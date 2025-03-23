@@ -1,0 +1,26 @@
+# Ignorar carpetas y archivos
+
+node_modules/
+dist/
+build/
+coverage/
+tmp/
+logs/
+
+# Ignorar archivos
+
+*.log
+*.tmp
+*.iml
+*.idea
+*.DS_Store
+
+# Ignorar archivos de configuración de editor
+
+.vscode/
+.editorconfig
+
+# Ignorar archivos de dependencias
+
+yarn.lock
+package-lock.json
