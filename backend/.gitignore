@@ -1,26 +1,27 @@
-# Ignorar carpetas y archivos
 
+# Node.js dependencies
 node_modules/
-dist/
-build/
-coverage/
-tmp/
-logs/
-
-# Ignorar archivos
-
-*.log
-*.tmp
-*.iml
-*.idea
-*.DS_Store
-
-# Ignorar archivos de configuración de editor
-
-.vscode/
-.editorconfig
-
-# Ignorar archivos de dependencias
-
-yarn.lock
+npm-debug.log
+yarn-error.log
 package-lock.json
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+logs/*.log
+debug.log
+error.log
+
+# Sequelize files
+sequelize-meta.json
+.sequelize/
+
+# IDE y sistema operativo
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
