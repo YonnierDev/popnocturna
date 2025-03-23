@@ -9,6 +9,7 @@ app.use(cors());
 // Rutas
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuarioRoutes"));
+app.use("/api", require("./routes/categoriaRoutes"));
 
 // Servidor
 const PORT = process.env.PORT || 5000;
