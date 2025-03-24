@@ -21,6 +21,11 @@ class UsuarioController {
             if (usuarioExistente) {
                 return res.status(400).json({ mensaje: "El correo ya está registrado" });
             }
+
+            const rolExistente = await UsuarioService.verificarRol(rolid);
+            if (!rolExistente) {
+                return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
+            }
     
             // Encriptar contraseña
             const salt = await bcrypt.genSalt(10);

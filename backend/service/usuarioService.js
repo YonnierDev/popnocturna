@@ -1,5 +1,5 @@
 // service/usuarioService.js
-const { Usuario } = require('../models');
+const { Usuario, Rol } = require('../models');
 
 class UsuarioService {
     async listarUsuarios() {
@@ -27,6 +27,9 @@ class UsuarioService {
     async eliminarUsuario(id) {
         return await Usuario.destroy({ where: { id } });
     }
+    async verificarRol(rolid) {
+        return await Rol.findByPk(rolid);
+    }
 }
 
 module.exports = new UsuarioService();
