@@ -63,6 +63,11 @@ class UsuarioController {
             const usuario = await UsuarioService.buscarUsuario(id);
             if (!usuario) {
                 return res.status(404).json({ mensaje: "Usuario no encontrado" });
+                
+            }
+            const rolExistente = await UsuarioService.verificarRol(rolid);
+            if (!rolExistente) {
+                return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
             }
 
             // Preparar datos para actualizar

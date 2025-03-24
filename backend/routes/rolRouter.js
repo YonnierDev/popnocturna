@@ -2,7 +2,7 @@ const RolController = require('../controllers/rolController');
 const express = require('express');
 const router = express.Router();
 
-router.get('/rol', RolController.listarRol);
+router.get('/roles', RolController.listarRol);
 router.get('/rol/:id', RolController.buscarRol);
 router.post('/rol', RolController.crearRol);
 router.put('/rol/:id', RolController.actualizarRol);

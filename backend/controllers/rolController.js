@@ -22,7 +22,8 @@ class RolController{
                  const { nombre } = req.body;
                  const { id } = req.params;
                  const resp=await RolService.actualizarRol(id, nombre);
-                 res.json(resp);
+                 const buscarR = await RolService.buscarRol(id);
+                 res.json({ mensaje: "rol actualizado", rolActualizado: buscarR});
             } catch(e) {
                  res.json({ mensaje: "error en el servicio" });
             }
@@ -31,7 +32,6 @@ class RolController{
             try {
                 const { id } = req.params;
                 const r = await RolService.eliminarRol(id);
-                console.log(r);
                 res.json({ mensaje: "rol eliminado" });
             } catch(e) {
                  res.json({ mensaje: "error en el servicio" });

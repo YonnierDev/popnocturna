@@ -7,29 +7,13 @@ class RolService{
         return await Rol.create({nombre})
     }
     async actualizarRol(id,nombre) {
-        const rol = await Rol.findAll({ where: { id } });
-        if (rol.length==0) {
-            return null
-        }
-        else {
-            await  rol[0].update({nombre})
-            return rol[0];
-        }
-        
+        return await Rol.update({nombre}, { where: { id } });      
     }
     async eliminarRol(id) {
-        const rol = await Rol.findAll({ where: { id } });
-        if (rol.length==0) {
-            return null
-        }
-        else {
-            await rol[0].destroy();
-            return rol[0];
-        }
+        return await Rol.destroy({ where: { id } });
     }
     async buscarRol(id) {
-        const listaRol = await Rol.findByPk(id);
-        return listaRol
+        return await Rol.findByPk(id);
     }
 }
 module.exports = new RolService();
