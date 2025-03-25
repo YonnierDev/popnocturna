@@ -7,8 +7,8 @@ app.use(express.json());
 app.use(cors());
 
 // Rutas
-app.use("/api", require("./routes/eventoRoutes"));
-app.use("/api", require("./routes/lugarRoutes"));
+app.use("/api", require("./routes/calificacionRoutes"));
+
 
 // Servidor
 const PORT = process.env.PORT || 5000;
