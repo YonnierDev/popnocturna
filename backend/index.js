@@ -8,7 +8,7 @@ app.use(cors());
 
 // Rutas
 app.use("/api", require("./routes/calificacionRoutes"));
-
+app.use("/api", require("./routes/comentarioRoutes"));
 
 // Servidor
 const PORT = process.env.PORT || 5000;
