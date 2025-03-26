@@ -6,30 +6,30 @@ class LugarController {
       const listarLugares = await LugarService.listarLugares();
       res.json(listarLugares);
     } catch (e) {
-      res
-        .status(500)
-        .json({ mensaje: "Error en el servicio", error: e.message });
+      res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
     }
   }
 
   async crearLugar(req, res) {
     try {
-      const { categoriaid, Lugarid, descripcion, ubicacion } = req.body;
+      const { usuarioid, categoriaid, descripcion, ubicacion } = req.body;
 
-      // Verificar si la categoria ya existe
+      // Verificar si la categoría existe
       const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
       if (!categoriaExistente) {
-        return res.status(400).json({ mensaje: "La Categoria no existe" });
+        return res.status(400).json({ mensaje: "La categoría no existe" });
       }
 
-      const usuarioExistente = await LugarService.verificarLugar(usuarioid);
+      // Verificar si el usuario existe
+      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El Usuario no existe" });
+        return res.status(400).json({ mensaje: "El usuario no existe" });
       }
 
+      // Crear nuevo lugar
       const nuevoLugar = await LugarService.crearLugar({
         categoriaid,
-        Lugarid,
+        usuarioid,
         descripcion,
         ubicacion,
       });
@@ -50,18 +50,19 @@ class LugarController {
       const { id } = req.params;
       const { categoriaid, usuarioid, descripcion, ubicacion } = req.body;
 
-      // Verificar si la categoria ya existe
+      // Verificar si la categoría existe
       const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
       if (!categoriaExistente) {
-        return res.status(400).json({ mensaje: "La Categoria no existe" });
+        return res.status(400).json({ mensaje: "La categoría no existe" });
       }
 
-      const usuarioExistente = await LugarService.verificarLugar(usuarioid);
+      // Verificar si el usuario existe
+      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El Usuario no existe" });
+        return res.status(400).json({ mensaje: "El usuario no existe" });
       }
 
-      // Preparar datos para actualizar
+      // Actualizar datos del lugar
       const datosActualizados = {
         categoriaid,
         usuarioid,
@@ -69,14 +70,11 @@ class LugarController {
         ubicacion,
       };
 
-      const LugarActualizado = await LugarService.actualizarLugar(
-        id,
-        datosActualizados
-      );
-      res.json(LugarActualizado);
+      const lugarActualizado = await LugarService.actualizarLugar(id, datosActualizados);
+      res.json(lugarActualizado);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 
@@ -84,9 +82,9 @@ class LugarController {
     try {
       const { id } = req.params;
 
-      // Verificar si el Lugar existe
-      const Lugar = await LugarService.buscarLugar(id);
-      if (!Lugar) {
+      // Verificar si el lugar existe
+      const existeLugar = await LugarService.buscarLugar(id);
+      if (!existeLugar) {
         return res.status(404).json({ mensaje: "Lugar no encontrado" });
       }
 
@@ -94,23 +92,23 @@ class LugarController {
       res.json({ mensaje: "Lugar eliminado correctamente" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 
   async buscarLugar(req, res) {
     try {
       const { id } = req.params;
-      const Lugar = await LugarService.buscarLugar(id);
+      const lugar = await LugarService.buscarLugar(id);
 
-      if (!Lugar) {
+      if (!lugar) {
         return res.status(404).json({ mensaje: "Lugar no encontrado" });
       }
 
-      res.json(Lugar);
+      res.json(lugar);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 }

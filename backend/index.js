@@ -7,7 +7,14 @@ app.use(express.json());
 app.use(cors());
 
 // Rutas
+app.use("/api", require("./routes/rolRouter"));
+app.use("/api", require("./routes/usuarioRoutes"));
+app.use("/api", require("./routes/categoriaRoutes"));
+app.use("/api", require("./routes/lugarRoutes"));
+app.use("/api", require("./routes/eventoRoutes")); 
 app.use("/api", require("./routes/calificacionRoutes"));
+app.use("/api", require("./routes/reservaRouter"));
+
 
 
 // Servidor
