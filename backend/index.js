@@ -10,6 +10,7 @@ app.use(cors());
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuarioRoutes"));
 app.use("/api", require("./routes/categoriaRoutes"));
+app.use("/api", require("./routes/comentarioRoutes"));
 
 // Servidor
 const PORT = process.env.PORT || 5000;
