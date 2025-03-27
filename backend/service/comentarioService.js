@@ -6,8 +6,9 @@ class ComentarioService {
     }
 
     async crearComentario(usuarioid, contenido, fecha_hora) {  
-        return await Comentario.create(usuarioid, contenido, fecha_hora);
+        return await Comentario.create({ usuarioid, contenido, fecha_hora });
     }
+    
 
     async actualizarComentario(id, usuarioid, contenido, fecha_hora) {
         return await Comentario.update({usuarioid, contenido, fecha_hora}, { where: { id } });

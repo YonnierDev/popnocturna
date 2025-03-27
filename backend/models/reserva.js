@@ -7,13 +7,13 @@ module.exports = (sequelize, DataTypes) => {
       
       Reserva.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
-        as: "usuarios",
+        as: "usuario",
       });
 
       
       Reserva.belongsTo(models.Evento, {
         foreignKey: "eventoid",
-        as: "eventos",
+        as: "evento",
       });
     }
   }
@@ -52,6 +52,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Reserva",
+      tableName: "reservas",
     }
   );
 

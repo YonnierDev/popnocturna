@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
                 as: "usuarios"
             });
         }
+
+        
     }
 
     Comentario.init(
