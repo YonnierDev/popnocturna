@@ -30,7 +30,6 @@ class UsuarioService {
     async verificarRol(rolid) {
         return await Rol.findByPk(rolid);
     }
-    
     async login({correo, contrasena}){
     return await Usuario.findOne({ where: { correo, contrasena } });
     }

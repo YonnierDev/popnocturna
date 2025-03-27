@@ -1,6 +1,6 @@
 const UsuarioService = require('../service/usuarioService');
 const bcrypt = require('bcrypt');
-
+const jwt=require('jsonwebtoken');
 class UsuarioController {
     async listarUsuarios(req, res) {
         try {
@@ -132,24 +132,24 @@ class UsuarioController {
         try {
             const { correo, contrasena } = req.body;
 
-            //validacion de campos para el login
             if (!correo || !contrasena) {
                 return res.status(400).json({ mensaje: "Correo y contraseña son obligatorios" });
             }
 
-            // Buscar usuario por correo
             const usuario = await UsuarioService.buscarPorCorreo(correo);
             if (!usuario) {
                 return res.status(401).json({ mensaje: "Coredenciales inválidas" });
             }
 
-            // Verificar contraseña
-            const esCorrecta = await bcrypt.compare(contrasena, usuario.contrasena);
-            if (!esCorrecta) {
-                return res.status(401).json({ mensaje: "Credenciales inválidas" });
+          
+            const desenCrypt=await bcrypt.compare(contrasena,usuario.contrasena)
+            if(desenCrypt) {	
+                console.log(desenCrypt);
             }
+            else{
 
-            // Generar token JWT
+            }
+            
             const token = jwt.sign(
                 { id: usuario.id, correo: usuario.correo, rolid: usuario.rolid },
                 "secreto_super_seguro",
