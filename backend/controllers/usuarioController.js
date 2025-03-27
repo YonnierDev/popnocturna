@@ -128,6 +128,40 @@ class UsuarioController {
             res.status(500).json({ mensaje: "Error en el servicio" });
         }
     }
+    async login(req, res) {
+        try {
+            const { correo, contrasena } = req.body;
+
+            //validacion de campos para el login
+            if (!correo || !contrasena) {
+                return res.status(400).json({ mensaje: "Correo y contraseña son obligatorios" });
+            }
+
+            // Buscar usuario por correo
+            const usuario = await UsuarioService.buscarPorCorreo(correo);
+            if (!usuario) {
+                return res.status(401).json({ mensaje: "Coredenciales inválidas" });
+            }
+
+            // Verificar contraseña
+            const esCorrecta = await bcrypt.compare(contrasena, usuario.contrasena);
+            if (!esCorrecta) {
+                return res.status(401).json({ mensaje: "Credenciales inválidas" });
+            }
+
+            // Generar token JWT
+            const token = jwt.sign(
+                { id: usuario.id, correo: usuario.correo, rolid: usuario.rolid },
+                "secreto_super_seguro",
+                { expiresIn: "2h" }
+            );
+
+            res.json({ mensaje: "Login exitoso", token });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: "Error en el servicio" });
+        }
+    }
 }
 
 module.exports = new UsuarioController();
