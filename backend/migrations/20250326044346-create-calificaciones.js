@@ -11,10 +11,18 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       usuarioid: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        reference:{
+          model: 'usuarios',
+          key: 'id'
+        }
       },
       eventoid: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        reference:{
+          model: 'eventos',
+          key: 'id'
+        }
       },
       puntuacion: {
         type: Sequelize.INTEGER

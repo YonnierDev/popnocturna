@@ -14,7 +14,7 @@ app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes")); 
 app.use("/api", require("./routes/calificacionRoutes"));
 app.use("/api", require("./routes/reservaRouter"));
-
+app.use("/api", require("./routes/comentarioRoutes"));
 
 
 // Servidor

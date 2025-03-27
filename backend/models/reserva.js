@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Reserva.init(
     {
-      fk_usuarioid: {
+      usuarioid: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      fk_eventoid: {
+      eventoid: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
@@ -52,8 +52,6 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Reserva",
-      tableName: "reservas",
-      timestamps: false,
     }
   );
 

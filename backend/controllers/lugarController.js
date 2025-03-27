@@ -13,26 +13,8 @@ class LugarController {
   async crearLugar(req, res) {
     try {
       const { usuarioid, categoriaid, descripcion, ubicacion } = req.body;
-
-      // Verificar si la categoría existe
-      const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
-      if (!categoriaExistente) {
-        return res.status(400).json({ mensaje: "La categoría no existe" });
-      }
-
-      // Verificar si el usuario existe
-      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
-      if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario no existe" });
-      }
-
-      // Crear nuevo lugar
-      const nuevoLugar = await LugarService.crearLugar({
-        categoriaid,
-        usuarioid,
-        descripcion,
-        ubicacion,
-      });
+      
+      const nuevoLugar = await LugarService.crearLugar(usuarioid, categoriaid, descripcion, ubicacion);
 
       res.status(201).json(nuevoLugar);
     } catch (error) {

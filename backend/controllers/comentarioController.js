@@ -47,16 +47,9 @@ class ComentarioController {
             if (!usuarioExistente) {
                 return res.status(400).json({ mensaje: "El usuario seleccionado no existe" });
             }  
-
-            // Preparar datos para actualizar
-            const datosActualizados = {
-                usuarioid,
-                contenido,
-                fecha_hora
-            };
             
-            const ComentarioActualizado = await ComentarioService.actualizarComentario(id, datosActualizados);
-            res.json(ComentarioActualizado);
+            const ComentarioActualizado = await ComentarioService.actualizarComentario(id, usuarioid, contenido, fecha_hora);
+            res.json(req.body);
         } catch (error) {
             console.error(error);
             res.status(500).json({ mensaje: "Error en el servicio" });

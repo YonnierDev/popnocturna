@@ -10,10 +10,18 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       lugarid: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        reference:{
+          model: 'lugares',
+          key: 'id'
+        }
       },
       comentarioid: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        reference:{
+          model: 'comentarios',
+          key: 'id'
+        }
       },
       aforo: {
         type: Sequelize.INTEGER
