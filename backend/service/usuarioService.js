@@ -30,6 +30,7 @@ class UsuarioService {
     async verificarRol(rolid) {
         return await Rol.findByPk(rolid);
     }
+    
 }
 
 module.exports = new UsuarioService();

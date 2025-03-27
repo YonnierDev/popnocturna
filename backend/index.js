@@ -15,7 +15,6 @@ app.use("/api", require("./routes/eventoRoutes"));
 app.use("/api", require("./routes/calificacionRoutes"));
 app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/comentarioRoutes"));
-app.use("/api", require("./routes/usuariosRoutes"));
 
 // Servidor
 const PORT = process.env.PORT || 5000;
