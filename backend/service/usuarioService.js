@@ -31,6 +31,9 @@ class UsuarioService {
         return await Rol.findByPk(rolid);
     }
     
+    async login({correo, contrasena}){
+    return await Usuario.findOne({ where: { correo, contrasena } });
+    }
 }
 
 module.exports = new UsuarioService();
