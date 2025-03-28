@@ -162,7 +162,18 @@ class UsuarioController {
             res.status(500).json({ mensaje: "Error en el servicio" });
         }
     }
-}
+    
+    async obtenerPropietarios(req, res) {
+        try {
+            const propietarios = await UsuarioService.buscarPorRol(6);
+            res.json(propietarios);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: "Error al obtener propietarios" });
+        }
+    
+    }
 
+}
 module.exports = new UsuarioController();
 

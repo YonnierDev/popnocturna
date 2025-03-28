@@ -1,4 +1,3 @@
-// service/usuarioService.js
 const { Usuario, Rol } = require('../models');
 
 class UsuarioService {
@@ -10,7 +9,6 @@ class UsuarioService {
         return await Usuario.findByPk(id);
     }
 
-    // Añadimos este método que falta
     async buscarPorCorreo(correo) {
         return await Usuario.findOne({ where: { correo } });
     }
@@ -32,6 +30,12 @@ class UsuarioService {
     }
     async login({correo, contrasena}){
     return await Usuario.findOne({ where: { correo, contrasena } });
+    }
+
+    async buscarPorRol(rolId) {
+        return await Usuario.findAll({
+            where: { rolid: rolId }
+        });
     }
 }
 
