@@ -14,9 +14,11 @@ class UsuarioController {
 
     async crearUsuario(req, res) {
         try {
-            const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero, estado, rolid } = req.body;
+            console.log("Datos recibidos en el en backend", req.body);
+            const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = req.body;
+            const estado = "activo";
+            const rolid = 13; 
             
-            // Verificar si el correo ya existe
             const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
             if (usuarioExistente) {
                 return res.status(400).json({ mensaje: "El correo ya está registrado" });
@@ -27,7 +29,6 @@ class UsuarioController {
                 return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
             }
     
-            // Encriptar contraseña
             const salt = await bcrypt.genSalt(10);
             const contrasenaEncriptada = await bcrypt.hash(contrasena, salt);
     
