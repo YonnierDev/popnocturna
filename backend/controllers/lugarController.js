@@ -13,6 +13,7 @@ class LugarController {
   async crearLugar(req, res) {
     try {
       const { usuarioid, categoriaid, descripcion, ubicacion } = req.body;
+<<<<<<< HEAD
 
       // Verificar si la categoría existe
       const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
@@ -33,6 +34,10 @@ class LugarController {
         descripcion,
         ubicacion,
       });
+=======
+      
+      const nuevoLugar = await LugarService.crearLugar(usuarioid, categoriaid, descripcion, ubicacion);
+>>>>>>> integracion
 
       res.status(201).json(nuevoLugar);
     } catch (error) {

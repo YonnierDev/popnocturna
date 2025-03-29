@@ -1,6 +1,6 @@
 const UsuarioService = require('../service/usuarioService');
 const bcrypt = require('bcrypt');
-
+const jwt=require('jsonwebtoken');
 class UsuarioController {
     async listarUsuarios(req, res) {
         try {
@@ -14,9 +14,11 @@ class UsuarioController {
 
     async crearUsuario(req, res) {
         try {
-            const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero, estado, rolid } = req.body;
+            console.log("Datos recibidos en el en backend", req.body);
+            const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = req.body;
+            const estado = "activo";
+            const rolid = 13; 
             
-            // Verificar si el correo ya existe
             const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
             if (usuarioExistente) {
                 return res.status(400).json({ mensaje: "El correo ya está registrado" });
@@ -27,7 +29,6 @@ class UsuarioController {
                 return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
             }
     
-            // Encriptar contraseña
             const salt = await bcrypt.genSalt(10);
             const contrasenaEncriptada = await bcrypt.hash(contrasena, salt);
     
@@ -128,7 +129,52 @@ class UsuarioController {
             res.status(500).json({ mensaje: "Error en el servicio" });
         }
     }
-}
+    async login(req, res) {
+        try {
+            const { correo, contrasena } = req.body;
 
+            if (!correo || !contrasena) {
+                return res.status(400).json({ mensaje: "Correo y contraseña son obligatorios" });
+            }
+
+            const usuario = await UsuarioService.buscarPorCorreo(correo);
+            if (!usuario) {
+                return res.status(401).json({ mensaje: "Coredenciales inválidas" });
+            }
+
+          
+            const desenCrypt=await bcrypt.compare(contrasena,usuario.contrasena)
+            if(desenCrypt) {	
+                console.log(desenCrypt);
+            }
+            else{
+
+            }
+            
+            const token = jwt.sign(
+                { id: usuario.id, correo: usuario.correo, rolid: usuario.rolid },
+                "secreto_super_seguro",
+                { expiresIn: "2h" }
+            );
+
+            res.json({ mensaje: "Login exitoso", token });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: "Error en el servicio" });
+        }
+    }
+    
+    async obtenerPropietarios(req, res) {
+        try {
+            const propietarios = await UsuarioService.buscarPorRol(6);
+            res.json(propietarios);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: "Error al obtener propietarios" });
+        }
+    
+    }
+
+}
 module.exports = new UsuarioController();
 

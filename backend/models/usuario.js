@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
 
       
       Usuario.hasMany(models.Reserva, {
-        foreignKey: "fk_usuarioid",
+        foreignKey: "usuarioid",
         as: "reservas",
       });
     }
@@ -73,7 +73,6 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Usuario",
       tableName: "usuarios",
-      timestamps: false,
     }
   );
 
