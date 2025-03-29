@@ -6,15 +6,24 @@ const Sequelize = require("sequelize");
 const process = require("process");
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";
-const config = require(__dirname + "/../config/config.json")[env];
-const db = {};
+//const config = require(__dirname + "/../config/config.json")[env];
+const mysql = require("mysql2");
 
+const config = {
+  username: "ugxck9xkaenzpwg5",
+    password: "6HS2sfal2xxMcn5gPQZ2",
+    database: "b4gvydqqzxj7kiecj1bu",
+    host: "b4gvydqqzxj7kiecj1bu-mysql.services.clever-cloud.com",
+    dialect: "mysql",
+    port: 3306,
+    dialectModule: mysql,
+};
+
+const db = {}
 let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
-} else {
+
   sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
+
 
 // 🔍 Verificar conexión a la base de datos
 sequelize
@@ -36,6 +45,8 @@ Object.keys(db).forEach((modelName) => {
     db[modelName].associate(db);
   }
 });
+
+
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
