@@ -15,25 +15,33 @@ module.exports = {
           model: 'lugares',
           key: 'id'
         }
+        },
+        comentarioid: {
+          type: Sequelize.INTEGER,
+          reference:{
+            model: 'comentarios',
+            key: 'id'
+          }
+        
       },
-      comentarioid: {
+      capacidad: {
         type: Sequelize.INTEGER,
-        reference:{
-          model: 'comentarios',
-          key: 'id'
-        }
-      },
-      aforo: {
-        type: Sequelize.INTEGER
+        allowNull: false
       },
       precio: {
-        type: Sequelize.DECIMAL
+        type: Sequelize.DECIMAL,
+        allowNull: false
       },
       descripcion: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       fecha_hora: {
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      estado: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,

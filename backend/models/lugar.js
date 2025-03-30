@@ -1,21 +1,24 @@
 "use strict";
+
 const { Model, DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   class Lugar extends Model {
     static associate(models) {
-      // Asociación con Usuario
       Lugar.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
         as: "usuarios",
       });
-      
-      // Asociación con Categoría
+
       Lugar.belongsTo(models.Categoria, {
         foreignKey: "categoriaid",
         as: "categorias",
       });
 
+      Lugar.hasMany(models.Evento, {
+        foreignKey: "lugarid",
+        as: "eventos",
+      });
     }
   }
 
@@ -37,6 +40,9 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      estado: {
+        type: DataTypes.BOOLEAN,       
+      }
     },
     {
       sequelize,

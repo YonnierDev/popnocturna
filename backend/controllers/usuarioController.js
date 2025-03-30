@@ -16,8 +16,8 @@ class UsuarioController {
         try {
             console.log("Datos recibidos en el en backend", req.body);
             const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = req.body;
-            const estado = "activo";
-            const rolid = 13; 
+            const estado = "activo"; 
+            const rolid = 3;
             
             const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
             if (usuarioExistente) {

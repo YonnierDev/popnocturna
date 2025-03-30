@@ -16,6 +16,7 @@ module.exports = {
           key: 'id'
         }
       },
+      
       usuarioid: {
         type: Sequelize.INTEGER,
         reference:{
@@ -23,11 +24,20 @@ module.exports = {
           key: 'id'
         }
       },
+      nombre: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
       descripcion: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       ubicacion: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      estado: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,

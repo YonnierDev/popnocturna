@@ -25,7 +25,11 @@ module.exports = {
         }
       },
       puntuacion: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      estado: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,

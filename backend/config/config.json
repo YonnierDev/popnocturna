@@ -7,6 +7,8 @@
     "dialect": "mysql",
     "port": 3306
   },
+
+  
   "test": {
     "username": "ugxck9xkaenzpwg5",
     "password": "6HS2sfal2xxMcn5gPQZ2",

@@ -1,4 +1,5 @@
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
@@ -12,10 +13,10 @@ module.exports = {
             usuarioid: {
                 type: Sequelize.INTEGER,
                 reference:{
-                    model: 'usuarios',
-                    key: 'id'
-                  }
-              },
+                model: 'usuarios',
+                key: 'id'
+            }
+            },
             contenido: {
                 type: Sequelize.STRING,
                 allowNull: false
@@ -23,6 +24,9 @@ module.exports = {
             fecha_hora: {
                 type: Sequelize.DATE,
                 allowNull: false
+            },
+            estado: {
+                type: Sequelize.BOOLEAN
             },
             createdAt: {
                 allowNull: false,

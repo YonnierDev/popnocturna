@@ -1,38 +1,37 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+
+const { Model } = require("sequelize");
+
 module.exports = (sequelize, DataTypes) => {
   class Calificacion extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // un rol puede tener muchos usuarios (1:N)
-      /*
       Calificacion.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
-        as: "usuarios"
+        as: "usuarios",
       });
       Calificacion.belongsTo(models.Evento, {
-          foreignKey: "eventoid",
-          as: "eventos"
+        foreignKey: "eventoid",
+        as: "eventos",
       });
-      */
     }
   }
   Calificacion.init(
     {
-      usuarioid: DataTypes.INTEGER,
-      eventoid: DataTypes.INTEGER,
-      puntuacion: DataTypes.STRING,
+      usuarioid: {
+        type: DataTypes.INTEGER,
+      },
+      eventoid: {
+        type: DataTypes.INTEGER,
+      },
+      puntuacion: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
     },
     {
       sequelize,
       modelName: "Calificacion",
-      tableName: "Calificaciones"
+      tableName: "calificaciones",
     }
   );
   return Calificacion;

@@ -1,25 +1,33 @@
 "use strict";
+
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class Usuario extends Model {
     static associate(models) {
-      
       Usuario.belongsTo(models.Rol, {
         foreignKey: "rolid",
         as: "rols",
       });
 
-      
       Usuario.hasMany(models.Lugar, {
         foreignKey: "usuarioid",
         as: "lugares",
       });
 
-      
       Usuario.hasMany(models.Reserva, {
         foreignKey: "usuarioid",
         as: "reservas",
+      });
+
+      Usuario.hasMany(models.Comentario, {
+        foreignKey: "usuarioid",
+        as: "comentarios",
+      });
+
+      Usuario.hasMany(models.Calificacion, {
+        foreignKey: "usuarioid",
+        as: "calificaciones",
       });
     }
   }
@@ -55,14 +63,15 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       estado: {
-        type: DataTypes.STRING,
+        type: DataTypes.BOOLEAN,
         allowNull: false,
       },
       rolid: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        defaultValue: 3,
         references: {
-          model: "Rol", 
+          model: "Rol",
           key: "rolid",
         },
         onUpdate: "CASCADE",
