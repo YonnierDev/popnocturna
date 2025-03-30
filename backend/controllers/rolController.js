@@ -1,15 +1,16 @@
 const RolService = require("../service/rolService");
 
 class RolController {
-  async listarRol(res, req) {
+  async listarRol(req, res) {
     try {
-      console.log(req);
+      console.log(req.body);
       const listaRol = await RolService.listarRol();
       console.log("AQUI ESTOY");
       console.log(listaRol);
-      res.json(listaRol);
+      
+      res.status(201).json(listaRol);
     } catch (e) {
-      res.json({ mensaje: "error en el servicio", e });
+      res.json({ mensaje: "error en el servicio" });
     }
   }
 

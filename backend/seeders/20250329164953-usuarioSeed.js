@@ -19,7 +19,7 @@ module.exports = {
      * }], {});
     */
   
-    await queryInterface.bulkInsert('Usuarios', [
+    await queryInterface.bulkInsert('usuarios', [
       {
       nombre: 'Admin',
       apellido: 'admin',

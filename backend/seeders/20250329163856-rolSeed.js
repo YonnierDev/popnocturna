@@ -13,7 +13,7 @@ module.exports = {
      * }
      * ], {});
     */
-    await queryInterface.bulkInsert('Rols', [
+    await queryInterface.bulkInsert('rols', [
        {
          nombre: 'Administrador',
          createdAt: new Date(),
