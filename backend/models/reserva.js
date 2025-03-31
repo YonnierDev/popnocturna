@@ -31,6 +31,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: false,
       },
+      aprobacion: {
+        type: DataTypes.STRING,
+      },
       estado: {
         type: DataTypes.BOOLEAN,
       },

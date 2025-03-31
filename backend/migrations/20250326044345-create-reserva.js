@@ -27,6 +27,9 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false
       },
+      aprobacion: {//aprobada, rechazada, pendiente
+        type: Sequelize.STRING
+      },
       estado: {
         type: Sequelize.BOOLEAN
       },

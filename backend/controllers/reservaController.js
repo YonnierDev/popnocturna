@@ -13,42 +13,42 @@ class ReservaController {
 
   async crearReserva(req, res) {
     try {
-      const { usuarioid, eventoid, fecha_hora, estado } = req.body;
+      const { usuarioid, eventoid, fecha_hora } = req.body;
+      const aprobacion = "pendiente";
+      const estado = true;
 
       // Verificar si el usuario existe
       const usuarioExistente = await ReservaService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
         return res.status(400).json({ mensaje: "El usuario no existe" });
-     }
+      }
 
       // Verificar si el evento existe
       const eventoExistente = await ReservaService.verificarEvento(eventoid);
       if (!eventoExistente) {
         return res.status(400).json({ mensaje: "El evento no existe" });
       }
-
-      const nuevaReserva = await ReservaService.crearReserva({
+      const nuevaReserva = await ReservaService.crearReserva(
         usuarioid,
         eventoid,
         fecha_hora,
-        estado,
-      });
+        aprobacion,
+        estado
+      );
 
       res.status(201).json(nuevaReserva);
     } catch (error) {
-      console.error("Error detallado:", error);
-      res.status(500).json({
-        mensaje: "Error en el servicio",
-        error: error.message,
-        stack: error.stack,
-      });
+      console.error("Error al crear reserva:", error);
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 
   async actualizarReserva(req, res) {
     try {
       const { id } = req.params;
-      const { usuarioid, eventoid, fecha_hora, estado } = req.body;
+      const { usuarioid, eventoid, fecha_hora, aprobacion, estado } = req.body;
 
       // Verificar si el usuario existe
       const usuarioExistente = await ReservaService.verificarUsuario(usuarioid);
@@ -62,17 +62,20 @@ class ReservaController {
         return res.status(400).json({ mensaje: "El evento no existe" });
       }
 
-      const reservaActualizada = await ReservaService.actualizarReserva(id, {
-      usuarioid,
+      const reservaActualizada = await ReservaService.actualizarReserva(
+        id,
+        usuarioid,
         eventoid,
         fecha_hora,
-        estado,
-      });
+        aprobacion,
+        estado
+      );
 
-      res.json(reservaActualizada);
+      res.json({ mensaje: "Reserva actualizado correctamente",reservaActualizada });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res
+        .status(500)
+        .json({ mensaje: "Error al actualizar reserva", error: error.message });
     }
   }
 

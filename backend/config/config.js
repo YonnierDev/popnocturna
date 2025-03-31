@@ -1,28 +1,34 @@
-require('dotenv').config(); // Cargar variables de entorno
+require('dotenv').config();
 
 module.exports = {
+  // Para cuando programas en tu computadora
   development: {
-    username: process.env.DB_USERNAME,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    dialect: "mysql",
-    port: process.env.DB_PORT
+    database: 'popnocturna_dev',
+    host: 'localhost',
+    dialect: 'mysql',
+    port: 3306
   },
+
+  // Para cuando haces pruebas
   test: {
-    username: process.env.DB_USERNAME,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    dialect: "mysql",
-    port: process.env.DB_PORT
+    database: 'popnocturna_test',
+    host: 'localhost',
+    dialect: 'mysql',
+    port: 3306
   },
+
+  // Para cuando la app esté en internet (Vercel + Clever Cloud)
   production: {
-    username: process.env.DB_USERNAME,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
-    dialect: "mysql",
-    port: process.env.DB_PORT
+    dialect: 'mysql',
+    port: 3306,
+    ssl: true
   }
 };

@@ -6,16 +6,28 @@ class LugarController {
       const listarLugares = await LugarService.listarLugares();
       res.json(listarLugares);
     } catch (e) {
-      res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: e.message });
     }
   }
 
   async crearLugar(req, res) {
     try {
-      const { usuarioid, categoriaid, descripcion, ubicacion } = req.body;
-      
-      const nuevoLugar = await LugarService.crearLugar(usuarioid, categoriaid, descripcion, ubicacion);
+      const { usuarioid, categoriaid, nombre, descripcion, ubicacion } =
+        req.body;
+      const estado = true;
 
+      const nuevoLugar = await LugarService.crearLugar(
+        usuarioid,
+        categoriaid,
+        nombre,
+        descripcion,
+        ubicacion,
+        estado
+      );
+      console.log("AQUI ESTY");
+      console.log(nuevoLugar);
       res.status(201).json(nuevoLugar);
     } catch (error) {
       console.error("Error detallado:", error);
@@ -30,10 +42,13 @@ class LugarController {
   async actualizarLugar(req, res) {
     try {
       const { id } = req.params;
-      const { categoriaid, usuarioid, descripcion, ubicacion } = req.body;
+      const { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado } =
+        req.body;
 
       // Verificar si la categoría existe
-      const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
+      const categoriaExistente = await LugarService.verificarCategoria(
+        categoriaid
+      );
       if (!categoriaExistente) {
         return res.status(400).json({ mensaje: "La categoría no existe" });
       }
@@ -48,15 +63,22 @@ class LugarController {
       const datosActualizados = {
         categoriaid,
         usuarioid,
+        nombre,
         descripcion,
         ubicacion,
+        estado,
       };
 
-      const lugarActualizado = await LugarService.actualizarLugar(id, datosActualizados);
+      const lugarActualizado = await LugarService.actualizarLugar(
+        id,
+        datosActualizados
+      );
       res.json(lugarActualizado);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 
@@ -74,7 +96,9 @@ class LugarController {
       res.json({ mensaje: "Lugar eliminado correctamente" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 
@@ -90,7 +114,9 @@ class LugarController {
       res.json(lugar);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 }

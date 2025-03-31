@@ -5,13 +5,13 @@ class ComentarioService {
         return await Comentario.findAll();
     }
 
-    async crearComentario(usuarioid, contenido, fecha_hora) {  
-        return await Comentario.create({ usuarioid, contenido, fecha_hora });
+    async crearComentario(usuarioid, contenido, fecha_hora, estado) {  
+        return await Comentario.create({ usuarioid, contenido, fecha_hora, estado });
     }
     
 
-    async actualizarComentario(id, usuarioid, contenido, fecha_hora) {
-        return await Comentario.update({usuarioid, contenido, fecha_hora}, { where: { id } });
+    async actualizarComentario(id, usuarioid, contenido, fecha_hora, estado) {
+        return await Comentario.update({usuarioid, contenido, fecha_hora, estado}, { where: { id } });
     }
 
     async eliminarComentario(id) {

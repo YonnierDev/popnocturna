@@ -5,8 +5,8 @@ class EventoService {
     return await Evento.findAll();
   }
 
-  async crearEvento(nombre) {
-    return await Evento.create({ nombre });
+  async crearEvento(lugarid, comentarioid, capacidad, precio, descripcion, fecha_hora, estado) {
+    return await Evento.create({ lugarid, comentarioid, capacidad, precio, descripcion, fecha_hora, estado });
   }
 
   async buscarEvento(id) {

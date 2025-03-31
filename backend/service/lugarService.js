@@ -4,8 +4,8 @@ class LugarService {
     return await Lugar.findAll();
   }
 
-  async crearLugar(usuarioid, categoriaid, descripcion, ubicacion) {
-    return await Lugar.create({ usuarioid, categoriaid, descripcion, ubicacion });
+  async crearLugar(usuarioid, categoriaid, nombre, descripcion, ubicacion, estado) {
+    return await Lugar.create({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado });
   }
 
   async buscarLugar(id) {

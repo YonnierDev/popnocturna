@@ -16,7 +16,7 @@ class UsuarioController {
         try {
             console.log("Datos recibidos en el en backend", req.body);
             const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = req.body;
-            const estado = "activo"; 
+            const estado = true; 
             const rolid = 3;
             
             const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
@@ -166,7 +166,7 @@ class UsuarioController {
     
     async obtenerPropietarios(req, res) {
         try {
-            const propietarios = await UsuarioService.buscarPorRol(6);
+            const propietarios = await UsuarioService.buscarPorRol(2);
             res.json(propietarios);
         } catch (error) {
             console.error(error);

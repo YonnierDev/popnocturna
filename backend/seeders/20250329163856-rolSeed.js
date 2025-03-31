@@ -25,6 +25,7 @@ module.exports = {
         updatedAt: new Date(),
       },
       {
+        //Pasar ID 3 para que el rol del usuario se creee por defecto con rol (Usuario)
         nombre: 'Usuario',
         createdAt: new Date(),
         updatedAt: new Date(),

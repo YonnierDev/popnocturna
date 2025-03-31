@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      cantidad: {
+      capacidad: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },

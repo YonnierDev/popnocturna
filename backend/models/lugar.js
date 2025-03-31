@@ -32,6 +32,10 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      nombre: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       descripcion: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -41,8 +45,8 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       estado: {
-        type: DataTypes.BOOLEAN,       
-      }
+        type: DataTypes.BOOLEAN,
+      },
     },
     {
       sequelize,
