@@ -9,7 +9,7 @@ package-lock.json
 .npm
 
 
-.env
+
 .env.local
 .env.development
 .env.test
