@@ -10,7 +10,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
@@ -24,5 +23,6 @@
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
-  }
+  },
+  "description": ""
 }
