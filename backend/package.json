@@ -18,8 +18,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.0",
-    "sequelize": "^6.37.6",
-    "vercel": "^41.4.1"
+    "sequelize": "^6.37.6"
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
