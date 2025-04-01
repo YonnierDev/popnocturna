@@ -8,8 +8,7 @@ package-lock.json
 .pnp.*
 .npm
 
-
-
+.env
 .env.local
 .env.development
 .env.test

@@ -6,17 +6,16 @@ const Sequelize = require("sequelize");
 const process = require("process");
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";
-//const config = require(__dirname + "/../config/config.js")[env]
+//const config = require(__dirname + "/../config/config.json");
 const mysql = require("mysql2");
 
 const config = {
-  username: "ugxck9xkaenzpwg5",
-    password: "6HS2sfal2xxMcn5gPQZ2",
-    database: "b4gvydqqzxj7kiecj1bu",
-    host: "b4gvydqqzxj7kiecj1bu-mysql.services.clever-cloud.com",
-    dialect: "mysql",
-    port: 3306,
-    dialectModule: mysql,
+  username: "unkn0il8aebls9cd",
+  password: "uxugddtcFUBmCCnMN6dZ",
+  database: "bs00zkkxl8jruoucuwjp",
+  host: "bs00zkkxl8jruoucuwjp-mysql.services.clever-cloud.com",
+  dialect: "mysql",
+  port: 3306,
 };
 
 const db = {}

@@ -1,9 +1,4 @@
-require("dotenv").config();
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_USER:", process.env.DB_USER);
-console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
-console.log("DB_NAME:", process.env.DB_NAME);
-console.log("DB_PORT:", process.env.DB_PORT);
+require("dotenv").config()
 const express = require("express");
 const cors = require("cors");
 
@@ -24,5 +19,5 @@ app.use("/api", require("./routes/propietarioRoutes"));
 
 
 // Servidor
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
