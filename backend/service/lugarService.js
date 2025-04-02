@@ -1,7 +1,21 @@
 const { Lugar, Usuario, Categoria } = require("../models");
 class LugarService {
+  
   async listarLugares() {
-    return await Lugar.findAll();
+    return await Lugar.findAll({
+      include: [
+        {
+          model: Usuario,
+          as: "usuarios", // Usar el alias definido en el modelo
+          attributes: ["id", "nombre"], // Obtener solo el nombre
+        },
+        {
+          model: Categoria,
+          as: "categorias", // Usar el alias definido en el modelo
+          attributes: ["id", "tipo"],
+        },
+      ],
+    });
   }
 
   async crearLugar(usuarioid, categoriaid, nombre, descripcion, ubicacion, estado) {
