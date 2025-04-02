@@ -18,6 +18,18 @@ class LugarController {
         req.body;
       const estado = true;
 
+      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
+            if (!usuarioExistente) {
+              return res.status(400).json({ mensaje: "El usuario no existe" });
+            }
+      
+            const categoriaExistente = await LugarService.verificarCategoria(
+              categoriaid
+            );
+            if (!categoriaExistente) {
+              return res.status(400).json({ mensaje: "La categoria no existe" });
+            }
+
       const nuevoLugar = await LugarService.crearLugar(
         usuarioid,
         categoriaid,
@@ -26,11 +38,11 @@ class LugarController {
         ubicacion,
         estado
       );
-      console.log("AQUI ESTY");
-      console.log(nuevoLugar);
+
+
       res.status(201).json(nuevoLugar);
     } catch (error) {
-      console.error("Error detallado:", error);
+
       res.status(500).json({
         mensaje: "Error en el servicio",
         error: error.message,
