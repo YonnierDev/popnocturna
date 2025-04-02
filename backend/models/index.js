@@ -6,10 +6,11 @@ const Sequelize = require("sequelize");
 const process = require("process");
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";
-//const config = require(__dirname + "/../config/config.json");
+const config = require(__dirname + "/../config/config.json")[env];
+
 const mysql = require("mysql2");
 
-const config = {
+const configuracion = {
   username: "unkn0il8aebls9cd",
   password: "uxugddtcFUBmCCnMN6dZ",
   database: "bs00zkkxl8jruoucuwjp",
