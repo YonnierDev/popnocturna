@@ -1,11 +1,10 @@
 const TemporalService = require('../service/temporalService'); 
+const UsuarioService = require('../service/usuarioService');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
-
-// Configuración de Nodemailer para enviar correos
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
