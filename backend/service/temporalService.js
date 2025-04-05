@@ -1,4 +1,3 @@
-
 const { Codigotemporal } = require("../models");
 
 class TemporalService {

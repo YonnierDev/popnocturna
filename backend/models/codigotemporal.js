@@ -17,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   Codigotemporal.init(
     {
-      codtemporalid: DataTypes.INTEGER,
       codigo: DataTypes.STRING,
       correo: DataTypes.STRING,
       expiracion: DataTypes.DATE,

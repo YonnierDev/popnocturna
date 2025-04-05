@@ -9,9 +9,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      codtemporalid: {
-        type: Sequelize.INTEGER
-      },
       codigo: {
         type: Sequelize.STRING
       },
