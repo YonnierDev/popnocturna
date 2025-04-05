@@ -64,8 +64,8 @@ class AutentiController {
             const codigoVerificacion = AutentiController.generarCodigo();
             const expiracion = Date.now() + 5 * 60 * 1000; 
 
-            await TemporalService.guardarCodigo(correo, codigoVerificacion, new Date (expiracion)); 
-
+            const codtemp =TemporalService.guardarCodigo(correo, codigoVerificacion, new Date (expiracion)); 
+            console.log(codtemp);
             const usuario = await UsuarioService.crearUsuario({
                 nombre,
                 apellido,
