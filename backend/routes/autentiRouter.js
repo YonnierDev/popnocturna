@@ -6,6 +6,6 @@ router.post('/registrar', AutentiController.registrar);
 router.post('/validar/correo', AutentiController.validarCorreo);
 router.post('/login', AutentiController.login);
 router.post('/recuperar/contrasena', AutentiController.recuperarContrasena);
-router.post('/cambiar/contrasena', AutentiController.cambiarContrasena);
+router.post('/cambiar/contrasena', AutentiController.cambiarContrasena); 
 
 module.exports = router;
