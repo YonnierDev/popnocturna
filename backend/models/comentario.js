@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       
       Comentario.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
-        as: "usuarios",
+        as: "usuario",
       });
     }
   }

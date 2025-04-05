@@ -2,7 +2,20 @@ const { Evento, Lugar, Comentario } = require("../models");
 
 class EventoService {
   async listarEventos() {
-    return await Evento.findAll();
+    return await Evento.findAll({
+      include: [
+        {
+          model: Lugar,
+          as: "lugares",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          attributes: ["id", "contenido"],
+        },
+      ],
+    });
   }
 
   async crearEvento(lugarid, comentarioid, capacidad, precio, descripcion, fecha_hora, estado) {

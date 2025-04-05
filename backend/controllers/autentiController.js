@@ -1,5 +1,4 @@
-const UsuarioService = require('../service/usuarioService');
-const CodigoTemporal = require('./temporal/codigoTemporal'); 
+const TemporalService = require('../service/temporalService'); 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -41,7 +40,7 @@ class AutentiController {
                 });
             }
 
-            const generosPermitidos = ["Masculino", "Femenino", "Otros"];
+            const generosPermitidos = ["Masculino", "Femenino", "Otro"];
             if (!generosPermitidos.includes(genero)) {
                 return res.status(400).json({ mensaje: "Género no válido. Escoja uno" });
             }
@@ -64,9 +63,9 @@ class AutentiController {
 
             const contrasenaHash = await bcrypt.hash(contrasena, 10);
             const codigoVerificacion = AutentiController.generarCodigo();
-            const expiracion = Date.now() + 5 * 60 * 1000; // 5 minutos
+            const expiracion = Date.now() + 5 * 60 * 1000; 
 
-            CodigoTemporal.guardarCodigo(correo, codigoVerificacion, expiracion);
+            await TemporalService.guardarCodigo(correo, codigoVerificacion, new Date (expiracion)); 
 
             const usuario = await UsuarioService.crearUsuario({
                 nombre,
@@ -96,7 +95,7 @@ class AutentiController {
     static async validarCorreo(req, res) {
         try {
             const { correo, codigo } = req.body;
-            const codigoGuardado = CodigoTemporal.obtenerCodigo(correo);
+            const codigoGuardado = await TemporalService.obtenerCodigo(correo);
 
             if (!codigoGuardado) {
                 return res.status(400).json({ mensaje: "Código inválido o expirado" });
@@ -109,7 +108,7 @@ class AutentiController {
             }
 
             await UsuarioService.activarUsuario(correo);
-            CodigoTemporal.eliminar(correo);
+            await TemporalService.eliminar(correo);
 
             res.json({
               mensaje: "VALIDACION EXITOSA. BIENVENIDO A POPAYAN NOCTURNA",
@@ -155,7 +154,7 @@ class AutentiController {
             const codigoRecuperacion = AutentiController.generarCodigo();
             const expiracion = Date.now() + 5 * 60 * 1000;
 
-            CodigoTemporal.guardarCodigo(correo, codigoRecuperacion, expiracion);
+            await TemporalService.guardarCodigo(correo, codigoRecuperacion, new Date (expiracion));
 
             await transporter.sendMail({
                 from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
@@ -175,7 +174,7 @@ class AutentiController {
     static async cambiarContrasena(req, res) {
         try {
             const { correo, codigo, nuevaContrasena } = req.body;
-            const codigoGuardado = CodigoTemporal.obtenerCodigo(correo);
+            const codigoGuardado = await TemporalService.obtenerCodigo(correo);
 
             if (!codigoGuardado || codigoGuardado.codigo !== codigo || Date.now() > codigoGuardado.expiracion) {
                 return res.status(400).json({ mensaje: "Código inválido o expirado" });
@@ -184,7 +183,7 @@ class AutentiController {
             const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
             await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
 
-            CodigoTemporal.eliminar(correo);
+            await TemporalService.eliminar(correo);
 
             res.json({ mensaje: "Contraseña cambiada correctamente" });
 

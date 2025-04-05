@@ -12,6 +12,18 @@ class LugarController {
     }
   }
 
+  async listarRelacionesLugares(req, res) {
+    try {
+      const listarRelacionesLugares =
+        await LugarService.listarRelacionesLugares();
+      res.json(listarRelacionesLugares);     
+    } catch (e) {
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: e.message });
+    }
+  }
+
   async crearLugar(req, res) {
     try {
       const { usuarioid, categoriaid, nombre, descripcion, ubicacion } =
@@ -19,16 +31,15 @@ class LugarController {
       const estado = true;
 
       const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
-            if (!usuarioExistente) {
-              return res.status(400).json({ mensaje: "El usuario no existe" });
-            }
-      
-            const categoriaExistente = await LugarService.verificarCategoria(
-              categoriaid
-            );
-            if (!categoriaExistente) {
-              return res.status(400).json({ mensaje: "La categoria no existe" });
-            }
+      if (!usuarioExistente) {
+        return res.status(400).json({ mensaje: "El usuario no existe" });
+      }
+
+      const categoriaExistente =
+        await LugarService.verificarCategoria(categoriaid);
+      if (!categoriaExistente) {
+        return res.status(400).json({ mensaje: "La categoria no existe" });
+      }
 
       const nuevoLugar = await LugarService.crearLugar(
         usuarioid,
@@ -39,10 +50,8 @@ class LugarController {
         estado
       );
 
-
       res.status(201).json(nuevoLugar);
     } catch (error) {
-
       res.status(500).json({
         mensaje: "Error en el servicio",
         error: error.message,
@@ -58,9 +67,8 @@ class LugarController {
         req.body;
 
       // Verificar si la categoría existe
-      const categoriaExistente = await LugarService.verificarCategoria(
-        categoriaid
-      );
+      const categoriaExistente =
+        await LugarService.verificarCategoria(categoriaid);
       if (!categoriaExistente) {
         return res.status(400).json({ mensaje: "La categoría no existe" });
       }

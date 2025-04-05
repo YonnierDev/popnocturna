@@ -1,62 +1,81 @@
-const { Usuario, Rol } = require('../models');
+const { Usuario, Rol, Lugar, Comentario, Reserva, Calificacion } = require("../models");
+
 
 class UsuarioService {
-    async listarUsuarios() {
-        
-        return await Usuario.findAll({include: [{ model: Rol, as: "rol", attributes: ["id", "nombre"]}] });
-    }
+  async listarUsuarios() {
+    return await Usuario.findAll({
+      include: [{ model: Rol, as: "rol", attributes: ["id", "nombre"] }],
+    });
+  }
 
-    async buscarUsuario(id) {
-        return await Usuario.findByPk(id);
-    }
+  async listarRelacionesUsuarios() {
+    return await Usuario.findAll({
+      include: [
+        { model: Rol, as: "rol", attributes: ["id", "nombre"] },
+        { model: Lugar, as: "lugares", attributes: ["id", "nombre"] },
+        { model: Reserva, as: "reservas", attributes: ["id", "fecha_hora"] },
+        {
+          model: Comentario,
+          as: "comentarios",
+          attributes: ["id", "contenido"],
+        },
+        {
+          model: Calificacion,
+          as: "calificaciones",
+          attributes: ["id", "puntuacion"],
+        },
+      ],
+    });
+  }
 
-    async buscarPorCorreo(correo) {
-        return await Usuario.findOne({ where: { correo } });
-    }
+  async buscarUsuario(id) {
+    return await Usuario.findByPk(id);
+  }
 
-    async crearUsuario(datos) {
-        return await Usuario.create(datos);
-    }
+  async buscarPorCorreo(correo) {
+    return await Usuario.findOne({ where: { correo } });
+  }
 
-    async activarUsuario(correo) {
-        await Usuario.update(
-            { estado: true, codigoVerificacion: null },
-            { where: { correo } }
-        );
-    }
+  async crearUsuario(datos) {
+    return await Usuario.create(datos);
+  }
 
-    async guardarCodigoRecuperacion(correo, codigo) {
-        await Usuario.update(
-            { codigoRecuperacion: codigo },
-            { where: { correo } }
-        );
-    }
+  async activarUsuario(correo) {
+    await Usuario.update(
+      { estado: true, codigoVerificacion: null },
+      { where: { correo } }
+    );
+  }
 
-    async actualizarContrasena(correo, nuevaContrasena) {
-        await Usuario.update(
-            { contrasena: nuevaContrasena, codigoRecuperacion: null },
-            { where: { correo } }
-        );
-    }
+  async guardarCodigoRecuperacion(correo, codigo) {
+    await Usuario.update({ codigoRecuperacion: codigo }, { where: { correo } });
+  }
 
-    async actualizarUsuario(id, datos) {
-        await Usuario.update(datos, { where: { id } });
-        return await this.buscarUsuario(id);
-    }
+  async actualizarContrasena(correo, nuevaContrasena) {
+    await Usuario.update(
+      { contrasena: nuevaContrasena, codigoRecuperacion: null },
+      { where: { correo } }
+    );
+  }
 
-    async eliminarUsuario(id) {
-        return await Usuario.destroy({ where: { id } });
-    }
+  async actualizarUsuario(id, datos) {
+    await Usuario.update(datos, { where: { id } });
+    return await this.buscarUsuario(id);
+  }
 
-    async verificarRol(rolid) {
-        return await Rol.findByPk(rolid);
-    }
+  async eliminarUsuario(id) {
+    return await Usuario.destroy({ where: { id } });
+  }
 
-    async buscarPorRol(rolId) {
-        return await Usuario.findAll({
-            where: { rolid: rolId }
-        });
-    }
+  async verificarRol(rolid) {
+    return await Rol.findByPk(rolid);
+  }
+
+  async buscarPorRol(rolId) {
+    return await Usuario.findAll({
+      where: { rolid: rolId },
+    });
+  }
 }
 
 module.exports = new UsuarioService();

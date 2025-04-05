@@ -7,12 +7,12 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Evento.belongsTo(models.Lugar, {
         foreignKey: "lugarid",
-        as: "lugares",
+        as: "lugar",
       });
 
       Evento.belongsTo(models.Comentario, {
         foreignKey: "comentarioid",
-        as: "comentarios",
+        as: "comentario",
       });
 
       Evento.hasMany(models.Reserva, {

@@ -7,12 +7,12 @@ module.exports = (sequelize) => {
     static associate(models) {
       Lugar.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
-        as: "usuarios",
+        as: "usuario",
       });
 
       Lugar.belongsTo(models.Categoria, {
         foreignKey: "categoriaid",
-        as: "categorias",
+        as: "categoria",
       });
 
       Lugar.hasMany(models.Evento, {

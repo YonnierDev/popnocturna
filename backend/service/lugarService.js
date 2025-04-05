@@ -1,4 +1,4 @@
-const { Lugar, Usuario, Categoria } = require("../models");
+const { Lugar, Usuario, Categoria, Evento } = require("../models");
 class LugarService {
   
   async listarLugares() {
@@ -6,15 +6,38 @@ class LugarService {
       include: [
         {
           model: Usuario,
-          as: "usuarios", // Usar el alias definido en el modelo
-          attributes: ["id", "nombre"], // Obtener solo el nombre
+          as: "usuario", 
+          attributes: ["nombre"], 
         },
         {
           model: Categoria,
-          as: "categorias", // Usar el alias definido en el modelo
-          attributes: ["id", "tipo"],
+          as: "categoria",
+          attributes: ["tipo"],
         },
       ],
+    });
+  }
+
+  async listarRelacionesLugares() {
+    return await Lugar.findAll({
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre"],
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["id", "tipo"],
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["id", "descripcion"],
+        }
+      ],
+      
     });
   }
 

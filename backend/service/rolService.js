@@ -1,7 +1,9 @@
 const {Rol}=require('../models')
 class RolService{
     async listarRol() {
-        return await Rol.findAll();
+        return await Rol.findAll({
+            include: [{ model: Usuario, as: "usuarios", attributes: ["id", "nombre"]}]
+        });
     }
     async crearRol(nombre) {
         return await Rol.create({nombre})

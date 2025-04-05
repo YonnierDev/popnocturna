@@ -11,6 +11,16 @@ class ComentarioController {
         }
     }
 
+    async listarRelacionesComentarios(req, res) {
+        try {
+            const listaComentarios = await ComentarioService.listarRelacionesComentarios();
+            res.json(listaComentarios);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: "Error en el servicio", ERror: error });
+        }
+    }
+
     async crearComentario(req, res) {
         try {
             const { usuarioid, contenido, fecha_hora } = req.body;

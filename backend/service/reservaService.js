@@ -2,9 +2,23 @@ const { Reserva, Usuario, Evento } = require("../models");
 
 class ReservaService {
   async listarReservas() {
-    return await Reserva.findAll();
+    return await Reserva.findAll({
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "correo"],
+        },
+        {
+          model: Evento,
+          as: "evento",
+          attributes: ["id", "descripcion", "fecha_hora"],
+        },
+      ],
+    });
   }
 
+  
   async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
     return await Reserva.create({usuarioid, eventoid, fecha_hora, aprobacion, estado});
   }

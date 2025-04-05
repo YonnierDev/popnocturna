@@ -10,6 +10,16 @@ class UsuarioController {
             console.error(error);
             res.status(500).json({ mensaje: "Error en el servicio" });
         }
+        
+    }
+    async listarRelacionesUsuarios(req, res) {
+        try {
+            const listaUsuarios = await UsuarioService.listarRelacionesUsuarios();
+            res.json(listaUsuarios);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ mensaje: "Error en el servicio" });
+        }
     }
 
     async crearUsuario(req, res) {
