@@ -1,5 +1,11 @@
-const { Usuario, Rol, Lugar, Comentario, Reserva, Calificacion } = require("../models");
-
+const {
+  Usuario,
+  Rol,
+  Lugar,
+  Comentario,
+  Reserva,
+  Calificacion,
+} = require("../models");
 
 class UsuarioService {
   async listarUsuarios() {
