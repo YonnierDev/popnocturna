@@ -79,7 +79,7 @@ class AutentiController {
             });
 
             await transporter.sendMail({
-                from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
+                from: `Popayán Nocturna <${process.env.EMAIL_USER}>`,
                 to: correo,
                 subject: 'Código de verificación',
                 html: `<p>Tu código de verificación es: <strong>${codigoVerificacion}</strong></p>`
