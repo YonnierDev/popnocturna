@@ -17,6 +17,27 @@ class UsuarioService {
         return await Usuario.create(datos);
     }
 
+    async activarUsuario(correo) {
+        await Usuario.update(
+            { estado: true, codigoVerificacion: null },
+            { where: { correo } }
+        );
+    }
+
+    async guardarCodigoRecuperacion(correo, codigo) {
+        await Usuario.update(
+            { codigoRecuperacion: codigo },
+            { where: { correo } }
+        );
+    }
+
+    async actualizarContrasena(correo, nuevaContrasena) {
+        await Usuario.update(
+            { contrasena: nuevaContrasena, codigoRecuperacion: null },
+            { where: { correo } }
+        );
+    }
+
     async actualizarUsuario(id, datos) {
         await Usuario.update(datos, { where: { id } });
         return await this.buscarUsuario(id);
@@ -25,11 +46,9 @@ class UsuarioService {
     async eliminarUsuario(id) {
         return await Usuario.destroy({ where: { id } });
     }
+
     async verificarRol(rolid) {
         return await Rol.findByPk(rolid);
-    }
-    async login({correo, contrasena}){
-    return await Usuario.findOne({ where: { correo, contrasena } });
     }
 
     async buscarPorRol(rolId) {

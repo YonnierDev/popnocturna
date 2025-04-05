@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "usuarioid",
         as: "calificaciones",
       });
+      
     }
   }
 
