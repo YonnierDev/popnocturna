@@ -12,6 +12,8 @@ class UsuarioController {
         }
     }
 
+    
+
     async actualizarUsuario(req, res) {
         try {
             const { id } = req.params;

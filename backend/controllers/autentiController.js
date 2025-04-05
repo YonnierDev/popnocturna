@@ -37,13 +37,13 @@ class AutentiController {
             const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
             if (!contrasenavalida.test(contrasena)) {
                 return res.status(400).json({
-                    mensaje: "La contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un símbolo."
+                    mensaje: "La contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un simbolo"
                 });
             }
 
             const generosPermitidos = ["Masculino", "Femenino", "Otros"];
             if (!generosPermitidos.includes(genero)) {
-                return res.status(400).json({ mensaje: "Género no válido. Debe ser Masculino, Femenino u Otros." });
+                return res.status(400).json({ mensaje: "Género no válido. Escoja uno" });
             }
 
             const fechaNacimientoDate = new Date(fecha_nacimiento);
@@ -54,12 +54,12 @@ class AutentiController {
             const edadExacta = mes < 0 || (mes === 0 && dia < 0) ? edad - 1 : edad;
 
             if (edadExacta < 16) {
-                return res.status(400).json({ mensaje: "Debes tener al menos 16 años para registrarte." });
+                return res.status(400).json({ mensaje: "Edad minima de registro: 16 años" });
             }
 
             const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
             if (usuarioExistente) {
-                return res.status(400).json({ mensaje: "El correo ya está registrado" });
+                return res.status(400).json({ mensaje: "Correo Existente" });
             }
 
             const contrasenaHash = await bcrypt.hash(contrasena, 10);
@@ -111,7 +111,9 @@ class AutentiController {
             await UsuarioService.activarUsuario(correo);
             CodigoTemporal.eliminar(correo);
 
-            res.json({ mensaje: "Correo validado correctamente" });
+            res.json({
+              mensaje: "VALIDACION EXITOSA. BIENVENIDO A POPAYAN NOCTURNA",
+            });
 
         } catch (error) {
             res.status(400).json({ mensaje: "Error en la validación", error: error.message });
@@ -161,7 +163,8 @@ class AutentiController {
                 subject: 'Código de recuperación de contraseña',
                 html: `<p>Tu código para recuperar la contraseña es: <strong>${codigoRecuperacion}</strong></p>`
             });
-
+            console.log(codigoRecuperacion);
+            console.log(expiracion);
             res.json({ mensaje: "Código de recuperación enviado" });
 
         } catch (error) {
