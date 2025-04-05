@@ -2,7 +2,8 @@ const { Usuario, Rol } = require('../models');
 
 class UsuarioService {
     async listarUsuarios() {
-        return await Usuario.findAll();
+        
+        return await Usuario.findAll({include: [{ model: Rol, as: "rol", attributes: ["id", "nombre"]}] });
     }
 
     async buscarUsuario(id) {

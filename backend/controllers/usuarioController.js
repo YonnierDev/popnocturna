@@ -12,7 +12,47 @@ class UsuarioController {
         }
     }
 
+    async crearUsuario(req, res) {
+        try {
+            console.log("Datos recibidos en el en backend", req.body);
+            const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero, rolid } = req.body;
+            const estado = true; 
+            // const rolid = 3;
+            
+            const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
+            if (usuarioExistente) {
+                return res.status(400).json({ mensaje: "El correo ya está registrado" });
+            }
+
+            const rolExistente = await UsuarioService.verificarRol(rolid);
+            if (!rolExistente) {
+                return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
+            }
     
+            const salt = await bcrypt.genSalt(10);
+            const contrasenaEncriptada = await bcrypt.hash(contrasena, salt);
+    
+            const nuevoUsuario = await UsuarioService.crearUsuario({
+                nombre,
+                apellido,
+                correo,
+                fecha_nacimiento,
+                contrasena: contrasenaEncriptada,
+                genero,
+                estado,
+                rolid
+            });
+    
+            res.status(201).json(nuevoUsuario);
+        } catch (error) {
+            console.error("Error detallado:", error);
+            res.status(500).json({ 
+                mensaje: "Error en el servicio", 
+                error: error.message,
+                stack: error.stack 
+            });
+        }
+    }
 
     async actualizarUsuario(req, res) {
         try {

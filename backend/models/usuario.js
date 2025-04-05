@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Usuario.belongsTo(models.Rol, {
         foreignKey: "rolid",
-        as: "rols",
+        as: "rol",
       });
 
       Usuario.hasMany(models.Lugar, {
