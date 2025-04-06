@@ -10,30 +10,27 @@ module.exports = (sequelize, DataTypes) => {
         as: "lugar",
       });
 
-      Evento.belongsTo(models.Comentario, {
-        foreignKey: "comentarioid",
-        as: "comentario",
+      // Evento tiene muchos comentarios (no uno solo)
+      Evento.hasMany(models.Comentario, {
+        foreignKey: "eventoid",
+        as: "comentarios",
       });
 
       Evento.hasMany(models.Reserva, {
         foreignKey: "eventoid",
         as: "reservas",
       });
-      
+
       Evento.hasMany(models.Calificacion, {
         foreignKey: "eventoid",
         as: "calificaciones",
-      }); 
+      });
     }
   }
 
   Evento.init(
     {
       lugarid: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      comentarioid: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
@@ -55,6 +52,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       estado: {
         type: DataTypes.BOOLEAN,
+        defaultValue: true,
       },
     },
     {
@@ -63,5 +61,6 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "eventos",
     }
   );
+
   return Evento;
 };

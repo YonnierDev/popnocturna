@@ -16,23 +16,58 @@ class UsuarioService {
 
   async listarRelacionesUsuarios() {
     return await Usuario.findAll({
+      attributes: ['id', 'nombre', 'apellido', 'correo'], // Puedes personalizarlo
       include: [
-        { model: Rol, as: "rol", attributes: ["id", "nombre"] },
-        { model: Lugar, as: "lugares", attributes: ["id", "nombre"] },
-        { model: Reserva, as: "reservas", attributes: ["id", "fecha_hora"] },
+        {
+          model: Rol,
+          as: "rol",
+          attributes: ["nombre"] // Solo el nombre del rol
+        },
+        {
+          model: Lugar,
+          as: "lugares",
+          attributes: ["descripcion", "ubicacion"], // O lo que necesites mostrar
+        },
+        {
+          model: Reserva,
+          as: "reservas",
+          attributes: ["fecha_hora"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion", "fecha_hora"],
+            }
+          ]
+        },
         {
           model: Comentario,
           as: "comentarios",
-          attributes: ["id", "contenido"],
+          attributes: ["contenido", "fecha_hora"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion"],
+            }
+          ]
         },
         {
           model: Calificacion,
           as: "calificaciones",
-          attributes: ["id", "puntuacion"],
-        },
-      ],
+          attributes: ["puntuacion"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion"]
+            }
+          ]
+        }
+      ]
     });
   }
+  
 
   async buscarUsuario(id) {
     return await Usuario.findByPk(id);

@@ -5,21 +5,27 @@ class UsuarioController {
   async listarUsuarios(req, res) {
     try {
       const listaUsuarios = await UsuarioService.listarUsuarios();
-      res.json(listaUsuarios);
+      res.status(200).json(listaUsuarios);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      console.error("Error al listar usuarios:", error);
+      res.status(500).json({ mensaje: "Error al listar usuarios" });
     }
   }
-  async listarRelacionesUsuarios(req, res) {
-    try {
-      const listaUsuarios = await UsuarioService.listarRelacionesUsuarios();
-      res.json(listaUsuarios);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
-    }
+  
+  async listarRelacionesUsuarios() {
+    return await Usuario.findAll({
+      attributes: ["id", "nombre", "apellido", "correo"], // lo que tú necesites mostrar
+      include: [
+        { model: Rol, as: "rol", attributes: ["nombre"] },
+        { model: Lugar, as: "lugares", attributes: ["nombre", "descripcion"] },
+        { model: Reserva, as: "reservas", attributes: ["fecha_hora"] },
+        { model: Comentario, as: "comentarios", attributes: ["contenido", "fecha_hora"] },
+        { model: Calificacion, as: "calificaciones", attributes: ["puntuacion"] },
+      ],
+    });
   }
+  
+  
 
   async crearUsuario(req, res) {
     try {

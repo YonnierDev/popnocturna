@@ -6,7 +6,7 @@ class EventoService {
       include: [
         {
           model: Lugar,
-          as: "lugares",
+          as: "lugar",
           attributes: ["id", "nombre"],
         },
         {
@@ -18,12 +18,17 @@ class EventoService {
     });
   }
 
-  async crearEvento(lugarid, comentarioid, capacidad, precio, descripcion, fecha_hora, estado) {
-    return await Evento.create({ lugarid, comentarioid, capacidad, precio, descripcion, fecha_hora, estado });
+  async crearEvento(lugarid, capacidad, precio, descripcion, fecha_hora, estado) {
+    return await Evento.create({ lugarid, capacidad, precio, descripcion, fecha_hora, estado });
   }
 
   async buscarEvento(id) {
-    return await Evento.findByPk(id);
+    return await Evento.findByPk(id, {
+      include: [
+        { model: Lugar, as: "lugar", attributes: ["id", "nombre"] },
+        { model: Comentario, as: "comentarios", attributes: ["id", "contenido"] },
+      ]
+    });
   }
 
   async actualizarEvento(id, datos) {
@@ -37,10 +42,6 @@ class EventoService {
 
   async verificarLugar(lugarid) {
     return await Lugar.findByPk(lugarid);
-  }
-
-  async verificarComentario(comentarioid) {
-    return await Comentario.findByPk(comentarioid);
   }
 }
 

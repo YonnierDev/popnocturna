@@ -14,7 +14,7 @@ class ReservaController {
   async crearReserva(req, res) {
     try {
       const { usuarioid, eventoid, fecha_hora } = req.body;
-      const aprobacion = "pendiente";
+      const aprobacion = "Pendiente";
       const estado = true;
 
       // Verificar si el usuario existe
