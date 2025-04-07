@@ -1,3 +1,4 @@
+const comentarioService = require("../service/comentarioService");
 const EventoService = require("../service/eventoService");
 
 class EventoController {
@@ -14,21 +15,15 @@ class EventoController {
 
   async crearEvento(req, res) {
     try {
-      const {
-        nombre,
-        lugarid,
-        capacidad,
-        precio,
-        descripcion,
-        fecha_hora,
-      } = req.body;
-      
+      const { nombre, lugarid, capacidad, precio, descripcion, fecha_hora } = req.body;
+  
       const estado = true;
   
       const lugarExistente = await EventoService.verificarLugar(lugarid);
       if (!lugarExistente) {
         return res.status(400).json({ mensaje: "El lugar no existe" });
       }
+  
       const nuevoEvento = await EventoService.crearEvento({
         nombre,
         lugarid,
@@ -38,19 +33,22 @@ class EventoController {
         fecha_hora,
         estado: true,
       });
-      
   
       console.log("Evento creado:", nuevoEvento);
-      res.status(201).json(nuevoEvento);
+      return res.status(201).json({
+        evento: nuevoEvento
+      });
+  
     } catch (error) {
       console.error("Error detallado:", error);
-      res.status(500).json({
+      return res.status(500).json({
         mensaje: "Error en el servicio",
         error: error.message,
         stack: error.stack,
       });
     }
   }
+  
   
   async listaeRelacionesEventos(req, res) {
     try {
