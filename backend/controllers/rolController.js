@@ -39,23 +39,40 @@ class RolController {
   async eliminarRol(req, res) {
     try {
       const { id } = req.params;
-      const r = await RolService.eliminarRol(id);
-
-      res.json({ mensaje: "rol eliminado" });
-    } catch (e) {
-      res.json({ mensaje: "error en el servicio" });
+  
+      const rolExistente = await RolService.buscarRol(id);
+      if (!rolExistente) {
+        return res.status(404).json({ mensaje: "El rol no existe" });
+      }
+  
+      await RolService.eliminarRol(id);
+  
+      res.json({ mensaje: "Rol eliminado correctamente" });
+    } catch (error) {
+      console.error("Error al eliminar rol:", error);
+      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
+  
   async buscarRol(req, res) {
     try {
       const { id } = req.params;
-      const buscarR = await RolService.buscarRol(id);
+      const rol = await RolService.buscarRolConUsuarios(id);
 
-      res.json(buscarR);
-    } catch (e) {
-      res.json({ mensaje: "error en el servicio" });
+      if (!rol) {
+        return res.status(404).json({ mensaje: "Rol no encontrado" });
+      }
+
+      res.json(rol);
+    } catch (error) {
+      console.error("Error al buscar rol:", error);
+      res.status(500).json({
+        mensaje: "Error en el servicio",
+        error: error.message
+      });
     }
   }
+  
 }
 
 module.exports = new RolController();

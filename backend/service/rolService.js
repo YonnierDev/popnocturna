@@ -20,8 +20,23 @@ class RolService {
   async eliminarRol(id) {
     return await Rol.destroy({ where: { id } });
   }
-  async buscarRol(id) {
-    return await Rol.findByPk(id);
-  }
+  async buscarRolConUsuarios(id) {
+    return await Rol.findByPk(id, {
+      include: [
+        {
+          model: Usuario,
+          as: "usuarios",
+          attributes: ["id", "nombre", "apellido", "correo"],
+          include: [
+            {
+              model: Rol,
+              as: "rol",
+              attributes: ["nombre"]
+            }
+          ]
+        }
+      ]
+    });
+  }  
 }
 module.exports = new RolService();

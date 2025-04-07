@@ -1,7 +1,7 @@
 const { Comentario, Usuario, Evento } = require('../models');
 
 class ComentarioService {
-  async listarRelacionesComentarios() {
+  async listarComentarios() {
     return await Comentario.findAll({
       include: [
         {
@@ -17,6 +17,7 @@ class ComentarioService {
       ]
     });
   }
+  
 
   async crearComentario({ usuarioid, eventoid, contenido, fecha_hora, estado }) {
     return await Comentario.create({ usuarioid, eventoid, contenido, fecha_hora, estado });

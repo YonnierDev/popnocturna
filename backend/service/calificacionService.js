@@ -1,11 +1,8 @@
 const { Calificacion, Usuario, Evento } = require("../models");
 
 class CalificacionService {
-  async listarCalificaciones() {
-    return await Calificacion.findAll();
-  }
 
-  async listarCalificacionesConRelaciones() {
+  async listarCalificaciones() {
     return await Calificacion.findAll({
       include: [
         {

@@ -1,61 +1,41 @@
 const { Lugar, Usuario, Categoria, Evento } = require("../models");
+
 class LugarService {
-  
-  async listarRelaciones() {
-    return await Lugar.findAll({
-      include: [
-        {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["id", "nombre"],
-        },
-        {
-          model: Categoria,
-          as: "categoria",
-          attributes: ["id", "tipo"],
-        },
-        {
-          model: Evento,
-          as: "eventos",
-          attributes: ["id", "descripcion"],
-        },
-      ],
+  // Relaciones comunes incluidas
+  static relacionesBase = [
+    {
+      model: Usuario,
+      as: "usuario",
+      attributes: ["id", "nombre"],
+    },
+    {
+      model: Categoria,
+      as: "categoria",
+      attributes: ["id", "tipo"],
+    },
+    {
+      model: Evento,
+      as: "eventos",
+      attributes: ["id", "descripcion"],
+    },
+  ];
+
+  async listarLugares() {
+    return await Lugar.findAll(); // Básico, sin relaciones
+  }
+
+  async listarLugaresConRelaciones() {
+    return await Lugar.findAll({ include: LugarService.relacionesBase });
+  }
+
+  async buscarLugar(id, conRelaciones = false) {
+    return await Lugar.findByPk(id, {
+      include: conRelaciones ? LugarService.relacionesBase : [],
     });
   }
 
-  async actualizarEstado(id, estado) {
-    return await Lugar.update({ estado }, { where: { id } });
-  }
-
-  async listarRelacionesLugares() {
-    return await Lugar.findAll({
-      include: [
-        {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["id", "nombre"],
-        },
-        {
-          model: Categoria,
-          as: "categoria",
-          attributes: ["id", "tipo"],
-        },
-        {
-          model: Evento,
-          as: "eventos",
-          attributes: ["id", "descripcion"],
-        }
-      ],
-      
-    });
-  }
-
-  async crearLugar(usuarioid, categoriaid, nombre, descripcion, ubicacion, estado) {
+  async crearLugar({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado = true }) {
     return await Lugar.create({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado });
-  }
-
-  async buscarLugar(id) {
-    return await Lugar.findByPk(id);
   }
 
   async actualizarLugar(id, datos) {
@@ -65,6 +45,10 @@ class LugarService {
 
   async eliminarLugar(id) {
     return await Lugar.destroy({ where: { id } });
+  }
+
+  async actualizarEstado(id, estado) {
+    return await Lugar.update({ estado }, { where: { id } });
   }
 
   async verificarUsuario(usuarioid) {

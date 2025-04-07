@@ -11,16 +11,6 @@ class ReservaController {
     }
   }
 
-
-  async listarRelacionesReservas(req, res) {
-    try {
-      const reservas = await ReservaService.listarReservas();
-      res.json(reservas);
-    } catch (error) {
-      res.status(500).json({ mensaje: "Error al listar reservas", error });
-    }
-  }
-  
   async actualizarEstado(req, res) {
     try {
       const { id } = req.params;

@@ -48,18 +48,6 @@ class EventoController {
       });
     }
   }
-  
-  
-  async listaeRelacionesEventos(req, res) {
-    try {
-      const listaEventos = await EventoService.listarEventos();
-      res.json(listaEventos);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error });
-    }
-  }
-  
 
   async actualizarEvento(req, res) {
     try {

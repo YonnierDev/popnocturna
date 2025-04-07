@@ -16,17 +16,15 @@ class CalificacionController {
     try {
       const { usuarioid, eventoid, puntuacion } = req.body;
       const estado = true;
-      const usuarioExistente = await CalificacionService.verificarUsuario(
-        usuarioid
-      );
+      const usuarioExistente =
+        await CalificacionService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
         return res
           .status(400)
           .json({ mensaje: "El usuario seleccionado no existe" });
       }
-      const eventoExistente = await CalificacionService.verificarEvento(
-        eventoid
-      );
+      const eventoExistente =
+        await CalificacionService.verificarEvento(eventoid);
       if (!eventoExistente) {
         return res
           .status(400)
@@ -49,63 +47,66 @@ class CalificacionController {
     }
   }
 
-  async listarConRelaciones(req, res) {
-    try {
-      const lista = await CalificacionService.listarCalificacionesConRelaciones();
-      res.status(200).json(lista);
-    } catch (error) {
-      console.error("Error al listar calificaciones con relaciones:", error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
-    }
-  }
-  
   async cambiarEstado(req, res) {
     try {
       const { id } = req.params;
       const { estado } = req.body;
-  
+
       const calificacion = await CalificacionService.buscarCalificacion(id);
       if (!calificacion) {
         return res.status(404).json({ mensaje: "Calificación no encontrada" });
       }
-  
+
       await CalificacionService.actualizarEstado(id, estado);
-      res.json({ mensaje: "Estado de la calificación actualizado correctamente" });
+      res.json({
+        mensaje: "Estado de la calificación actualizado correctamente",
+      });
     } catch (error) {
       console.error("Error al actualizar estado de la calificación:", error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res
+        .status(500)
+        .json({ mensaje: "Error en el servicio", error: error.message });
     }
   }
 
   async actualizarCalificacion(req, res) {
-         try {
-             const { id } = req.params;
-             const { usuarioid, eventoid, puntuacion, estado  } = req.body;
-            
-             const usuarioExistente = await CalificacionService.verificarUsuario(
-                usuarioid
-              );
-             if (!usuarioExistente) {
-                return res
-                  .status(400)
-                  .json({ mensaje: "El usuario seleccionado no existe" });
-              }
-              const eventoExistente = await CalificacionService.verificarEvento(
-                eventoid
-              );
-              if (!eventoExistente) {
-                return res
-                  .status(400)
-                  .json({ mensaje: "El evento seleccionado no existe" });
-              }
-            
-             await CalificacionService.actualizarCalificacion(id, usuarioid, eventoid, puntuacion, estado);
-             res.json({ mensaje: "Calificacion actualizado correctamente" });
-         } catch (error) {
-             res.status(500).json({ mensaje: "Error al actualizar calificacion", error: error.message });
-         }
-     }
- 
+    try {
+      const { id } = req.params;
+      const { usuarioid, eventoid, puntuacion, estado } = req.body;
+
+      const usuarioExistente =
+        await CalificacionService.verificarUsuario(usuarioid);
+      if (!usuarioExistente) {
+        return res
+          .status(400)
+          .json({ mensaje: "El usuario seleccionado no existe" });
+      }
+      const eventoExistente =
+        await CalificacionService.verificarEvento(eventoid);
+      if (!eventoExistente) {
+        return res
+          .status(400)
+          .json({ mensaje: "El evento seleccionado no existe" });
+      }
+
+      await CalificacionService.actualizarCalificacion(
+        id,
+        usuarioid,
+        eventoid,
+        puntuacion,
+        estado
+      );
+      res.json({ mensaje: "Calificacion actualizado correctamente" });
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          mensaje: "Error al actualizar calificacion",
+          error: error.message,
+        });
+    }
+  }
+
   async eliminarCalificacion(req, res) {
     try {
       const { id } = req.params;
