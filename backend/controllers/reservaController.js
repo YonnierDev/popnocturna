@@ -11,6 +11,28 @@ class ReservaController {
     }
   }
 
+
+  async listarRelacionesReservas(req, res) {
+    try {
+      const reservas = await ReservaService.listarReservas();
+      res.json(reservas);
+    } catch (error) {
+      res.status(500).json({ mensaje: "Error al listar reservas", error });
+    }
+  }
+  
+  async actualizarEstado(req, res) {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+  
+      await ReservaService.actualizarEstado(id, estado);
+      res.json({ mensaje: "Estado actualizado correctamente" });
+    } catch (error) {
+      res.status(500).json({ mensaje: "Error al actualizar estado", error });
+    }
+  }
+
   async crearReserva(req, res) {
     try {
       const { usuarioid, eventoid, fecha_hora } = req.body;
@@ -76,6 +98,39 @@ class ReservaController {
       res
         .status(500)
         .json({ mensaje: "Error al actualizar reserva", error: error.message });
+    }
+  }
+
+   async listarRelaciones(req, res) {
+    try {
+      const reservas = await ReservaService.listarRelaciones();
+      res.json(reservas);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: 'Error al listar reservas', error });
+    }
+  }
+
+  async cambiarEstado(req, res) {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+
+      const actualizados = await ReservaService.actualizarEstado(id, estado);
+
+      if (actualizados[0] === 0) {
+        const existe = await ReservaService.buscarPorId(id);
+        if (!existe) {
+          return res.status(404).json({ mensaje: 'Reserva no encontrada' });
+        }
+        return res.status(200).json({ mensaje: 'El estado ya estaba igual', reserva: existe });
+      }
+
+      const reserva = await ReservaService.buscarPorId(id);
+      res.json({ mensaje: 'Estado actualizado', reserva });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: 'Error al actualizar estado', error });
     }
   }
 

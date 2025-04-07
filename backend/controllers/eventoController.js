@@ -13,57 +13,61 @@ class EventoController {
   }
 
   async crearEvento(req, res) {
-      try {
-        const {  lugarid,
-          comentarioid,
-          capacidad,
-          precio,
-          descripcion,
-          fecha_hora, } =
-          req.body;
-        const estado = true;
-          
-        // Verificar si el lugar ya existe
+    try {
+      const {
+        nombre,
+        lugarid,
+        capacidad,
+        precio,
+        descripcion,
+        fecha_hora,
+      } = req.body;
+      
+      const estado = true;
+  
       const lugarExistente = await EventoService.verificarLugar(lugarid);
       if (!lugarExistente) {
         return res.status(400).json({ mensaje: "El lugar no existe" });
       }
-
-      const comentarioExistente = await EventoService.verificarComentario(
-        comentarioid
-      );
-      if (!comentarioExistente) {
-        return res.status(400).json({ mensaje: "El comentario no existe" });
-      }
+      const nuevoEvento = await EventoService.crearEvento({
+        nombre,
+        lugarid,
+        capacidad,
+        precio,
+        descripcion,
+        fecha_hora,
+        estado: true,
+      });
       
-        const nuevoEvento = await EventoService.crearEvento(
-          lugarid,
-          comentarioid,
-          capacidad,
-          precio,
-          descripcion,
-          fecha_hora,
-          estado
-        );
-        console.log("AQUI ESTY");
-        console.log(nuevoEvento);
-        res.status(201).json(nuevoEvento);
-      } catch (error) {
-        console.error("Error detallado:", error);
-        res.status(500).json({
-          mensaje: "Error en el servicio",
-          error: error.message,
-          stack: error.stack,
-        });
-      }
+  
+      console.log("Evento creado:", nuevoEvento);
+      res.status(201).json(nuevoEvento);
+    } catch (error) {
+      console.error("Error detallado:", error);
+      res.status(500).json({
+        mensaje: "Error en el servicio",
+        error: error.message,
+        stack: error.stack,
+      });
     }
+  }
+  
+  async listaeRelacionesEventos(req, res) {
+    try {
+      const listaEventos = await EventoService.listarEventos();
+      res.json(listaEventos);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: "Error en el servicio", error });
+    }
+  }
+  
 
   async actualizarEvento(req, res) {
     try {
       const { id } = req.params;
       const {
         lugarid,
-        comentarioid,
         capacidad,
         precio,
         descripcion,
@@ -71,21 +75,11 @@ class EventoController {
         estado,
       } = req.body;
 
-
-      // Verificar si el lugar ya existe
       const lugarExistente = await EventoService.verificarLugar(lugarid);
       if (!lugarExistente) {
         return res.status(400).json({ mensaje: "El lugar no existe" });
       }
 
-      const comentarioExistente = await EventoService.verificarComentario(
-        comentarioid
-      );
-      if (!comentarioExistente) {
-        return res.status(400).json({ mensaje: "El comentario no existe" });
-      }
-
-      // Preparar datos para actualizar
       const datosActualizados = {
         lugarid,
         comentarioid,
@@ -106,6 +100,25 @@ class EventoController {
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
+
+  async actualizarEstado(req, res) {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+  
+      const evento = await EventoService.buscarEvento(id);
+      if (!evento) {
+        return res.status(404).json({ mensaje: "Evento no encontrado" });
+      }
+  
+      await EventoService.actualizarEstado(id, estado);
+      res.json({ mensaje: "Estado del evento actualizado correctamente" });
+    } catch (error) {
+      console.error("Error actualizando estado del evento:", error);
+      res.status(500).json({ mensaje: "Error en el servicio", error });
+    }
+  }
+  
 
   async eliminarEvento(req, res) {
     try {

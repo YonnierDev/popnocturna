@@ -12,15 +12,36 @@ class LugarController {
     }
   }
 
-  async listarRelacionesLugares(req, res) {
+  async listarRelaciones(req, res) {
     try {
-      const listarRelacionesLugares =
-        await LugarService.listarRelacionesLugares();
-      res.json(listarRelacionesLugares);     
-    } catch (e) {
-      res
-        .status(500)
-        .json({ mensaje: "Error en el servicio", error: e.message });
+      const lugares = await LugarService.listarRelaciones();
+      res.json(lugares);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: 'Error al listar lugares', error });
+    }
+  }
+
+  async cambiarEstado(req, res) {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+
+      const actualizados = await LugarService.actualizarEstado(id, estado);
+
+      if (actualizados[0] === 0) {
+        const existe = await LugarService.buscarPorId(id);
+        if (!existe) {
+          return res.status(404).json({ mensaje: 'Lugar no encontrado' });
+        }
+        return res.status(200).json({ mensaje: 'El estado ya estaba igual', lugar: existe });
+      }
+
+      const lugar = await LugarService.buscarLugar(parseInt(id));
+      res.json({ mensaje: 'Estado actualizado', lugar });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ mensaje: 'Error al actualizar estado', error });
     }
   }
 

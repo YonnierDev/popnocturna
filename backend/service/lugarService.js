@@ -1,21 +1,30 @@
 const { Lugar, Usuario, Categoria, Evento } = require("../models");
 class LugarService {
   
-  async listarLugares() {
+  async listarRelaciones() {
     return await Lugar.findAll({
       include: [
         {
           model: Usuario,
-          as: "usuario", 
-          attributes: ["nombre"], 
+          as: "usuario",
+          attributes: ["id", "nombre"],
         },
         {
           model: Categoria,
           as: "categoria",
-          attributes: ["tipo"],
+          attributes: ["id", "tipo"],
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["id", "descripcion"],
         },
       ],
     });
+  }
+
+  async actualizarEstado(id, estado) {
+    return await Lugar.update({ estado }, { where: { id } });
   }
 
   async listarRelacionesLugares() {

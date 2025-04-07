@@ -7,5 +7,7 @@ router.get('/lugar/:id', LugarController.buscarLugar);
 router.post('/lugar', LugarController.crearLugar);
 router.put('/lugar/:id', LugarController.actualizarLugar);
 router.delete('/lugar/:id', LugarController.eliminarLugar);
-router.get('/lugares/relaciones', LugarController.listarRelacionesLugares);
+router.get('/lugares/relaciones', LugarController.listarRelaciones);
+router.put('/lugar/estado/:id', LugarController.cambiarEstado);
+
 module.exports = router;

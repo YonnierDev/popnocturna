@@ -7,5 +7,7 @@ router.get("/reserva/:id", ReservaController.buscarReserva);
 router.post("/reserva", ReservaController.crearReserva);
 router.put("/reserva/:id", ReservaController.actualizarReserva);
 router.delete("/reserva/:id", ReservaController.eliminarReserva);
+router.get("/reservas/relaciones", ReservaController.listarRelacionesReservas);
+router.patch("/reservas/estado/:id", ReservaController.actualizarEstado);
 
 module.exports = router;

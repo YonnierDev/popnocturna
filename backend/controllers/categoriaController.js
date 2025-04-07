@@ -31,6 +31,17 @@ class CategoriaController {
             res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
         }
     }
+      
+      async listarConRelaciones(req, res) {
+        try {
+          const categorias = await CategoriaService.listarConLugares();
+          res.json(categorias);
+        } catch (error) {
+          console.error("Error al listar categorías detallada:", error);
+          res.status(500).json({ mensaje: "Error en el servicio" });
+        }
+      }
+      
 
     async eliminarCategoria(req, res) {
         try {
