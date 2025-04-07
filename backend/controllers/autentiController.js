@@ -116,12 +116,7 @@ class AutentiController {
     try {
       const { correo, codigo } = req.body;
 
-      // Obtener código guardado para ese correo
       const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-
-      // Logs de depuración
-      console.log("BODY:", req.body);
-      console.log("Código guardado:", codigoGuardado);
 
       if (!codigoGuardado) {
         return res.status(400).json({ mensaje: "Código no encontrado" });
@@ -130,7 +125,6 @@ class AutentiController {
       const ahora = Date.now();
       const expiracion = new Date(codigoGuardado.expiracion).getTime();
 
-      // Comparar código y verificar expiración
       if (
         String(codigoGuardado.codigo) !== String(codigo) ||
         ahora > expiracion
@@ -138,12 +132,11 @@ class AutentiController {
         return res.status(400).json({ mensaje: "Código inválido o expirado" });
       }
 
-      // Activar usuario y eliminar el código temporal
       await UsuarioService.activarUsuario(correo);
       await TemporalService.eliminarCodigo(correo);
 
       return res.json({
-        mensaje: "VALIDACIÓN EXITOSA. BIENVENIDO A POPAYÁN NOCTURNA",
+        mensaje: "validacion exitosa",
       });
     } catch (error) {
       console.error("Error en validación:", error);
@@ -158,33 +151,45 @@ class AutentiController {
     try {
       const { correo, contrasena } = req.body;
       const usuario = await UsuarioService.buscarPorCorreo(correo);
-
+  
       if (!usuario || !usuario.estado) {
         return res
           .status(401)
           .json({ mensaje: "Usuario no validado o no existe" });
       }
-
+  
       const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
       if (!esValido) {
         return res.status(401).json({ mensaje: "Contraseña incorrecta" });
       }
-
+  
       const token = jwt.sign(
-        { id: usuario.id, correo: usuario.correo },
+        {
+          id: usuario.id,
+          correo: usuario.correo,
+          rol: usuario.rolid,
+        },
         process.env.JWT_SECRET || "secreto",
         {
           expiresIn: "2h",
         }
       );
-
-      res.json({ mensaje: "Login exitoso", token });
+  
+      res.json({
+        mensaje: "Login exitoso",
+        token,
+        rol: usuario.rolid,
+        nombre: usuario.nombre,
+        usuarioId: usuario.id,
+      });
+  
     } catch (error) {
       res
         .status(401)
         .json({ mensaje: "Error en el login", error: error.message });
     }
   }
+  
 
   static async recuperarContrasena(req, res) {
     try {
@@ -219,6 +224,30 @@ class AutentiController {
     }
   }
 
+  static async actualizarContrasena(req, res) {
+    try {
+      const { correo, contrasenaActual, nuevaContrasena } = req.body;
+  
+      const usuario = await UsuarioService.buscarPorCorreo(correo);
+      if (!usuario) {
+        return res.status(404).json({ mensaje: "Usuario no encontrado" });
+      }
+  
+      const contrasenaValida = await bcrypt.compare(contrasenaActual, usuario.contrasena);
+      if (!contrasenaValida) {
+        return res.status(401).json({ mensaje: "Contraseña actual incorrecta" });
+      }
+  
+      const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
+      await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
+  
+      return res.json({ mensaje: "Contraseña actualizada correctamente" });
+    } catch (error) {
+      return res.status(500).json({ mensaje: "Error al actualizar contraseña", error: error.message });
+    }
+  }
+  
+
   static async cambiarContrasena(req, res) {
     try {
       const { correo, codigo, nuevaContrasena } = req.body;
@@ -235,7 +264,7 @@ class AutentiController {
       const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
       await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
 
-      await TemporalService.eliminar(correo);
+      await TemporalService.eliminarCodigo(correo);
 
       res.json({ mensaje: "Contraseña cambiada correctamente" });
     } catch (error) {
