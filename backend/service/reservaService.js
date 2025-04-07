@@ -43,6 +43,10 @@ class ReservaService {
   async verificarEvento(eventoid) {
     return await Evento.findByPk(eventoid);
   }
+
+  async actualizarEstado(id, estado) {
+    return await Reserva.update({ estado }, { where: { id } });
+  }
 }
 
 module.exports = new ReservaService();

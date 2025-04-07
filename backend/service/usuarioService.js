@@ -16,17 +16,17 @@ class UsuarioService {
 
   async listarRelacionesUsuarios() {
     return await Usuario.findAll({
-      attributes: ['id', 'nombre', 'apellido', 'correo'], // Puedes personalizarlo
+      attributes: ['id', 'nombre', 'apellido', 'correo'], 
       include: [
         {
           model: Rol,
           as: "rol",
-          attributes: ["nombre"] // Solo el nombre del rol
+          attributes: ["nombre"] 
         },
         {
           model: Lugar,
           as: "lugares",
-          attributes: ["descripcion", "ubicacion"], // O lo que necesites mostrar
+          attributes: ["descripcion", "ubicacion"], 
         },
         {
           model: Reserva,

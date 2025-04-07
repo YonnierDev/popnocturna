@@ -1,6 +1,8 @@
 const UsuarioService = require("../service/usuarioService");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { Usuario, Rol, Evento, Reserva, Comentario, Lugar, Calificacion } = require("../models");
+
 class UsuarioController {
   async listarUsuarios(req, res) {
     try {
@@ -11,25 +13,66 @@ class UsuarioController {
       res.status(500).json({ mensaje: "Error al listar usuarios" });
     }
   }
-  
+
   async listarRelacionesUsuarios() {
     return await Usuario.findAll({
-      attributes: ["id", "nombre", "apellido", "correo"], // lo que tú necesites mostrar
+      attributes: ['id', 'nombre', 'apellido', 'correo'],
       include: [
-        { model: Rol, as: "rol", attributes: ["nombre"] },
-        { model: Lugar, as: "lugares", attributes: ["nombre", "descripcion"] },
-        { model: Reserva, as: "reservas", attributes: ["fecha_hora"] },
-        { model: Comentario, as: "comentarios", attributes: ["contenido", "fecha_hora"] },
-        { model: Calificacion, as: "calificaciones", attributes: ["puntuacion"] },
-      ],
+        {
+          model: Rol,
+          as: "rol",
+          attributes: ["nombre"]
+        },
+        {
+          model: Lugar,
+          as: "lugares",
+          attributes: ["descripcion", "ubicacion"],
+        },
+        {
+          model: Reserva,
+          as: "reservas",
+          attributes: ["fecha_hora"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion", "fecha_hora"],
+            }
+          ]
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          attributes: ["contenido", "fecha_hora"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion"],
+            }
+          ]
+        },
+        {
+          model: Calificacion,
+          as: "calificaciones",
+          attributes: ["puntuacion"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion"]
+            }
+          ]
+        }
+      ]
     });
   }
+  
   
   
 
   async crearUsuario(req, res) {
     try {
-      console.log("Datos recibidos en el en backend", req.body);
       const {
         nombre,
         apellido,
@@ -37,10 +80,9 @@ class UsuarioController {
         fecha_nacimiento,
         contrasena,
         genero,
-        rolid,
       } = req.body;
       const estado = true;
-      // const rolid = 3;
+      const rolid = 2;
 
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
       if (usuarioExistente) {
@@ -67,7 +109,7 @@ class UsuarioController {
         contrasena: contrasenaEncriptada,
         genero,
         estado,
-        rolid,
+        rolid: 2,
       });
 
       res.status(201).json(nuevoUsuario);
@@ -94,9 +136,8 @@ class UsuarioController {
         estado,
         rolid,
       } = req.body;
-
-      // Verificar si el usuario existe
-      const usuario = await UsuarioService.buscarUsuario(id);
+      console.log("Datos recibidos en el backend:", req.body);
+    const usuario = await UsuarioService.buscarUsuario(id);
       if (!usuario) {
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
       }
@@ -107,7 +148,6 @@ class UsuarioController {
           .json({ mensaje: "El rol seleccionado no existe" });
       }
 
-      // Preparar datos para actualizar
       const datosActualizados = {
         nombre,
         apellido,
@@ -139,7 +179,6 @@ class UsuarioController {
     try {
       const { id } = req.params;
 
-      // Verificar si el usuario existe
       const usuario = await UsuarioService.buscarUsuario(id);
       if (!usuario) {
         return res.status(404).json({ mensaje: "Usuario no encontrado" });

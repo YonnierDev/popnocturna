@@ -49,6 +49,34 @@ class CalificacionController {
     }
   }
 
+  async listarConRelaciones(req, res) {
+    try {
+      const lista = await CalificacionService.listarCalificacionesConRelaciones();
+      res.status(200).json(lista);
+    } catch (error) {
+      console.error("Error al listar calificaciones con relaciones:", error);
+      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+    }
+  }
+  
+  async cambiarEstado(req, res) {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body;
+  
+      const calificacion = await CalificacionService.buscarCalificacion(id);
+      if (!calificacion) {
+        return res.status(404).json({ mensaje: "Calificación no encontrada" });
+      }
+  
+      await CalificacionService.actualizarEstado(id, estado);
+      res.json({ mensaje: "Estado de la calificación actualizado correctamente" });
+    } catch (error) {
+      console.error("Error al actualizar estado de la calificación:", error);
+      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+    }
+  }
+
   async actualizarCalificacion(req, res) {
          try {
              const { id } = req.params;

@@ -1,6 +1,6 @@
 "use strict";
 
-const { Model } = require("sequelize");
+const { Model, Sequelize } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class Evento extends Model {
@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
         as: "lugar",
       });
 
-      // Evento tiene muchos comentarios (no uno solo)
       Evento.hasMany(models.Comentario, {
         foreignKey: "eventoid",
         as: "comentarios",
@@ -31,7 +30,11 @@ module.exports = (sequelize, DataTypes) => {
   Evento.init(
     {
       lugarid: {
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      nombre: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
       capacidad: {

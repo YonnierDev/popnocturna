@@ -1,13 +1,18 @@
 "use strict";
+
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class Comentario extends Model {
     static associate(models) {
-      
       Comentario.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
         as: "usuario",
+      });
+
+      Comentario.belongsTo(models.Evento, {
+        foreignKey: "eventoid",
+        as: "evento",
       });
     }
   }
@@ -16,17 +21,23 @@ module.exports = (sequelize, DataTypes) => {
     {
       usuarioid: {
         type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      eventoid: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
       contenido: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
       },
       fecha_hora: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
       },
       estado: {
         type: DataTypes.BOOLEAN,
+        defaultValue: true,
       },
     },
     {

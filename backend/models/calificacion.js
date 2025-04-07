@@ -8,10 +8,12 @@ module.exports = (sequelize, DataTypes) => {
       Calificacion.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
         as: "usuario",
+        atrtibutes: ["id", "nombre"],
       });
       Calificacion.belongsTo(models.Evento, {
         foreignKey: "eventoid",
         as: "evento",
+        atrtibutes: ["id", "nombre", "fecha_hora"],
       });
     }
   }

@@ -13,36 +13,63 @@ class ComentarioController {
 
     async listarRelacionesComentarios(req, res) {
         try {
-            const listaComentarios = await ComentarioService.listarRelacionesComentarios();
-            res.json(listaComentarios);
+          const listaComentarios = await ComentarioService.listarRelacionesComentarios();
+          res.json(listaComentarios);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ mensaje: "Error en el servicio", ERror: error });
+          console.error(error);
+          res.status(500).json({ mensaje: "Error en el servicio", error });
         }
-    }
+      }
 
     async crearComentario(req, res) {
         try {
-            const { usuarioid, contenido, fecha_hora } = req.body;
-            const estado =true;
-            const usuarioExistente = await ComentarioService.verificarUsuario(usuarioid);
-            if (!usuarioExistente) {
-                return res.status(400).json({ mensaje: "El usuario seleccionado no existe" });
-            }
+            console.log("BODY RECIBIDO:", req.body);
 
-            if (!contenido || contenido.trim() === "") {
-                return res.status(400).json({ mensaje: "El comentario no puede estar vacío" });
-            }
-
-            const nuevoComentario = await ComentarioService.crearComentario(usuarioid, contenido, fecha_hora, estado);
-
-            res.status(201).json(nuevoComentario);
+          const { usuarioid, eventoid, contenido, fecha_hora } = req.body;
+          const estado = true;
+      
+          const usuarioExistente = await ComentarioService.verificarUsuario(usuarioid);
+          if (!usuarioExistente) {
+            return res.status(400).json({ mensaje: "El usuario seleccionado no existe" });
+          }
+      
+          if (!contenido || contenido.trim() === "") {
+            return res.status(400).json({ mensaje: "El comentario no puede estar vacío" });
+          }
+      
+          const nuevoComentario = await ComentarioService.crearComentario({
+            usuarioid,
+            eventoid,
+            contenido,
+            fecha_hora,
+            estado
+          });
+      
+          res.status(201).json(nuevoComentario);
         } catch (error) {
-            console.error("Error al crear comentario:", error);
-            res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+          console.error("Error al crear comentario:", error);
+          res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
         }
-    }
-    
+      }
+      
+      async cambiarEstadoComentario(req, res) {
+        try {
+          const { id } = req.params;
+          const { estado } = req.body;
+      
+          const resultado = await ComentarioService.actualizarEstadoComentario(id, estado);
+      
+          if (resultado[0] === 0) {
+            return res.status(404).json({ mensaje: "Comentario no encontrado" });
+          }
+      
+          res.json({ mensaje: "Estado del comentario actualizado correctamente" });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ mensaje: "Error al actualizar estado", error });
+        }
+      }
+      
 
     async actualizarComentario(req, res) {
         try {

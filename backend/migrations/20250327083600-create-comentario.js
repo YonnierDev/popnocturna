@@ -2,36 +2,34 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('eventos', {
+    await queryInterface.createTable('comentarios', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      lugarid: {
+      usuarioid: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'lugares',
+          model: 'usuarios',
           key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE' 
+        onDelete: 'CASCADE'
       },
-      nombre: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      capacidad: {
+      eventoid: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+        references: {
+          model: 'eventos',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
-      precio: {
-        type: Sequelize.DECIMAL,
-        allowNull: false
-      },
-      descripcion: {
+      contenido: {
         type: Sequelize.STRING,
         allowNull: false
       },
@@ -53,8 +51,7 @@ module.exports = {
       }
     });
   },
-
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('eventos');
+    await queryInterface.dropTable('comentarios');
   }
 };
