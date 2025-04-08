@@ -9,5 +9,4 @@ router.put('/calificacion/:id', CalificacionController.actualizarCalificacion);
 router.delete('/calificacion/:id', CalificacionController.eliminarCalificacion);
 router.patch("/calificacion/estado/:id", CalificacionController.cambiarEstado);
 
-
 module.exports = router;
