@@ -54,7 +54,7 @@ class LugarController {
         nombre,
         descripcion,
         ubicacion,
-        estado
+        estado = true,
       );
 
       res.status(201).json(nuevoLugar);
