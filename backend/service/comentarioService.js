@@ -7,12 +7,12 @@ class ComentarioService {
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["id", "nombre"]
+          attributes: ["nombre"]
         },
         {
           model: Evento,
           as: "evento",
-          attributes: ["id", "nombre", "fecha_hora"]
+          attributes: ["nombre", "fecha_hora"]
         }
       ]
     });
