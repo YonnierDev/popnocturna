@@ -1,7 +1,6 @@
 const { Lugar, Usuario, Categoria, Evento } = require("../models");
 
 class LugarService {
-  // Relaciones comunes incluidas
   static relacionesBase = [
     {
       model: Usuario,

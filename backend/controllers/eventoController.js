@@ -68,7 +68,6 @@ class EventoController {
 
       const datosActualizados = {
         lugarid,
-        comentarioid,
         capacidad,
         precio,
         descripcion,

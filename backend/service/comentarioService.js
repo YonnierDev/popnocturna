@@ -17,14 +17,16 @@ class ComentarioService {
       ]
     });
   }
-  
 
   async crearComentario({ usuarioid, eventoid, contenido, fecha_hora, estado }) {
     return await Comentario.create({ usuarioid, eventoid, contenido, fecha_hora, estado });
   }
 
   async actualizarComentario(id, usuarioid, contenido, fecha_hora, estado) {
-    return await Comentario.update({ usuarioid, contenido, fecha_hora, estado }, { where: { id } });
+    return await Comentario.update(
+      { usuarioid, contenido, fecha_hora, estado },
+      { where: { id } }
+    );
   }
 
   async eliminarComentario(id) {
@@ -38,11 +40,14 @@ class ComentarioService {
   async verificarUsuario(usuarioid) {
     return await Usuario.findByPk(usuarioid);
   }
-  
+
+  async verificarEvento(eventoid) {
+    return await Evento.findByPk(eventoid);
+  }
+
   async actualizarEstadoComentario(id, estado) {
     return await Comentario.update({ estado }, { where: { id } });
   }
-
 }
 
 module.exports = new ComentarioService();

@@ -18,9 +18,8 @@ class ReservaService {
     });
   }
 
-  
   async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
-    return await Reserva.create({usuarioid, eventoid, fecha_hora, aprobacion, estado});
+    return await Reserva.create({ usuarioid, eventoid, fecha_hora, aprobacion, estado });
   }
 
   async buscarReserva(id) {
@@ -28,7 +27,7 @@ class ReservaService {
   }
 
   async actualizarReserva(id, usuarioid, eventoid, fecha_hora, aprobacion, estado) {
-    await Reserva.update({usuarioid, eventoid, fecha_hora, aprobacion, estado}, { where: { id } });
+    await Reserva.update({ usuarioid, eventoid, fecha_hora, aprobacion, estado }, { where: { id } });
     return await this.buscarReserva(id);
   }
 
@@ -46,6 +45,27 @@ class ReservaService {
 
   async actualizarEstado(id, estado) {
     return await Reserva.update({ estado }, { where: { id } });
+  }
+
+  async buscarPorId(id) {
+    return await Reserva.findByPk(id, {
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "correo"],
+        },
+        {
+          model: Evento,
+          as: "evento",
+          attributes: ["id", "descripcion", "fecha_hora"],
+        },
+      ],
+    });
+  }
+
+  async listarRelaciones() {
+    return await this.listarReservas();
   }
 }
 
