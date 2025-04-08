@@ -1,36 +1,52 @@
 const { Lugar, Usuario, Categoria, Evento } = require("../models");
 
 class LugarService {
-  static relacionesBase = [
-    {
-      model: Usuario,
-      as: "usuario",
-      attributes: ["id", "nombre"],
-    },
-    {
-      model: Categoria,
-      as: "categoria",
-      attributes: ["id", "tipo"],
-    },
-    {
-      model: Evento,
-      as: "eventos",
-      attributes: ["id", "descripcion"],
-    },
-  ];
-
   async listarLugares() {
-    return await Lugar.findAll(); // Básico, sin relaciones
-  }
-
-  async listarLugaresConRelaciones() {
-    return await Lugar.findAll({ include: LugarService.relacionesBase });
+    return await Lugar.findAll({
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"], 
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"], 
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["nombre", "descripcion"], 
+        },
+      ],
+    });
   }
 
   async buscarLugar(id, conRelaciones = false) {
-    return await Lugar.findByPk(id, {
-      include: conRelaciones ? LugarService.relacionesBase : [],
-    });
+    const options = { where: { id } };
+  
+    if (conRelaciones) {
+      options.include = [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"],
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"],
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["nombre", "descripcion"],
+        },
+      ];
+    }
+  
+    return await Lugar.findOne(options);
   }
 
   async crearLugar({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado = true }) {

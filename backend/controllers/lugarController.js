@@ -4,39 +4,39 @@ class LugarController {
   async listarLugares(req, res) {
     try {
       const lugares = await LugarService.listarLugares();
-      res.json(lugares);
+
+      if (!lugares || lugares.length === 0) {
+        return res.status(404).json({ mensaje: "No se encontraron lugares registrados" });
+      }
+
+      res.status(200).json(lugares);
     } catch (e) {
-      res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
+      res.status(500).json({ mensaje: "Error al listar lugares", error: e.message });
     }
   }
 
-  async cambiarEstado(req, res) {
+  async buscarLugar(req, res) {
     try {
       const { id } = req.params;
-      const { estado } = req.body;
+      const lugar = await LugarService.buscarLugar(id, true); // con relaciones
 
-      const actualizados = await LugarService.actualizarEstado(id, estado);
-
-      if (actualizados[0] === 0) {
-        const existe = await LugarService.buscarLugar(id); // ✅ corrección aquí
-        if (!existe) {
-          return res.status(404).json({ mensaje: 'Lugar no encontrado' });
-        }
-        return res.status(200).json({ mensaje: 'El estado ya estaba igual', lugar: existe });
+      if (!lugar) {
+        return res.status(404).json({ mensaje: "Lugar no encontrado" });
       }
 
-      const lugar = await LugarService.buscarLugar(parseInt(id));
-      res.json({ mensaje: 'Estado actualizado', lugar });
+      res.status(200).json(lugar);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: 'Error al actualizar estado', error });
+      res.status(500).json({ mensaje: "Error al buscar el lugar", error: error.message });
     }
   }
 
   async crearLugar(req, res) {
     try {
       const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
-      const estado = true;
+
+      if (!usuarioid || !categoriaid || !nombre?.trim() || !descripcion?.trim() || !ubicacion?.trim()) {
+        return res.status(400).json({ mensaje: "Faltan campos requeridos o contienen valores inválidos" });
+      }
 
       const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
@@ -48,21 +48,20 @@ class LugarController {
         return res.status(400).json({ mensaje: "La categoría no existe" });
       }
 
-      const nuevoLugar = await LugarService.crearLugar(
+      const nuevoLugar = await LugarService.crearLugar({
         usuarioid,
         categoriaid,
         nombre,
         descripcion,
         ubicacion,
-        estado = true,
-      );
+        estado: true,
+      });
 
       res.status(201).json(nuevoLugar);
     } catch (error) {
       res.status(500).json({
         mensaje: "Error en el servicio",
         error: error.message,
-        stack: error.stack,
       });
     }
   }
@@ -88,7 +87,7 @@ class LugarController {
       res.json(lugarActualizado);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res.status(500).json({ mensaje: "Error al actualizar lugar", error: error.message });
     }
   }
 
@@ -105,23 +104,30 @@ class LugarController {
       res.json({ mensaje: "Lugar eliminado correctamente" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res.status(500).json({ mensaje: "Error al eliminar lugar", error: error.message });
     }
   }
 
-  async buscarLugar(req, res) {
+  async cambiarEstado(req, res) {
     try {
       const { id } = req.params;
-      const lugar = await LugarService.buscarLugar(id);
+      const { estado } = req.body;
 
-      if (!lugar) {
-        return res.status(404).json({ mensaje: "Lugar no encontrado" });
+      const actualizados = await LugarService.actualizarEstado(id, estado);
+
+      if (actualizados[0] === 0) {
+        const existe = await LugarService.buscarLugar(id);
+        if (!existe) {
+          return res.status(404).json({ mensaje: 'Lugar no encontrado' });
+        }
+        return res.status(200).json({ mensaje: 'El estado ya estaba igual', lugar: existe });
       }
 
-      res.json(lugar);
+      const lugar = await LugarService.buscarLugar(id, true);
+      res.json({ mensaje: 'Estado actualizado', lugar });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res.status(500).json({ mensaje: 'Error al actualizar estado', error: error.message });
     }
   }
 }
