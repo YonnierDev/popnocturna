@@ -7,12 +7,12 @@ class ReservaService {
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["id", "nombre", "correo"],
+          attributes: ["nombre", "correo"],
         },
         {
           model: Evento,
           as: "evento",
-          attributes: ["id", "descripcion", "fecha_hora"],
+          attributes: ["descripcion", "fecha_hora"],
         },
       ],
     });
@@ -53,12 +53,12 @@ class ReservaService {
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["id", "nombre", "correo"],
+          attributes: ["nombre", "correo"],
         },
         {
           model: Evento,
           as: "evento",
-          attributes: ["id", "descripcion", "fecha_hora"],
+          attributes: ["descripcion", "fecha_hora"],
         },
       ],
     });

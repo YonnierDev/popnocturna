@@ -6,7 +6,7 @@ class RolService {
         {
           model: Usuario,
           as: "usuarios",
-          attributes: ["id", "nombre"],
+          attributes: ["nombre"],
         },
       ],
     });

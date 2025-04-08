@@ -8,12 +8,12 @@ class CalificacionService {
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["id", "nombre"]
+          attributes: ["nombre"]
         },
         {
           model: Evento,
           as: "evento",
-          attributes: ["id", "descripcion"]
+          attributes: ["descripcion"]
         }
       ]
     });

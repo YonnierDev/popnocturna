@@ -8,41 +8,41 @@ class EventoService {
         {
           model: Lugar,
           as: "lugar",
-          attributes: ["id", "nombre", "ubicacion"]
+          attributes: ["nombre", "ubicacion"]
         },
         {
           model: Comentario,
           as: "comentarios",
-          attributes: ["id", "contenido", "fecha_hora", "usuarioid"],
+          attributes: ["contenido", "fecha_hora", "usuarioid"],
           include: [
             {
               model: Usuario,
               as: "usuario",
-              attributes: ["id", "nombre", "apellido"]
+              attributes: ["nombre", "apellido"]
             }
           ]
         },
         {
           model: Reserva,
           as: "reservas",
-          attributes: ["id", "fecha_hora", "usuarioid"],
+          attributes: ["fecha_hora", "usuarioid"],
           include: [
             {
               model: Usuario,
               as: "usuario",
-              attributes: ["id", "nombre", "apellido"]
+              attributes: ["nombre", "apellido"]
             }
           ]
         },
         {
           model: Calificacion,
           as: "calificaciones",
-          attributes: ["id", "puntuacion", "usuarioid"],
+          attributes: ["puntuacion", "usuarioid"],
           include: [
             {
               model: Usuario,
               as: "usuario",
-              attributes: ["id", "nombre", "apellido"]
+              attributes: ["nombre", "apellido"]
             }
           ]
         }

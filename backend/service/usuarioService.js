@@ -16,7 +16,7 @@ class UsuarioService {
 
   async listarRelacionesUsuarios() {
     return await Usuario.findAll({
-      attributes: ['id', 'nombre', 'apellido', 'correo'], 
+      attributes: ['nombre', 'apellido', 'correo'], 
       include: [
         {
           model: Rol,
