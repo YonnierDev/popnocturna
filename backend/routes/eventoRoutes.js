@@ -7,6 +7,6 @@ router.get('/evento/:id', EventoController.buscarEvento);
 router.post('/evento', EventoController.crearEvento);
 router.put('/evento/:id', EventoController.actualizarEvento);
 router.delete('/evento/:id', EventoController.eliminarEvento);
-router.patch("/eventos/estado/:id", EventoController.actualizarEstado);
+router.patch("/evento/estado/:id", EventoController.actualizarEstado);
 
 module.exports = router;

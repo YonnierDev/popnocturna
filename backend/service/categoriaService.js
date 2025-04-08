@@ -7,7 +7,7 @@ class CategoriaService {
         {
           model: Lugar,
           as: 'lugares',
-          attributes: ['id', 'nombre', 'descripcion', 'estado'],
+          attributes: ['nombre', 'descripcion', 'estado'],
         },
       ],
     });
