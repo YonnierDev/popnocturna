@@ -5,6 +5,7 @@ const {
   Comentario,
   Reserva,
   Calificacion,
+  Evento,
 } = require("../models");
 
 class UsuarioService {
@@ -100,13 +101,19 @@ class UsuarioService {
   }
 
   async actualizarUsuario(id, datos) {
+    const usuario = await this.buscarUsuario(id);
+    if (!usuario) throw new Error("Usuario no encontrado");
     await Usuario.update(datos, { where: { id } });
     return await this.buscarUsuario(id);
-  }
+  }  
 
   async eliminarUsuario(id) {
-    return await Usuario.destroy({ where: { id } });
+    const usuario = await this.buscarUsuario(id);
+    if (!usuario) throw new Error("Usuario no encontrado");
+    await Usuario.destroy({ where: { id } });
+    return { mensaje: "Usuario eliminado correctamente", usuarioEliminado: usuario };
   }
+  
 
   async verificarRol(rolid) {
     return await Rol.findByPk(rolid);

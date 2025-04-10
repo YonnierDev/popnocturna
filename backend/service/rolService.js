@@ -14,9 +14,15 @@ class RolService {
   async crearRol(nombre) {
     return await Rol.create({ nombre });
   }
-  async actualizarRol(id, nombre) {
-    return await Rol.update({ nombre }, { where: { id } });
+
+  async actualizarRol(id, datos) {
+    return await Rol.update(datos, { where: { id } });
   }
+
+  async buscarRol(id) {
+    return await Rol.findByPk(id);
+  }
+
   async eliminarRol(id) {
     return await Rol.destroy({ where: { id } });
   }

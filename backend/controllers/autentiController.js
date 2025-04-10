@@ -252,7 +252,7 @@ class AutentiController {
     try {
       const { correo, codigo, nuevaContrasena } = req.body;
       const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-
+  
       if (
         !codigoGuardado ||
         codigoGuardado.codigo !== codigo ||
@@ -260,12 +260,20 @@ class AutentiController {
       ) {
         return res.status(400).json({ mensaje: "Código inválido o expirado" });
       }
-
+  
+      // Validación de contraseña segura (como en el registro)
+      const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
+      if (!contrasenavalida.test(nuevaContrasena)) {
+        return res.status(400).json({
+          mensaje:
+            "La nueva contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un símbolo",
+        });
+      }
+  
       const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
       await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
-
       await TemporalService.eliminarCodigo(correo);
-
+  
       res.json({ mensaje: "Contraseña cambiada correctamente" });
     } catch (error) {
       res
@@ -273,6 +281,7 @@ class AutentiController {
         .json({ mensaje: "Error al cambiar contraseña", error: error.message });
     }
   }
+  
 }
 
 module.exports = AutentiController;

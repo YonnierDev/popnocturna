@@ -9,67 +9,9 @@ class UsuarioController {
       const listaUsuarios = await UsuarioService.listarUsuarios();
       res.status(200).json(listaUsuarios);
     } catch (error) {
-      console.error("Error al listar usuarios:", error);
       res.status(500).json({ mensaje: "Error al listar usuarios" });
     }
   }
-
-  async listarRelacionesUsuarios() {
-    return await Usuario.findAll({
-      attributes: ['id', 'nombre', 'apellido', 'correo'],
-      include: [
-        {
-          model: Rol,
-          as: "rol",
-          attributes: ["nombre"]
-        },
-        {
-          model: Lugar,
-          as: "lugares",
-          attributes: ["descripcion", "ubicacion"],
-        },
-        {
-          model: Reserva,
-          as: "reservas",
-          attributes: ["fecha_hora"],
-          include: [
-            {
-              model: Evento,
-              as: "evento",
-              attributes: ["descripcion", "fecha_hora"],
-            }
-          ]
-        },
-        {
-          model: Comentario,
-          as: "comentarios",
-          attributes: ["contenido", "fecha_hora"],
-          include: [
-            {
-              model: Evento,
-              as: "evento",
-              attributes: ["descripcion"],
-            }
-          ]
-        },
-        {
-          model: Calificacion,
-          as: "calificaciones",
-          attributes: ["puntuacion"],
-          include: [
-            {
-              model: Evento,
-              as: "evento",
-              attributes: ["descripcion"]
-            }
-          ]
-        }
-      ]
-    });
-  }
-  
-  
-  
 
   async crearUsuario(req, res) {
     try {
@@ -114,7 +56,6 @@ class UsuarioController {
 
       res.status(201).json(nuevoUsuario);
     } catch (error) {
-      console.error("Error detallado:", error);
       res.status(500).json({
         mensaje: "Error en el servicio",
         error: error.message,
@@ -136,7 +77,6 @@ class UsuarioController {
         estado,
         rolid,
       } = req.body;
-      console.log("Datos recibidos en el backend:", req.body);
     const usuario = await UsuarioService.buscarUsuario(id);
       if (!usuario) {
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
@@ -170,7 +110,6 @@ class UsuarioController {
       );
       res.json(usuarioActualizado);
     } catch (error) {
-      console.error(error);
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
@@ -187,7 +126,6 @@ class UsuarioController {
       await UsuarioService.eliminarUsuario(id);
       res.json({ mensaje: "Usuario eliminado correctamente" });
     } catch (error) {
-      console.error(error);
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
@@ -203,8 +141,7 @@ class UsuarioController {
 
       res.json(usuario);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+            res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
 
@@ -213,7 +150,6 @@ class UsuarioController {
       const propietarios = await UsuarioService.buscarPorRol(2);
       res.json(propietarios);
     } catch (error) {
-      console.error(error);
       res.status(500).json({ mensaje: "Error al obtener propietarios" });
     }
   }
@@ -221,8 +157,6 @@ class UsuarioController {
   async buscarPorRol(req, res) {
     try {
       const { rolId } = req.params;
-      console.log("Rol ID recibido:", rolId); // Depuración
-
       const usuarios = await UsuarioService.buscarPorRol(rolId);
 
       if (!usuarios || usuarios.length === 0) {
@@ -231,7 +165,6 @@ class UsuarioController {
 
       res.json(usuarios);
     } catch (error) {
-      console.error("Error al buscar usuarios por rol:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   }
@@ -240,9 +173,6 @@ class UsuarioController {
     try {
       const { id } = req.params;
       const { estado } = req.body;
-
-      console.log(`Cambiando estado del usuario ${id} a ${estado}`);
-      console.log("Datos recibidos en el body:", req.body); // 🔍 Depuración
 
       const usuario = await UsuarioService.buscarUsuario(id);
       if (!usuario) {
@@ -254,7 +184,6 @@ class UsuarioController {
       });
       res.json(usuarioActualizado);
     } catch (error) {
-      console.error("Error en cambiarEstadoUsuario:", error);
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
