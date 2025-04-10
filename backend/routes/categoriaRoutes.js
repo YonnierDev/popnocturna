@@ -7,5 +7,6 @@ router.get('/categoria/:id', CategoriaController.buscarCategoria);
 router.post('/categoria', CategoriaController.crearCategoria);
 router.put('/categoria/:id', CategoriaController.actualizarCategoria);
 router.delete('/categoria/:id', CategoriaController.eliminarCategoria);
+router.patch('/categoria/estado/:id', CategoriaController.actualizarEstado);
 
 module.exports = router;

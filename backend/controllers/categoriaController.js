@@ -57,6 +57,18 @@ class CategoriaController {
             res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
         }
     }
+
+    async actualizarEstado(req, res) {
+        try {
+          const { id } = req.params;
+          const { estado } = req.body;
+          await CategoriaService.actualizarEstado(id, estado);
+          res.json({ mensaje: "Estado actualizado correctamente" });
+        } catch (error) {
+          res.status(500).json({ mensaje: "Error al actualizar estado", error });
+        }
+    }
+
 }
 
 module.exports = new CategoriaController();

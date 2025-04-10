@@ -43,6 +43,11 @@ class RolService {
         }
       ]
     });
-  }  
+  }
+
+  async actualizarEstado(id, estado) {
+    return await Rol.update({ estado }, { where: { id } });
+  }
+
 }
 module.exports = new RolService();

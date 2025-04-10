@@ -27,6 +27,11 @@ class CategoriaService {
   async buscarCategoria(id) {
     return await Categoria.findOne({ where: { id } });
   }
+
+  async actualizarEstado(id, estado) {
+    return await Categoria.update({ estado }, { where: { id } });
+  }
+
 }
 
 module.exports = new CategoriaService();

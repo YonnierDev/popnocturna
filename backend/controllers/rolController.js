@@ -29,7 +29,7 @@ class RolController {
       const { nombre } = req.body;
       const { id } = req.params;
   
-      const resp = await RolService.actualizarRol(id, { nombre }); // 🔥 corregido aquí
+      const resp = await RolService.actualizarRol(id, { nombre });
   
       const buscarR = await RolService.buscarRol(id);
       res.json({ mensaje: "rol actualizado", rolActualizado: buscarR });
@@ -75,6 +75,17 @@ class RolController {
       });
     }
   }
+
+  async actualizarEstado(req, res) {
+      try {
+        const { id } = req.params;
+        const { estado } = req.body;
+        await RolService.actualizarEstado(id, estado);
+        res.json({ mensaje: "Estado actualizado correctamente" });
+      } catch (error) {
+        res.status(500).json({ mensaje: "Error al actualizar estado", error });
+      }
+  } 
   
 }
 

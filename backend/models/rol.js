@@ -16,6 +16,9 @@ module.exports = (sequelize, DataTypes) => {
       nombre: {
         type: DataTypes.STRING,
       },
+      estado: {
+        type: DataTypes.BOOLEAN,
+      },
     },
     {
       sequelize,
