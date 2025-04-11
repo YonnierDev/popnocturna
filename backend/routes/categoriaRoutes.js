@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.get('/categorias', CategoriaController.listarCategorias);
 router.get('/categoria/:id', CategoriaController.buscarCategoria);
+router.get('/categoria/:id/lugares', CategoriaController.obtenerLugaresPorCategoria);
 router.post('/categoria', CategoriaController.crearCategoria);
 router.put('/categoria/:id', CategoriaController.actualizarCategoria);
 router.delete('/categoria/:id', CategoriaController.eliminarCategoria);

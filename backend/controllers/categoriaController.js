@@ -20,13 +20,30 @@ class CategoriaController {
         }
     }
 
+    async obtenerLugaresPorCategoria(req, res) {
+        try {
+            const { id } = req.params;
+            const lugares = await CategoriaService.obtenerLugaresPorCategoria(id);
+
+            if (lugares.length === 0) {
+                return res.status(404).json({ mensaje: "No hay lugares para esta categoría" });
+            }
+
+            res.status(200).json(lugares);
+        } catch (e) {
+            res.status(500).json({ mensaje: "Error al obtener lugares por categoría", error: e.message });
+        }
+    }
+
     async actualizarCategoria(req, res) {
         try {
             const { tipo } = req.body;
             const { id } = req.params;
-            const resp = await CategoriaService.actualizarCategoria(id, tipo);
+
+            await CategoriaService.actualizarCategoria(id, tipo);
             const buscarC = await CategoriaService.buscarCategoria(id);
-                res.json({ mensaje: "Categoria actualizada", categoriaActualizado: buscarC });
+
+            res.json({ mensaje: "Categoría actualizada", categoriaActualizada: buscarC });
         } catch (e) {
             res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
         }
@@ -60,15 +77,14 @@ class CategoriaController {
 
     async actualizarEstado(req, res) {
         try {
-          const { id } = req.params;
-          const { estado } = req.body;
-          await CategoriaService.actualizarEstado(id, estado);
-          res.json({ mensaje: "Estado actualizado correctamente" });
+            const { id } = req.params;
+            const { estado } = req.body;
+            await CategoriaService.actualizarEstado(id, estado);
+            res.json({ mensaje: "Estado actualizado correctamente" });
         } catch (error) {
-          res.status(500).json({ mensaje: "Error al actualizar estado", error });
+            res.status(500).json({ mensaje: "Error al actualizar estado", error });
         }
     }
-
 }
 
 module.exports = new CategoriaController();

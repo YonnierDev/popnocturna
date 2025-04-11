@@ -1,37 +1,50 @@
 const { Categoria, Lugar } = require('../models');
 
 class CategoriaService {
-  async listarCategorias() {
-    return await Categoria.findAll({
-      include: [
-        {
-          model: Lugar,
-          as: 'lugares',
-          attributes: ['nombre', 'descripcion', 'estado'],
-        },
-      ],
-    });
-  }
-  async crearCategoria(tipo) {
-    return await Categoria.create({ tipo, estado: true }); // estado por defecto
-  }
+    async listarCategorias() {
+        return await Categoria.findAll({
+            include: [
+                {
+                    model: Lugar,
+                    as: 'lugares',
+                    attributes: ['nombre', 'descripcion', 'estado'],
+                },
+            ],
+        });
+    }
 
-  async actualizarCategoria(id, tipo, estado) {
-    return await Categoria.update({ tipo, estado }, { where: { id } });
-  }
+    async obtenerLugaresPorCategoria(categoriaid) {
+        return await Lugar.findAll({
+            where: { categoriaid },
+            include: [
+                {
+                    model: Categoria,
+                    as: 'categoria',
+                    attributes: ['tipo'],
+                },
+            ],
+        });
+    }
 
-  async eliminarCategoria(id) {
-    return await Categoria.destroy({ where: { id } });
-  }
+    async crearCategoria(tipo) {
+        return await Categoria.create({ tipo, estado: true });
+    }
 
-  async buscarCategoria(id) {
-    return await Categoria.findOne({ where: { id } });
-  }
+    async actualizarCategoria(id, tipo) {
+        return await Categoria.update({ tipo }, { where: { id } });
+    }
 
-  async actualizarEstado(id, estado) {
-    return await Categoria.update({ estado }, { where: { id } });
-  }
+    async eliminarCategoria(id) {
+        return await Categoria.destroy({ where: { id } });
+    }
 
+    async buscarCategoria(id) {
+        return await Categoria.findOne({ where: { id } });
+    }
+
+    async actualizarEstado(id, estado) {
+        return await Categoria.update({ estado }, { where: { id } });
+    }
 }
 
 module.exports = new CategoriaService();
