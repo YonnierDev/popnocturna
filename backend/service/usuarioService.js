@@ -37,7 +37,7 @@ class UsuarioService {
             {
               model: Evento,
               as: "evento",
-              attributes: ["descripcion", "fecha_hora"],
+              attributes: ["nombre", "fecha_hora"],
             }
           ]
         },
