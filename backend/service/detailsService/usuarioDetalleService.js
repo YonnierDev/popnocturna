@@ -1,40 +1,27 @@
-const { Usuario, Lugar, Categoria} = require('../../models');
+const { Usuario, Lugar } = require('../../models');
 
-const verificarUsuarioEsPropietario = async (usuarioId) => {
-  const usuario = await Usuario.findOne({
-    where: { id: usuarioId },
-  });
+class UsuarioDetalleService {
+  async verificarUsuarioEsPropietario(usuarioId) {
+    const usuario = await Usuario.findOne({
+      where: { id: usuarioId },
+    });
 
-  if (!usuario) {
-    return false;
+    return usuario && usuario.rolid === 3;
   }
 
-  if (usuario.rolid !== 3) {
-    return false;
+  async obtenerLugaresPorPropietario(usuarioId) {
+    return await Lugar.findAll({
+      where: { usuarioid: usuarioId },
+      attributes: ['id', 'nombre', 'descripcion'], 
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'correo']
+        }
+      ]
+    });
   }
+}
 
-  return true;
-};
-
-const obtenerLugaresPorPropietario = async (usuarioId) => {
-  return await Lugar.findAll({
-    where: { usuarioid: usuarioId },
-    include: [
-      {
-        model: Usuario,
-        as: 'usuario',
-        attributes: ['nombre', 'correo']
-      },
-      {
-        model: Categoria,
-        as: 'categoria',
-        attributes: ['tipo']
-      }
-    ]
-  });
-};
-
-module.exports = {
-  verificarUsuarioEsPropietario,
-  obtenerLugaresPorPropietario,
-};
+module.exports = new UsuarioDetalleService();

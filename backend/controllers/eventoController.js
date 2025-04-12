@@ -123,21 +123,55 @@ class EventoController {
     }
   }
 
-  async buscarEvento(req, res) {
-    try {
-      const { id } = req.params;
-      const Evento = await EventoService.buscarEvento(id);
-
-      if (!Evento) {
-        return res.status(404).json({ mensaje: "Evento no encontrado" });
-      }
-
-      res.json(Evento);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
-    }
+  async buscarEvento(id) {
+    return await Evento.findOne({
+      where: { id },
+      include: [
+        {
+          model: Lugar,
+          as: "lugar",
+          attributes: ["nombre", "ubicacion"]
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          attributes: ["contenido", "fecha_hora", "usuarioid"],
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ["nombre", "apellido"]
+            }
+          ]
+        },
+        {
+          model: Reserva,
+          as: "reservas",
+          attributes: ["fecha_hora", "usuarioid", "estado"],
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ["nombre", "apellido"]
+            }
+          ]
+        },
+        {
+          model: Calificacion,
+          as: "calificaciones",
+          attributes: ["puntuacion", "usuarioid", "estado"],
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ["nombre", "apellido"]
+            }
+          ]
+        }
+      ]
+    });
   }
+  
 }
 
 module.exports = new EventoController();

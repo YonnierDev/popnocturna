@@ -1,8 +1,26 @@
 const { Comentario, Usuario, Evento } = require('../models');
 
 class ComentarioService {
-  async listarComentarios() {
+  async listarComentariosConRelaciones() {
     return await Comentario.findAll({
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre"]
+        },
+        {
+          model: Evento,
+          as: "evento",
+          attributes: ["nombre", "fecha_hora"]
+        }
+      ]
+    });
+  }
+
+  async buscarComentarioConRelaciones(id) {
+    return await Comentario.findOne({
+      where: { id },
       include: [
         {
           model: Usuario,
