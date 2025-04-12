@@ -44,7 +44,7 @@ class UsuarioService {
         {
           model: Comentario,
           as: "comentarios",
-          attributes: ["contenido", "fecha_hora"],
+          attributes: ["nombre"],
           include: [
             {
               model: Evento,
@@ -71,8 +71,59 @@ class UsuarioService {
   
 
   async buscarUsuario(id) {
-    return await Usuario.findByPk(id);
+    return await Usuario.findByPk(id, {
+      attributes: ['nombre', 'apellido', 'correo'],
+      include: [
+        {
+          model: Rol,
+          as: "rol",
+          attributes: ["nombre"]
+        },
+        {
+          model: Lugar,
+          as: "lugares",
+          attributes: ["descripcion", "ubicacion"]
+        },
+        {
+          model: Reserva,
+          as: "reservas",
+          attributes: ["fecha_hora"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion", "fecha_hora"]
+            }
+          ]
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          attributes: ["contenido", "fecha_hora"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion"]
+            }
+          ]
+        },
+        {
+          model: Calificacion,
+          as: "calificaciones",
+          attributes: ["puntuacion"],
+          include: [
+            {
+              model: Evento,
+              as: "evento",
+              attributes: ["descripcion"]
+            }
+          ]
+        }
+      ]
+    });
   }
+  
 
   async buscarPorCorreo(correo) {
     return await Usuario.findOne({ where: { correo } });

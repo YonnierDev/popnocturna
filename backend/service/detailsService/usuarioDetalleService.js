@@ -1,4 +1,4 @@
-const { Usuario, Lugar } = require('../../models');
+const { Usuario, Lugar, Categoria} = require('../../models');
 
 const verificarUsuarioEsPropietario = async (usuarioId) => {
   const usuario = await Usuario.findOne({
@@ -23,7 +23,12 @@ const obtenerLugaresPorPropietario = async (usuarioId) => {
       {
         model: Usuario,
         as: 'usuario',
-        attributes: ['nombre', 'apellido']
+        attributes: ['nombre', 'correo']
+      },
+      {
+        model: Categoria,
+        as: 'categoria',
+        attributes: ['tipo']
       }
     ]
   });

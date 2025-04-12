@@ -34,7 +34,7 @@ class RolController {
       const buscarR = await RolService.buscarRol(id);
       res.json({ mensaje: "rol actualizado", rolActualizado: buscarR });
     } catch (e) {
-      console.error(e); // opcional, para debug
+      console.error(e);
       res.status(500).json({ mensaje: "error en el servicio" });
     }
   }
