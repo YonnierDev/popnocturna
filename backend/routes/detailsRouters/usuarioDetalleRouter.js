@@ -3,6 +3,6 @@ const router = express.Router();
 const usuarioDetalleController = require('../../controllers/detailsControllers/usuarioDetalleController');
 
 
-router.get('/usuarios/:id/lugares', usuarioDetalleController.obtenerLugaresDelPropietario)
+router.get('/propietarios/:id/lugares', usuarioDetalleController.obtenerLugaresDelPropietario)
 
 module.exports = router;

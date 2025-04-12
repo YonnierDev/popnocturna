@@ -24,11 +24,9 @@ class CategoriaController {
         try {
             const { id } = req.params;
             const lugares = await CategoriaService.obtenerLugaresPorCategoria(id);
-
             if (lugares.length === 0) {
                 return res.status(404).json({ mensaje: "No hay lugares para esta categoría" });
             }
-
             res.status(200).json(lugares);
         } catch (e) {
             res.status(500).json({ mensaje: "Error al obtener lugares por categoría", error: e.message });
@@ -39,10 +37,8 @@ class CategoriaController {
         try {
             const { tipo } = req.body;
             const { id } = req.params;
-
             await CategoriaService.actualizarCategoria(id, tipo);
             const buscarC = await CategoriaService.buscarCategoria(id);
-
             res.json({ mensaje: "Categoría actualizada", categoriaActualizada: buscarC });
         } catch (e) {
             res.status(500).json({ mensaje: "Error en el servicio", error: e.message });

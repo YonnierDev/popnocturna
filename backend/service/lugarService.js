@@ -41,7 +41,7 @@ class LugarService {
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "descripcion"],
+          attributes: ["nombre", "fecha_hora"],
         },
       ];
     }

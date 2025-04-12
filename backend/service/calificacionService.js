@@ -39,7 +39,21 @@ class CalificacionService {
   }
 
   async buscarCalificacion(id) {
-    return await Calificacion.findOne({ where: { id } });
+    return await Calificacion.findOne({
+      where: { id },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre"],
+        },
+        {
+          model: Evento,
+          as: "evento", 
+          attributes: ["nombre"],
+        },
+      ],
+    });
   }
 
   async verificarUsuario(usuarioid) {

@@ -111,7 +111,6 @@ class CalificacionController {
     try {
       const { id } = req.params;
 
-      // Verificar si el Calificacion existe
       const Calificacion = await CalificacionService.buscarCalificacion(id);
       if (!Calificacion) {
         return res.status(404).json({ mensaje: "Calificacion no encontrado" });
@@ -125,21 +124,36 @@ class CalificacionController {
     }
   }
 
-  async buscarCalificacion(req, res) {
-    try {
-      const { id } = req.params;
-      const Calificacion = await CalificacionService.buscarCalificacion(id);
+async buscarCalificacion(req, res) {
+  try {
+    const { id } = req.params;
+    const calificacion = await CalificacionService.buscarCalificacion(id);
 
-      if (!Calificacion) {
-        return res.status(404).json({ mensaje: "Calificacion no encontrado" });
-      }
-
-      res.json(Calificacion);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+    if (!calificacion) {
+      return res.status(404).json({ mensaje: "Calificación no encontrada" });
     }
+
+
+    const calificacionResponse = {
+      id: calificacion.id,
+      calificacion: calificacion.calificacion, 
+      comentario: calificacion.comentario,
+      usuario: {
+        nombre: calificacion.usuario?.nombre,
+      },
+      evento: {
+        nombre: calificacion.evento?.nombre,
+      },
+    };
+
+    res.json(calificacionResponse);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
   }
+}
+
+  
 }
 
 module.exports = new CalificacionController();

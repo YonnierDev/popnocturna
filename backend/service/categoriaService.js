@@ -39,7 +39,16 @@ class CategoriaService {
     }
 
     async buscarCategoria(id) {
-        return await Categoria.findOne({ where: { id } });
+        return await Categoria.findOne({
+            where: { id },
+            include: [
+                {
+                    model: Lugar,
+                    as: 'lugares',
+                    attributes: ['nombre', 'descripcion', 'estado',],
+                },
+            ],
+        });
     }
 
     async actualizarEstado(id, estado) {

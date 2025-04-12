@@ -63,10 +63,42 @@ class ReservaService {
       ],
     });
   }
+  
 
   async listarRelaciones() {
     return await this.listarReservas();
   }
+
+  async buscarReserva(req, res) {
+    try {
+      const { id } = req.params;
+      const reserva = await ReservaService.buscarPorId(id);
+  
+      if (!reserva) {
+        return res.status(404).json({ mensaje: "Reserva no encontrada" });
+      }
+  
+      // Estructuramos la respuesta
+      const reservaResponse = {
+        id: reserva.id,
+        usuario: {
+          nombre: reserva.usuario.nombre,
+          correo: reserva.usuario.correo,
+        },
+        evento: {
+          descripcion: reserva.evento.descripcion,
+          fecha_hora: reserva.evento.fecha_hora,
+        },
+        estado: reserva.estado,
+        fecha_hora: reserva.fecha_hora,
+      };
+  
+      res.json(reservaResponse);
+    } catch (error) {
+      res.status(500).json({ mensaje: "Error en el servicio" });
+    }
+  }
+  
 }
 
 module.exports = new ReservaService();
