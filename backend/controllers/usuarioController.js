@@ -1,7 +1,15 @@
 const UsuarioService = require("../service/usuarioService");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { Usuario, Rol, Evento, Reserva, Comentario, Lugar, Calificacion } = require("../models");
+const {
+  Usuario,
+  Rol,
+  Evento,
+  Reserva,
+  Comentario,
+  Lugar,
+  Calificacion,
+} = require("../models");
 
 class UsuarioController {
   async listarUsuarios(req, res) {
@@ -22,9 +30,9 @@ class UsuarioController {
         fecha_nacimiento,
         contrasena,
         genero,
+        rolid,
       } = req.body;
       const estado = true;
-      const rolid = 2;
 
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
       if (usuarioExistente) {
@@ -51,7 +59,7 @@ class UsuarioController {
         contrasena: contrasenaEncriptada,
         genero,
         estado,
-        rolid: 2,
+        rolid,
       });
 
       res.status(201).json(nuevoUsuario);
@@ -77,7 +85,7 @@ class UsuarioController {
         estado,
         rolid,
       } = req.body;
-    const usuario = await UsuarioService.buscarUsuario(id);
+      const usuario = await UsuarioService.buscarUsuario(id);
       if (!usuario) {
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
       }
@@ -141,7 +149,7 @@ class UsuarioController {
 
       res.json(usuario);
     } catch (error) {
-            res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
 
