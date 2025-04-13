@@ -67,6 +67,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
       },
+      imagen: {
+              type: DataTypes.STRING,
+              allowNull: true,
+            },
       rolid: {
         type: DataTypes.INTEGER,
         allowNull: false,

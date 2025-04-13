@@ -36,6 +36,10 @@ module.exports = {
       estado: {
         type: Sequelize.BOOLEAN
       },
+      imagen: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
       rolid: {
         type: Sequelize.INTEGER,
         references: {
