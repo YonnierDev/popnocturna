@@ -48,6 +48,10 @@ module.exports = (sequelize) => {
       estado: {
         type: DataTypes.BOOLEAN,
       },
+      imagen: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       sequelize,

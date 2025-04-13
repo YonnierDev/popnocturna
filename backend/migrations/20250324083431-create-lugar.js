@@ -11,15 +11,14 @@ module.exports = {
       },
       categoriaid: {
         type: Sequelize.INTEGER,
-        reference:{
+        references: {
           model: 'categorias',
           key: 'id'
         }
       },
-      
       usuarioid: {
         type: Sequelize.INTEGER,
-        reference:{
+        references: {
           model: 'usuarios',
           key: 'id'
         }
@@ -38,6 +37,10 @@ module.exports = {
       },
       estado: {
         type: Sequelize.BOOLEAN
+      },
+      imagen: {
+        type: Sequelize.STRING,
+        allowNull: true
       },
       createdAt: {
         allowNull: false,
