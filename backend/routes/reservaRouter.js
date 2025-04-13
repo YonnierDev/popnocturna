@@ -8,5 +8,6 @@ router.post("/reserva", ReservaController.crearReserva);
 router.put("/reserva/:id", ReservaController.actualizarReserva);
 router.delete("/reserva/:id", ReservaController.eliminarReserva);
 router.patch("/reserva/estado/:id", ReservaController.actualizarEstado);
+router.patch("/reserva/aprobar/:id", ReservaController.aprobarReserva);
 
 module.exports = router;

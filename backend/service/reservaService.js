@@ -58,7 +58,7 @@ class ReservaService {
         {
           model: Evento,
           as: "evento",
-          attributes: ["descripcion", "fecha_hora"],
+          attributes: ["nombre", "descripcion", "fecha_hora"],
         },
       ],
     });
@@ -96,6 +96,20 @@ class ReservaService {
       res.json(reservaResponse);
     } catch (error) {
       res.status(500).json({ mensaje: "Error en el servicio" });
+    }
+  }
+
+  async actualizarAprobacion(id, aprobacion) {
+    try {
+      const reserva = await Reserva.findByPk(id);
+      if (!reserva) return null;
+  
+      reserva.aprobacion = aprobacion;
+      await reserva.save();
+  
+      return reserva;
+    } catch (error) {
+      throw new Error("Error al actualizar la reserva: " + error.message);
     }
   }
   

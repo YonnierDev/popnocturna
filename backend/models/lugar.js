@@ -24,7 +24,13 @@ module.exports = (sequelize) => {
   }
 
   Lugar.init(
+    
     {
+      id: {                           // <-- Agregamos el campo id
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
       categoriaid: {
         type: DataTypes.INTEGER,
         allowNull: false,

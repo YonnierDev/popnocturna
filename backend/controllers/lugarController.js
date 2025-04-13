@@ -1,3 +1,4 @@
+const cloudinaryService = require("../service/cloudinaryService");
 const LugarService = require("../service/lugarService");
 
 class LugarController {
@@ -73,33 +74,43 @@ class LugarController {
   
   async actualizarLugar(req, res) {
     try {
-      const { id } = req.params;
-      const { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado } = req.body;
-      const imagen = req.file;
-  
-      const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
-      if (!categoriaExistente) {
-        return res.status(400).json({ mensaje: "La categoría no existe" });
+      const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
+      const lugarid = req.params.id;
+      let imagenUrl = null;
+
+      if (req.file) {
+        console.log("Imagen recibida en el backend:", req.file);
+        
+        // Subir la imagen a Cloudinary
+        const uploadResponse = await cloudinaryService.subirImagen(
+          req.file.buffer,
+          `${lugarid}-${Date.now()}`
+        );
+
+        if (!uploadResponse) {
+          return res.status(500).json({ mensaje: "Error al subir la imagen" });
+        }
+
+        imagenUrl = uploadResponse.secure_url;  // Guardamos la URL de la imagen subida
       }
-  
-      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
-      if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario no existe" });
-      }
-  
-      let datosActualizados = { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado };
-  
-      if (imagen) {
-        const resultadoimagen = await cloudinary.uploader.upload(imagen.path);
-        datosActualizados.imagen = resultadoimagen.secure_url;
-      }
-  
-      const lugarActualizado = await LugarService.actualizarLugar(id, datosActualizados);
-  
-      res.json(lugarActualizado);
+
+      console.log("URL de imagen subida a Cloudinary:", imagenUrl);  
+
+      const lugarActualizado = await LugarService.actualizarLugar(lugarid, {
+        usuarioid, categoriaid, nombre, descripcion, ubicacion,
+        imagen: imagenUrl || null,  // Si no hay imagen, no la actualizamos
+      });
+
+      res.json({
+        mensaje: "Lugar actualizado con éxito",
+        usuario: {
+          ...lugarActualizado.dataValues,
+          imagen: imagenUrl || lugarActualizado.imagen
+        },
+      });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error al actualizar lugar", error: error.message });
+      console.error("❌ Error al actualizar el lugar:", error);
+      res.status(500).json({ mensaje: "Error al actualizar el lugar", error: error.message });
     }
   }
 

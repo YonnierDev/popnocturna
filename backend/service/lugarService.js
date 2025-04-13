@@ -53,9 +53,19 @@ class LugarService {
     return await Lugar.create({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado, imagen });
   }
   
-  async actualizarLugar(id, datos) {
-    await Lugar.update(datos, { where: { id } });
-    return await this.buscarLugar(id);
+  async actualizarLugar(id, dataLugar) {
+    try {
+      const lugar = await Lugar.findByPk(id);
+      if (!lugar) {
+        throw new Error("Lugar no encontrado");
+      }
+
+      const lugarActualizado = await lugar.update(dataLugar);
+      return lugarActualizado;
+    } catch (error) {
+      console.error("❌ Error al actualizar el lugar:", error);
+      throw error;
+    }
   }
 
   async eliminarLugar(id) {
