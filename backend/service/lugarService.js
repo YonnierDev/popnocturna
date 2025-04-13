@@ -49,10 +49,10 @@ class LugarService {
     return await Lugar.findOne(options);
   }
 
-  async crearLugar({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado = true }) {
-    return await Lugar.create({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado });
+  async crearLugar({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado = true, imagen }) {
+    return await Lugar.create({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado, imagen });
   }
-
+  
   async actualizarLugar(id, datos) {
     await Lugar.update(datos, { where: { id } });
     return await this.buscarLugar(id);

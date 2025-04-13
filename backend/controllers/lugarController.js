@@ -33,30 +33,35 @@ class LugarController {
   async crearLugar(req, res) {
     try {
       const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
-
-      if (!usuarioid || !categoriaid || !nombre?.trim() || !descripcion?.trim() || !ubicacion?.trim()) {
+      const imagen = req.file;
+      console.log(req.body);
+  
+      if (!usuarioid || !categoriaid || !nombre?.trim() || !descripcion?.trim() || !ubicacion?.trim() || !imagen) {
         return res.status(400).json({ mensaje: "Faltan campos requeridos o contienen valores inválidos" });
+        console.log(req.file);
       }
-
+  
       const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
         return res.status(400).json({ mensaje: "El usuario no existe" });
       }
-
+  
       const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
       if (!categoriaExistente) {
         return res.status(400).json({ mensaje: "La categoría no existe" });
       }
-
+  
+      const resultadoimagen = await cloudinary.uploader.upload(imagen.path);
       const nuevoLugar = await LugarService.crearLugar({
         usuarioid,
         categoriaid,
         nombre,
         descripcion,
         ubicacion,
-        estado: true,
+        estado: false,
+        imagen: resultadoimagen.secure_url,
       });
-
+  
       res.status(201).json(nuevoLugar);
     } catch (error) {
       res.status(500).json({
@@ -65,25 +70,32 @@ class LugarController {
       });
     }
   }
-
+  
   async actualizarLugar(req, res) {
     try {
       const { id } = req.params;
       const { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado } = req.body;
-
+      const imagen = req.file;
+  
       const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
       if (!categoriaExistente) {
         return res.status(400).json({ mensaje: "La categoría no existe" });
       }
-
+  
       const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
         return res.status(400).json({ mensaje: "El usuario no existe" });
       }
-
-      const datosActualizados = { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado };
+  
+      let datosActualizados = { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado };
+  
+      if (imagen) {
+        const resultadoimagen = await cloudinary.uploader.upload(imagen.path);
+        datosActualizados.imagen = resultadoimagen.secure_url;
+      }
+  
       const lugarActualizado = await LugarService.actualizarLugar(id, datosActualizados);
-
+  
       res.json(lugarActualizado);
     } catch (error) {
       console.error(error);
