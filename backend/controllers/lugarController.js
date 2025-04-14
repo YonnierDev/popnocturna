@@ -33,8 +33,6 @@ class LugarController {
 
   async crearLugar(req, res) {
     try {
-      console.log("Req.body:", req.body);
-      console.log("Req.file:", req.file);
   
       const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
       let imagenUrl = null;
