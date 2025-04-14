@@ -13,6 +13,7 @@ app.use(
   })
 );
 
+app.use("/api", require("./routes/perfilRouter"));
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuarioRoutes"));
 app.use("/api", require("./routes/categoriaRoutes"));

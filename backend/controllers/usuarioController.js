@@ -1,3 +1,4 @@
+const cloudinaryService = require("../service/cloudinaryService");
 const UsuarioService = require("../service/usuarioService");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -33,6 +34,28 @@ class UsuarioController {
         rolid,
       } = req.body;
       const estado = true;
+      let imagenUrl = null;
+
+      if (!req.file) {
+        console.log("No se recibió imagen");
+        return res.status(400).json({ mensaje: "La imagen es requerida" });
+      }
+
+      console.log("Imagen recibida:", req.file);
+
+      // Subir la imagen a Cloudinary
+      const uploadResponse = await cloudinaryService.subirImagen(
+        req.file.buffer,
+        `usuario-${Date.now()}`
+      );
+
+      if (!uploadResponse) {
+        console.log("Error al subir la imagen");
+        return res.status(500).json({ mensaje: "Error al subir la imagen" });
+      }
+
+      imagenUrl = uploadResponse.secure_url;
+      console.log("Imagen subida:", imagenUrl);
 
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
       if (usuarioExistente) {
@@ -60,8 +83,8 @@ class UsuarioController {
         genero,
         estado,
         rolid,
+        imagen: imagenUrl,
       });
-
       res.status(201).json(nuevoUsuario);
     } catch (error) {
       res.status(500).json({

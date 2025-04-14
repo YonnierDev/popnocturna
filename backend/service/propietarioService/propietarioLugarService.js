@@ -46,6 +46,30 @@ class PropietarioLugarService {
       throw error;
     }
   }
+
+  async buacarLugarPropietarioDetallado(nombre, usuarioid) {
+    try {
+      const lugar = await Lugar.findAll( {
+        where: { nombre: { [require("sequelize").Op.like]: `%${nombre}%` }, usuarioid },
+        include: [
+          {
+            model: Categoria,
+            as: "categoria",
+            attributes: ["tipo"],
+          },
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre"],
+          },
+        ],
+      });
+      return lugar;
+    } catch (error) {
+      console.error("Error al buscar el lugar:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new PropietarioLugarService();

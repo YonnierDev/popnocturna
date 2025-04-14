@@ -26,7 +26,7 @@ module.exports = (sequelize) => {
   Lugar.init(
     
     {
-      id: {                           // <-- Agregamos el campo id
+      id: {                     
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -42,6 +42,7 @@ module.exports = (sequelize) => {
       nombre: {
         type: DataTypes.STRING,
         allowNull: false,
+        
       },
       descripcion: {
         type: DataTypes.STRING,

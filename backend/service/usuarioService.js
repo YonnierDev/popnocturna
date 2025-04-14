@@ -129,6 +129,10 @@ class UsuarioService {
     return await Usuario.findOne({ where: { correo } });
   }
 
+  async buscarPorNombre(nombre) {
+    return await Usuario.findOne({ where: { nombre } });
+  }
+
   async crearUsuario(datos) {
     return await Usuario.create(datos);
   }

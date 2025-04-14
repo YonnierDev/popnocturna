@@ -27,4 +27,11 @@ router.patch(
   PropietarioController.aprobarLugarPropietario
 );
 
+router.get(
+  "/propietario/lugar/:nombre",
+  autentiMiddleware,
+  validarRol(3),
+  PropietarioController.buscarLugarPropietario
+);
+
 module.exports = router;

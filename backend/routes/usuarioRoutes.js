@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 const UsuarioController = require("../controllers/usuarioController");
 const autentiMiddleware = require("../middlewares/autentiMiddleware");
+const validarUsuario = require("../middlewares/validacionesUsuario");
+const multerMiddleware = require("../middlewares/multerMiddleware");
 
 router.get("/usuarios",UsuarioController.listarUsuarios);
 router.get("/usuario/:id", UsuarioController.buscarUsuario);
-router.post("/usuario", UsuarioController.crearUsuario);
+router.post("/usuario", multerMiddleware.single("imagen"), validarUsuario, UsuarioController.crearUsuario);
 router.put("/usuario/:id", UsuarioController.actualizarUsuario);
 router.delete("/usuario/:id", UsuarioController.eliminarUsuario);
 router.get("/usuarios/rol/:rolId", UsuarioController.buscarPorRol);

@@ -83,6 +83,24 @@ class PropietarioLugarController {
         .json({ mensaje: "Error al crear lugar", error: error.message });
     }
   }
+
+  async buscarLugarPropietario(req, res) {
+    try {
+      const { nombre } = req.params;
+      const usuarioid = req.usuario.id;
+      const lugar =
+        await PropietarioLugarService.buacarLugarPropietarioDetallado(nombre, usuarioid);
+        if(!lugar || lugar.length === 0){
+          return res.status(404).json({ mensaje: "Lugar no encontrado" });
+        }
+      res.json(lugar);
+    } catch (error) {
+      console.error("Error al buscar el lugar:", error);
+      res
+        .status(500)
+        .json({ error: "Error al buscar el lugar", detalles: error.message });
+    }
+  }
 }
 
 module.exports = new PropietarioLugarController();

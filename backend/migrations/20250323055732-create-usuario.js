@@ -12,7 +12,7 @@ module.exports = {
       nombre: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        
       },
       apellido: {
         type: Sequelize.STRING
