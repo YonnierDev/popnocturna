@@ -151,30 +151,32 @@ class AutentiController {
     try {
       const { correo, contrasena } = req.body;
       const usuario = await UsuarioService.buscarPorCorreo(correo);
-  
+
       if (!usuario || !usuario.estado) {
         return res
           .status(401)
           .json({ mensaje: "Usuario no validado o no existe" });
       }
-  
+
       const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
       if (!esValido) {
         return res.status(401).json({ mensaje: "Contraseña incorrecta" });
       }
-  
+
       const token = jwt.sign(
         {
           id: usuario.id,
           correo: usuario.correo,
           rol: usuario.rolid,
         },
-        process.env.JWT_SECRET || "secreto",
+        process.env.JWT_SECRET,
         {
-          expiresIn: "2h",
+          expiresIn: process.env.JWT_EXPIRES_IN || "2h",
         }
       );
-  
+      
+      const decodedDebug = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("🔍 Decodificado inmediatamente:", decodedDebug);
       res.json({
         mensaje: "Login exitoso",
         token,
@@ -182,7 +184,6 @@ class AutentiController {
         nombre: usuario.nombre,
         usuarioId: usuario.id,
       });
-  
     } catch (error) {
       res
         .status(401)
@@ -227,32 +228,41 @@ class AutentiController {
   static async actualizarContrasena(req, res) {
     try {
       const { correo, contrasenaActual, nuevaContrasena } = req.body;
-  
+
       const usuario = await UsuarioService.buscarPorCorreo(correo);
       if (!usuario) {
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
       }
-  
-      const contrasenaValida = await bcrypt.compare(contrasenaActual, usuario.contrasena);
+
+      const contrasenaValida = await bcrypt.compare(
+        contrasenaActual,
+        usuario.contrasena
+      );
       if (!contrasenaValida) {
-        return res.status(401).json({ mensaje: "Contraseña actual incorrecta" });
+        return res
+          .status(401)
+          .json({ mensaje: "Contraseña actual incorrecta" });
       }
-  
+
       const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
       await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
-  
+
       return res.json({ mensaje: "Contraseña actualizada correctamente" });
     } catch (error) {
-      return res.status(500).json({ mensaje: "Error al actualizar contraseña", error: error.message });
+      return res
+        .status(500)
+        .json({
+          mensaje: "Error al actualizar contraseña",
+          error: error.message,
+        });
     }
   }
-  
 
   static async cambiarContrasena(req, res) {
     try {
       const { correo, codigo, nuevaContrasena } = req.body;
       const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-  
+
       if (
         !codigoGuardado ||
         codigoGuardado.codigo !== codigo ||
@@ -260,7 +270,7 @@ class AutentiController {
       ) {
         return res.status(400).json({ mensaje: "Código inválido o expirado" });
       }
-  
+
       // Validación de contraseña segura (como en el registro)
       const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
       if (!contrasenavalida.test(nuevaContrasena)) {
@@ -269,11 +279,11 @@ class AutentiController {
             "La nueva contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un símbolo",
         });
       }
-  
+
       const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
       await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
       await TemporalService.eliminarCodigo(correo);
-  
+
       res.json({ mensaje: "Contraseña cambiada correctamente" });
     } catch (error) {
       res
@@ -281,7 +291,6 @@ class AutentiController {
         .json({ mensaje: "Error al cambiar contraseña", error: error.message });
     }
   }
-  
 }
 
 module.exports = AutentiController;

@@ -1,3 +1,4 @@
+const cloudinaryService = require("../service/cloudinaryService");
 const LugarService = require("../service/lugarService");
 
 class LugarController {
@@ -32,62 +33,95 @@ class LugarController {
 
   async crearLugar(req, res) {
     try {
+      console.log("Req.body:", req.body);
+      console.log("Req.file:", req.file);
+  
       const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
-
-      if (!usuarioid || !categoriaid || !nombre?.trim() || !descripcion?.trim() || !ubicacion?.trim()) {
-        return res.status(400).json({ mensaje: "Faltan campos requeridos o contienen valores inválidos" });
+      let imagenUrl = null;
+  
+      if (!req.file) {
+        console.log("No se recibió imagen");
+        return res.status(400).json({ mensaje: "La imagen es requerida" });
       }
-
-      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
-      if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario no existe" });
+  
+      console.log("Imagen recibida:", req.file);
+  
+      // Subir la imagen a Cloudinary
+      const uploadResponse = await cloudinaryService.subirImagen(
+        req.file.buffer,
+        `lugar-${Date.now()}`
+      );
+  
+      if (!uploadResponse) {
+        console.log("Error al subir la imagen");
+        return res.status(500).json({ mensaje: "Error al subir la imagen" });
       }
-
-      const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
-      if (!categoriaExistente) {
-        return res.status(400).json({ mensaje: "La categoría no existe" });
-      }
-
-      const nuevoLugar = await LugarService.crearLugar({
+  
+      imagenUrl = uploadResponse.secure_url;
+      console.log("Imagen subida:", imagenUrl);
+  
+      const dataLugar = {
         usuarioid,
         categoriaid,
         nombre,
         descripcion,
         ubicacion,
-        estado: true,
+        estado: false,
+        imagen: imagenUrl,
+      };
+  
+      const nuevoLugar = await LugarService.crearLugar(dataLugar);
+      console.log("Lugar creado:", nuevoLugar);
+  
+      res.status(201).json({
+        mensaje: "Lugar creado con éxito",
+        lugar: nuevoLugar,
       });
-
-      res.status(201).json(nuevoLugar);
     } catch (error) {
-      res.status(500).json({
-        mensaje: "Error en el servicio",
-        error: error.message,
-      });
+      console.error("Error al crear lugar:", error);
+      res.status(500).json({ mensaje: "Error al crear lugar", error: error.message });
     }
   }
-
+  
   async actualizarLugar(req, res) {
     try {
-      const { id } = req.params;
-      const { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado } = req.body;
+      const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
+      const lugarid = req.params.id;
+      let imagenUrl = null;
 
-      const categoriaExistente = await LugarService.verificarCategoria(categoriaid);
-      if (!categoriaExistente) {
-        return res.status(400).json({ mensaje: "La categoría no existe" });
+      if (req.file) {
+        console.log("Imagen recibida en el backend:", req.file);
+        
+        // Subir la imagen a Cloudinary
+        const uploadResponse = await cloudinaryService.subirImagen(
+          req.file.buffer,
+          `${lugarid}-${Date.now()}`
+        );
+
+        if (!uploadResponse) {
+          return res.status(500).json({ mensaje: "Error al subir la imagen" });
+        }
+
+        imagenUrl = uploadResponse.secure_url;  // Guardamos la URL de la imagen subida
       }
 
-      const usuarioExistente = await LugarService.verificarUsuario(usuarioid);
-      if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario no existe" });
-      }
+      console.log("URL de imagen subida a Cloudinary:", imagenUrl);  
 
-      const datosActualizados = { categoriaid, usuarioid, nombre, descripcion, ubicacion, estado };
-      const lugarActualizado = await LugarService.actualizarLugar(id, datosActualizados);
+      const lugarActualizado = await LugarService.actualizarLugar(lugarid, {
+        usuarioid, categoriaid, nombre, descripcion, ubicacion,
+        imagen: imagenUrl || null,  // Si no hay imagen, no la actualizamos
+      });
 
-      res.json(lugarActualizado);
+      res.json({
+        mensaje: "Lugar actualizado con éxito",
+        usuario: {
+          ...lugarActualizado.dataValues,
+          imagen: imagenUrl || lugarActualizado.imagen
+        },
+      });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error al actualizar lugar", error: error.message });
+      console.error("❌ Error al actualizar el lugar:", error);
+      res.status(500).json({ mensaje: "Error al actualizar el lugar", error: error.message });
     }
   }
 

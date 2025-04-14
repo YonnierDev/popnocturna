@@ -144,6 +144,27 @@ class ReservaController {
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
+
+  async aprobarReserva(req, res) {
+    try {
+      const { id } = req.params;
+      const { aprobacion } = req.body;
+  
+      if (!["aceptado", "rechazado", "pendiente"].includes(aprobacion)) {
+        return res.status(400).json({ error: "Valor de aprobación inválido." });
+      }
+  
+      const reserva = await ReservaService.actualizarAprobacion(id, aprobacion);
+  
+      if (!reserva) {
+        return res.status(404).json({ error: "Reserva no encontrada." });
+      }
+  
+      res.json({ mensaje: "Reserva actualizada correctamente", reserva });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
   
 }
 
