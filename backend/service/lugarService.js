@@ -49,8 +49,16 @@ class LugarService {
     return await Lugar.findOne(options);
   }
 
-  async crearLugar({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado = true, imagen }) {
-    return await Lugar.create({ usuarioid, categoriaid, nombre, descripcion, ubicacion, estado, imagen });
+  async crearLugar(dataLugar) {
+    try {
+      console.log("Creando lugar:", dataLugar);
+      const nuevoLugar = await Lugar.create(dataLugar);
+      console.log("Lugar creado:", nuevoLugar);
+      return nuevoLugar;
+    } catch (error) {
+      console.error("Error al crear lugar:", error);
+      throw error;
+    }
   }
   
   async actualizarLugar(id, dataLugar) {
