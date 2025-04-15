@@ -1,3 +1,4 @@
+const AutentiService = require("../service/autentiService");
 const TemporalService = require("../service/temporalService");
 const UsuarioService = require("../service/usuarioService");
 const jwt = require("jsonwebtoken");
@@ -291,6 +292,7 @@ class AutentiController {
         .json({ mensaje: "Error al cambiar contraseña", error: error.message });
     }
   }
+
 }
 
 module.exports = AutentiController;

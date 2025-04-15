@@ -9,5 +9,4 @@ router.post('/recuperar/contrasena', AutentiController.recuperarContrasena);
 router.post('/cambiar/contrasena', AutentiController.cambiarContrasena);
 router.patch('/actualizar/contrasena', AutentiController.actualizarContrasena);
 
-
 module.exports = router;
