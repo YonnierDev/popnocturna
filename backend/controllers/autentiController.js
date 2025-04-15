@@ -1,298 +1,110 @@
-const AutentiService = require("../service/autentiService");
-const TemporalService = require("../service/temporalService");
-const UsuarioService = require("../service/usuarioService");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
-require("dotenv").config();
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
+const AutentiService = require("../service/autentiService");
 class AutentiController {
-  static generarCodigo() {
-    return crypto.randomInt(100000, 999999).toString();
-  }
-
   static async registrar(req, res) {
     try {
-      const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } =
-        req.body;
-
-      if (
-        !nombre ||
-        !apellido ||
-        !correo ||
-        !fecha_nacimiento ||
-        !contrasena ||
-        !genero
-      ) {
-        return res
-          .status(400)
-          .json({ mensaje: "Todos los campos son obligatorios" });
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(correo)) {
-        return res.status(400).json({ mensaje: "Correo no válido" });
-      }
-
-      const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
-      if (!contrasenavalida.test(contrasena)) {
-        return res.status(400).json({
-          mensaje:
-            "La contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un simbolo",
-        });
-      }
-
-      const generosPermitidos = ["Masculino", "Femenino", "Otro"];
-      if (!generosPermitidos.includes(genero)) {
-        return res
-          .status(400)
-          .json({ mensaje: "Género no válido. Escoja uno" });
-      }
-
-      const fechaNacimientoDate = new Date(fecha_nacimiento);
-      const hoy = new Date();
-      const edad = hoy.getFullYear() - fechaNacimientoDate.getFullYear();
-      const mes = hoy.getMonth() - fechaNacimientoDate.getMonth();
-      const dia = hoy.getDate() - fechaNacimientoDate.getDate();
-      const edadExacta = mes < 0 || (mes === 0 && dia < 0) ? edad - 1 : edad;
-
-      if (edadExacta < 16) {
-        return res
-          .status(400)
-          .json({ mensaje: "Edad minima de registro: 16 años" });
-      }
-
-      const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
-      if (usuarioExistente) {
-        return res.status(400).json({ mensaje: "Correo Existente" });
-      }
-
-      const contrasenaHash = await bcrypt.hash(contrasena, 10);
-      const codigoVerificacion = AutentiController.generarCodigo();
-      const expiracion = Date.now() + 5 * 60 * 1000;
-
-      const codtemp = TemporalService.guardarCodigo(
-        correo,
-        codigoVerificacion,
-        new Date(expiracion)
-      );
-      console.log(codtemp);
-      const usuario = await UsuarioService.crearUsuario({
-        nombre,
-        apellido,
-        correo,
-        fecha_nacimiento,
-        contrasena: contrasenaHash,
-        genero,
-        estado: false,
-      });
-
-      await transporter.sendMail({
-        from: `Popayán Nocturna <${process.env.EMAIL_USER}>`,
-        to: correo,
-        subject: "Código de verificación",
-        html: `<p>Tu código de verificación es: <strong>${codigoVerificacion}</strong></p>`,
-      });
-
-      res
-        .status(201)
-        .json({ mensaje: "Usuario registrado. Verifica tu correo.", usuario });
+      const datos = req.body;
+      const resultado = await AutentiService.registrarUsuario(datos);
+      res.status(201).json(resultado);
     } catch (error) {
-      console.error("Error al registrar usuario:", error);
-      res
-        .status(500)
-        .json({ mensaje: "Error en el registro", error: error.message });
+      res.status(400).json({ mensaje: error.message });
     }
   }
 
-  static async validarCorreo(req, res) {
+  static async validarCodigo(req, res) {
     try {
       const { correo, codigo } = req.body;
-
-      const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-
-      if (!codigoGuardado) {
-        return res.status(400).json({ mensaje: "Código no encontrado" });
-      }
-
-      const ahora = Date.now();
-      const expiracion = new Date(codigoGuardado.expiracion).getTime();
-
-      if (
-        String(codigoGuardado.codigo) !== String(codigo) ||
-        ahora > expiracion
-      ) {
-        return res.status(400).json({ mensaje: "Código inválido o expirado" });
-      }
-
-      await UsuarioService.activarUsuario(correo);
-      await TemporalService.eliminarCodigo(correo);
-
-      return res.json({
-        mensaje: "validacion exitosa",
-      });
+      await AutentiService.validarCodigoCorreo(correo, codigo);
+      res.json({ mensaje: "Usuario validado correctamente" });
     } catch (error) {
-      console.error("Error en validación:", error);
-      return res.status(400).json({
-        mensaje: "Error en la validación",
-        error: error.message,
-      });
+      res.status(400).json({ mensaje: error.message });
     }
   }
 
   static async login(req, res) {
     try {
-      const { correo, contrasena } = req.body;
-      const usuario = await UsuarioService.buscarPorCorreo(correo);
-
-      if (!usuario || !usuario.estado) {
-        return res
-          .status(401)
-          .json({ mensaje: "Usuario no validado o no existe" });
-      }
-
-      const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
-      if (!esValido) {
-        return res.status(401).json({ mensaje: "Contraseña incorrecta" });
-      }
-
-      const token = jwt.sign(
-        {
-          id: usuario.id,
-          correo: usuario.correo,
-          rol: usuario.rolid,
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: process.env.JWT_EXPIRES_IN || "2h",
-        }
-      );
-      
-      const decodedDebug = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("🔍 Decodificado inmediatamente:", decodedDebug);
-      res.json({
-        mensaje: "Login exitoso",
-        token,
-        rol: usuario.rolid,
-        nombre: usuario.nombre,
-        usuarioId: usuario.id,
-      });
+      const datos = req.body;
+      const resultado = await AutentiService.login(datos);
+      res.json(resultado);
     } catch (error) {
-      res
-        .status(401)
-        .json({ mensaje: "Error en el login", error: error.message });
+      res.status(401).json({ mensaje: error.message });
     }
   }
-  
 
-  static async recuperarContrasena(req, res) {
+  static async enviarCodigo(req, res) {
     try {
       const { correo } = req.body;
-      const usuario = await UsuarioService.buscarPorCorreo(correo);
-
-      if (!usuario)
-        return res.status(404).json({ mensaje: "Usuario no encontrado" });
-
-      const codigoRecuperacion = AutentiController.generarCodigo();
-      const expiracion = Date.now() + 5 * 60 * 1000;
-
-      await TemporalService.guardarCodigo(
-        correo,
-        codigoRecuperacion,
-        new Date(expiracion)
-      );
-
-      await transporter.sendMail({
-        from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
-        to: correo,
-        subject: "Código de recuperación de contraseña",
-        html: `<p>Tu código para recuperar la contraseña es: <strong>${codigoRecuperacion}</strong></p>`,
-      });
-      console.log(codigoRecuperacion);
-      console.log(expiracion);
-      res.json({ mensaje: "Código de recuperación enviado" });
+      const resultado = await AutentiService.enviarCodigoRecuperacion(correo);
+      res.json(resultado);
     } catch (error) {
-      res
-        .status(500)
-        .json({ mensaje: "Error en la recuperación", error: error.message });
+      res.status(400).json({ mensaje: error.message });
+    }
+  }
+
+  static async cambiarContrasenaConCodigo(req, res) {
+    try {
+      const { correo, codigo, nuevaContrasena } = req.body;
+      await AutentiService.cambiarContrasenaConCodigo(correo, codigo, nuevaContrasena);
+      res.json({ mensaje: "Contraseña actualizada correctamente" });
+    } catch (error) {
+      res.status(400).json({ mensaje: error.message });
+    }
+  }
+
+  static async cerrarSesion(req, res) {
+    try {
+      const token = req.headers.authorization?.split(" ")[1];
+      const resultado = await AutentiService.cerrarSesion(token);
+      res.json(resultado);
+    } catch (error) {
+      res.status(400).json({ mensaje: error.message });
+    }
+  }
+
+  static async enviarRecuperacionCorreo(req, res) {
+    try {
+      const { correo } = req.body;
+      const resultado = await AutentiService.enviarRecuperacionCorreo(correo);
+      res.json(resultado);
+    } catch (error) {
+      res.status(400).json({ mensaje: error.message });
+    }
+  }
+
+  static async verificarToken(req, res) {
+    try {
+      const { token } = req.params;
+      const decoded = await AutentiService.verificarTokenRecuperacion(token);
+      res.json(decoded);
+    } catch (error) {
+      res.status(400).json({ mensaje: error.message });
     }
   }
 
   static async actualizarContrasena(req, res) {
     try {
-      const { correo, contrasenaActual, nuevaContrasena } = req.body;
+      const { token, nuevaContrasena } = req.body;
 
-      const usuario = await UsuarioService.buscarPorCorreo(correo);
-      if (!usuario) {
-        return res.status(404).json({ mensaje: "Usuario no encontrado" });
-      }
-
-      const contrasenaValida = await bcrypt.compare(
-        contrasenaActual,
-        usuario.contrasena
-      );
-      if (!contrasenaValida) {
-        return res
-          .status(401)
-          .json({ mensaje: "Contraseña actual incorrecta" });
-      }
-
-      const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
-      await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
-
-      return res.json({ mensaje: "Contraseña actualizada correctamente" });
-    } catch (error) {
-      return res
-        .status(500)
-        .json({
-          mensaje: "Error al actualizar contraseña",
-          error: error.message,
-        });
-    }
-  }
-
-  static async cambiarContrasena(req, res) {
-    try {
-      const { correo, codigo, nuevaContrasena } = req.body;
-      const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-
-      if (
-        !codigoGuardado ||
-        codigoGuardado.codigo !== codigo ||
-        Date.now() > codigoGuardado.expiracion
-      ) {
-        return res.status(400).json({ mensaje: "Código inválido o expirado" });
-      }
-
-      // Validación de contraseña segura (como en el registro)
       const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
       if (!contrasenavalida.test(nuevaContrasena)) {
-        return res.status(400).json({
-          mensaje:
-            "La nueva contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un símbolo",
-        });
+        return res.status(400).json({ mensaje: "Contraseña insegura" });
       }
 
-      const nuevaContrasenaHash = await bcrypt.hash(nuevaContrasena, 10);
-      await UsuarioService.actualizarContrasena(correo, nuevaContrasenaHash);
-      await TemporalService.eliminarCodigo(correo);
+      const secret = process.env.JWT_SECRET;
+      const decoded = jwt.verify(token, secret);  
+      const id = decoded.id;
 
-      res.json({ mensaje: "Contraseña cambiada correctamente" });
+      const nuevaHash = await bcrypt.hash(nuevaContrasena, 10);
+
+      const resultado = await AutentiService.actualizarContrasena(id, nuevaHash);
+      res.json(resultado);
     } catch (error) {
-      res
-        .status(400)
-        .json({ mensaje: "Error al cambiar contraseña", error: error.message });
+      console.error("Error al actualizar contraseña",error);
+      res.status(400).json({ mensaje: error.message });
     }
   }
-
+  
 }
 
 module.exports = AutentiController;

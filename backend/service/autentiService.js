@@ -1,6 +1,8 @@
 const bcrypt = require("bcrypt");
+
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const TemporalService = require("./temporalService");
 const UsuarioService = require("./usuarioService");
 require("dotenv").config();
@@ -8,6 +10,11 @@ require("dotenv").config();
 class AutentiService {
   static generarCodigo() {
     return crypto.randomInt(100000, 999999).toString();
+  }
+
+  static validarContrasena(contrasena) {
+    const regex = /^(?=.[A-Z])(?=.\d)(?=.*[\W_]).{8,20}$/;
+    return regex.test(contrasena);
   }
 
   static async validarCamposRegistro(datos) {
@@ -22,9 +29,8 @@ class AutentiService {
       throw new Error("Correo no válido");
     }
 
-    const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
-    if (!contrasenavalida.test(contrasena)) {
-      throw new Error("Contraseña insegura");
+    if (!this.validarContrasena(contrasena)) {
+      throw new Error("La contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un símbolo.");
     }
 
     const generosPermitidos = ["Masculino", "Femenino", "Otro"];
@@ -108,7 +114,6 @@ class AutentiService {
 
     const codigo = this.generarCodigo();
     const expiracion = new Date(Date.now() + 5 * 60 * 1000);
-
     await TemporalService.guardarCodigo(correo, codigo, expiracion);
     return { codigo, expiracion };
   }
@@ -123,8 +128,7 @@ class AutentiService {
       throw new Error("Código inválido o expirado");
     }
 
-    const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
-    if (!contrasenavalida.test(nuevaContrasena)) {
+    if (!this.validarContrasena(nuevaContrasena)) {
       throw new Error("Contraseña insegura");
     }
 
@@ -140,9 +144,66 @@ class AutentiService {
     const esValida = await bcrypt.compare(contrasenaActual, usuario.contrasena);
     if (!esValida) throw new Error("Contraseña actual incorrecta");
 
+    if (!this.validarContrasena(nuevaContrasena)) {
+      throw new Error("Nueva contraseña insegura");
+    }
+
     const nuevaHash = await bcrypt.hash(nuevaContrasena, 10);
     await UsuarioService.actualizarContrasena(correo, nuevaHash);
   }
-}
 
+  static async cerrarSesion(token) {
+    try {
+      jwt.verify(token, process.env.JWT_SECRET);
+      return { mensaje: "Sesión cerrada exitosamente" };
+    } catch (error) {
+      throw new Error("Token inválido o ya expirado");
+    }
+  }
+
+  static async enviarRecuperacionCorreo(correo) {
+    const usuario = await UsuarioService.buscarPorCorreo(correo);
+    if (!usuario) throw new Error("Usuario no encontrado");
+
+    const token = jwt.sign(
+      { id: usuario.id, correo: usuario.correo },
+      process.env.JWT_SECRET || "secreto",
+      { expiresIn: "1h" }
+    );
+
+    const urlRecuperacion = `${process.env.FRONTEND_URL}/recuperar-contrasena/${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `Soporte <${process.env.EMAIL_USER}>`,
+      to: correo,
+      subject: "Recuperación de contraseña",
+      html: `<p>Haz clic en el siguiente enlace para recuperar tu contraseña:</p>
+             <a href="${urlRecuperacion}">${urlRecuperacion}</a>
+             <p>Este enlace es válido por 1 hora.</p>`,
+    });
+
+    return { mensaje: "Correo de recuperación enviado" };
+  }
+
+  static async verificarTokenRecuperacion(token) {
+    try {
+      return jwt.verify(token, process.env.JWT_SECRET); 
+    } catch (error) {
+      throw new Error("Token inválido o expirado");
+    }
+  }
+  
+  static async actualizarContrasena(id, nuevaContrasenaHash) {
+    await UsuarioService.actualizarContrasenaPorId(id, nuevaContrasenaHash);
+    return { mensaje: "Contraseña actualizada correctamente" };
+  }
+}
 module.exports = AutentiService;

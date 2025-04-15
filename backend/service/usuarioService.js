@@ -129,10 +129,6 @@ class UsuarioService {
     return await Usuario.findOne({ where: { correo } });
   }
 
-  async buscarPorNombre(nombre) {
-    return await Usuario.findOne({ where: { nombre } });
-  }
-
   async crearUsuario(datos) {
     return await Usuario.create(datos);
   }
@@ -178,6 +174,21 @@ class UsuarioService {
     return await Usuario.findAll({
       where: { rolid: rolId },
     });
+  }
+
+  async buscarPorId(id) {
+    return await Usuario.findByPk(id, {
+      attributes: { exclude: ["contrasena"] },
+    });
+  }
+
+  async actualizarContrasenaPorId(id, nuevaContrasena) {
+    console.log("actualizando contraseña por id", id, nuevaContrasena);
+    const usuario = await this.buscarPorId(id);
+    console.log("USUARIO",usuario);
+    if (!usuario) throw new Error("Usuario no encontrado");
+    await Usuario.update({ contrasena: nuevaContrasena }, { where: { id } });
+    return await this.buscarPorId(id);
   }
 }
 
