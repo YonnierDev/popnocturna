@@ -52,16 +52,6 @@ class AutentiController {
     }
   }
 
-  static async cerrarSesion(req, res) {
-    try {
-      const token = req.headers.authorization?.split(" ")[1];
-      const resultado = await AutentiService.cerrarSesion(token);
-      res.json(resultado);
-    } catch (error) {
-      res.status(400).json({ mensaje: error.message });
-    }
-  }
-
   static async enviarRecuperacionCorreo(req, res) {
     try {
       const { correo } = req.body;
@@ -84,8 +74,13 @@ class AutentiController {
 
   static async actualizarContrasena(req, res) {
     try {
-      const { token, nuevaContrasena } = req.body;
-
+      const { token, nuevaContrasena, confirmarContrasena } = req.body;
+      if(!nuevaContrasena || !confirmarContrasena) {
+        return res.status(400).json({ mensaje: "Ambas contrasenas son obligatorias" });
+      }
+      if (nuevaContrasena !== confirmarContrasena) {
+        return res.status(400).json({ mensaje: "Las contrasenas no coinciden" });
+      }
       const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
       if (!contrasenavalida.test(nuevaContrasena)) {
         return res.status(400).json({ mensaje: "Contraseña insegura" });
