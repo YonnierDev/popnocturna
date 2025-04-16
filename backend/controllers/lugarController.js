@@ -19,7 +19,7 @@ class LugarController {
   async buscarLugar(req, res) {
     try {
       const { id } = req.params;
-      const lugar = await LugarService.buscarLugar(id, true); // con relaciones
+      const lugar = await LugarService.buscarLugar(id, true);
 
       if (!lugar) {
         return res.status(404).json({ mensaje: "Lugar no encontrado" });
@@ -41,9 +41,7 @@ class LugarController {
         console.log("No se recibió imagen");
         return res.status(400).json({ mensaje: "La imagen es requerida" });
       }
-  
-      console.log("Imagen recibida:", req.file);
-  
+    
       // Subir la imagen a Cloudinary
       const uploadResponse = await cloudinaryService.subirImagen(
         req.file.buffer,
@@ -51,12 +49,10 @@ class LugarController {
       );
   
       if (!uploadResponse) {
-        console.log("Error al subir la imagen");
         return res.status(500).json({ mensaje: "Error al subir la imagen" });
       }
   
       imagenUrl = uploadResponse.secure_url;
-      console.log("Imagen subida:", imagenUrl);
   
       const dataLugar = {
         usuarioid,
@@ -69,8 +65,7 @@ class LugarController {
       };
   
       const nuevoLugar = await LugarService.crearLugar(dataLugar);
-      console.log("Lugar creado:", nuevoLugar);
-  
+
       res.status(201).json({
         mensaje: "Lugar creado con éxito",
         lugar: nuevoLugar,
@@ -88,8 +83,6 @@ class LugarController {
       let imagenUrl = null;
 
       if (req.file) {
-        console.log("Imagen recibida en el backend:", req.file);
-        
         // Subir la imagen a Cloudinary
         const uploadResponse = await cloudinaryService.subirImagen(
           req.file.buffer,

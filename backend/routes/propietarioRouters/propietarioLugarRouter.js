@@ -23,7 +23,7 @@ router.post(
 router.patch(
   "/propietario/aprobar/:id",
   autentiMiddleware,
-  validarRol(1),
+  validarRol(1,2),
   PropietarioController.aprobarLugarPropietario
 );
 
