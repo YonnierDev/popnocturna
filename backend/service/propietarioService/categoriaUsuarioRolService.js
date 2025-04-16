@@ -9,21 +9,25 @@ class CategoriaUsuarioRolService {
     if (!usuario) {
       throw new Error("El usuario no existe o no es un propietario");
     }
+
     const categorias = await Categoria.findAll({
-        where:{
-            estado: true
-        },
+      where: {
+        estado: true,
+      },
+      attributes: ["id", "nombre", "descripcion"],
       include: [
         {
           model: Lugar,
           as: "lugares",
-          require: true,
-          attributes: [ "nombre", "descripcion", "ubicacion"],
-          where: {usuarioid, estado:true},
+          required: true,
+          attributes: ["nombre", "descripcion", "ubicacion"],
+          where: { usuarioid, estado: true },
         },
       ],
     });
+
     return categorias;
   }
 }
+
 module.exports = new CategoriaUsuarioRolService();
