@@ -14,7 +14,7 @@ class CategoriaUsuarioRolService {
       where: {
         estado: true,
       },
-      attributes: ["id", "nombre", "descripcion"],
+      attributes: ["tipo"],
       include: [
         {
           model: Lugar,
