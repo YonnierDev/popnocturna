@@ -46,15 +46,34 @@ const validarUsuario = [
     .isIn(["Masculino", "Femenino", "Otro"])
     .withMessage("Género no válido. Escoja uno"),
 
-  body("contrasena")
-    .notEmpty()
-    .withMessage("La contraseña es obligatoria")
-    .isLength({ min: 8, max: 20 })
-    .withMessage("Debe tener entre 8 y 20 caracteres")
-    .matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/)
-    .withMessage(
-      "Debe incluir al menos una mayúscula, un número y un símbolo (!@#$%^&*()_-)"
-    ),
+    body("contrasena")
+  .notEmpty()
+  .withMessage("La contraseña es obligatoria")
+  .bail()
+  .isLength({ min: 8, max: 20 })
+  .withMessage("La contraseña debe tener entre 8 y 20 caracteres")
+  .bail()
+  .custom((value) => {
+    const errores = [];
+
+    if (!/[A-Z]/.test(value)) {
+      errores.push("Debe incluir al menos una letra mayúscula");
+    }
+    if (!/\d/.test(value)) {
+      errores.push("Debe incluir al menos un número");
+    }
+    if (!/[^A-Za-z\d]/.test(value)) {
+      errores.push("Debe incluir al menos un símbolo (como !@#$%^&*)");
+    }
+
+    if (errores.length > 0) {
+      throw new Error(errores.join(" | "));
+    }
+
+    return true;
+  }),
+
+  
 
   body("rolid")
     .notEmpty()

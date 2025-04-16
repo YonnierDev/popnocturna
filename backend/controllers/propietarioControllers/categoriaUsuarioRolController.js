@@ -1,28 +1,25 @@
 const CategoriaUsuarioRolService = require("../../service/propietarioService/categoriaUsuarioRolService");
-const UsuarioService = require("../../service/usuarioService");
 const { Usuario } = require("../../models");
 
 class CategoriaUsuarioRolController {
   async obtenerCategoriaPorPropietario(req, res) {
     try {
-      const { usuarioid } = req.params;
+      const usuarioid = req.usuario.id; // Usamos el ID del usuario desde el token
+
       const usuario = await Usuario.findByPk(usuarioid);
-      if(!usuario){
-        return res.json({mensaje: "El usuario no existe"})
-
+      if (!usuario) {
+        return res.status(404).json({ mensaje: "El usuario no existe" });
       }
-      if(usuario.rolid !==3){
-        return res.json({mensaje: "El usuario no es propietario"})
+      if (usuario.rolid !== 3) {
+        return res.status(403).json({ mensaje: "El usuario no es propietario" });
       }
-      const categorias =
-        await CategoriaUsuarioRolService.obtenerCategoriaPorPropietario(
-          usuarioid
-        );
 
-      res.json(categorias);
+      const categorias = await CategoriaUsuarioRolService.obtenerCategoriaPorPropietario(usuarioid);
+
+      return res.json(categorias);
     } catch (error) {
-      console.error("error al listar categorias por propietario", error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      console.error("Error al listar categorías por propietario", error);
+      return res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
 }
