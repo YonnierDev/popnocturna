@@ -4,7 +4,7 @@ const CategoriaParaUsuarioController = require('../../controllers/usuariosContro
 
 
 router.get('/usuarios/lista-categorias', CategoriaParaUsuarioController.categoriasParaUsuario);
-router.get('/usuarios/lugares-categoria', CategoriaParaUsuarioController.lugaresDeCadaCaregoria);
+router.get('/usuarios/lugares-categoria/:categoriaid', CategoriaParaUsuarioController.lugaresDeCadaCaregoria);
 
 
 module.exports = router;
