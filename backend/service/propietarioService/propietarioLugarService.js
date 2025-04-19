@@ -7,11 +7,6 @@ class PropietarioLugarService {
       where: { usuarioid },
       include: [
         {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["nombre"],
-        },
-        {
           model: Categoria,
           as: "categoria",
           attributes: ["tipo"],
