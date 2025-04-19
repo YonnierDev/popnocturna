@@ -14,8 +14,27 @@ module.exports = (sequelize, DataTypes) => {
   
   Categoria.init(
     {
-      tipo: DataTypes.STRING,
-      estado: DataTypes.BOOLEAN,
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      tipo: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      descripcion: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      imagen: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      estado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true, 
+      }
     },
     {
       sequelize,
