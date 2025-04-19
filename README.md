@@ -26,17 +26,13 @@ Backend del sistema **Popayán Nocturna**, una plataforma para la gestión de lu
 ```bash
 📦backend-popayan-nocturna
 ├── 📂controllers       # Lógica de negocio por entidad
-├── 📂middlewares       # Validaciones, JWT y roles
+├── 📂middlewares       # Validaciones, JWT, roles y multer
 ├── 📂models            # Modelos de Sequelize
 ├── 📂routes            # Definición de endpoints
-├── 📂services          # Lógica desacoplada y reusable
-├── 📂utils             # Funciones auxiliares (correos, cloudinary, etc.)
-├── 📂config            # Conexión DB y cloudinary
+├── 📂service           # Lógica desacoplada y reusable
+├── 📂config            # Conexión DB, cloudinary, Multer
 ├── 📄.env              # Variables de entorno
-├── 📄app.js            # Configuración principal
-├── 📄server.js         # Inicio del servidor
-└── 📄README.md         # Este archivo
-```
+├── 📄index.js          # Inicio del servidor
 
 ---
 
