@@ -6,12 +6,12 @@ const validarRol = require("../middlewares/validarRol");
 
 router.get("/reservas", autentiMiddleare, validarRol(1, 2), ReservaController.listarReservas);
 router.get("/reserva/:numero_reserva", autentiMiddleare, validarRol(1, 2), ReservaController.buscarReserva);
-router.post("/reserva", autentiMiddleare, validarRol(1, 2), ReservaController.crearReserva);
+router.post("/reserva", autentiMiddleare, validarRol(1, 2, 8), ReservaController.crearReserva);
 router.put("/reserva/:id", autentiMiddleare, validarRol(1, 2), ReservaController.actualizarReserva);
 router.delete("/reserva/:id", autentiMiddleare, validarRol(1, 2), ReservaController.eliminarReserva);
 router.patch("/reserva/estado/:id", autentiMiddleare, validarRol(1, 2), ReservaController.actualizarEstado);
 
 //super Admin, Administrador, propietario
-router.patch("/reserva/aprobar/:id", autentiMiddleare, validarRol(1, 2, 3), ReservaController.aprobarReserva);
+router.patch("/reserva/aprobar/:numero_reserva", autentiMiddleare, validarRol(1, 2, 3), ReservaController.aprobarReserva);
 
 module.exports = router;

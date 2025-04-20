@@ -153,20 +153,36 @@ class ReservaService {
   
 
 
-  async actualizarAprobacion(id, aprobacion) {
+  async actualizarAprobacionPorNumero(numero_reserva, aprobacion) {
     try {
-      const reserva = await Reserva.findByPk(id);
+      const reserva = await Reserva.findOne({ where: { numero_reserva } });
       if (!reserva) return null;
   
       reserva.aprobacion = aprobacion;
       await reserva.save();
   
-      return reserva;
+      const reservaConInfo = await Reserva.findOne({
+        where: { numero_reserva },
+        include: [
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['nombre', 'correo'],
+          },
+          {
+            model: Evento,
+            as: 'evento',
+            attributes: ['nombre', 'fecha_hora'],
+          },
+        ],
+      });
+  
+      return reservaConInfo;
     } catch (error) {
       throw new Error("Error al actualizar la reserva: " + error.message);
     }
   }
-  
+
 }
 
 module.exports = new ReservaService();

@@ -178,24 +178,28 @@ class ReservaController {
 
   async aprobarReserva(req, res) {
     try {
-      const { id } = req.params;
+      const { numero_reserva } = req.params;
       const { aprobacion } = req.body;
   
-      if (!["aceptado", "rechazado", "pendiente"].includes(aprobacion)) {
+      if (!["aceptado", "rechazado", "pendiente"].includes(aprobacion.toLowerCase())) {
         return res.status(400).json({ error: "Valor de aprobación inválido." });
       }
   
-      const reserva = await ReservaService.actualizarAprobacion(id, aprobacion);
+      const reserva = await ReservaService.actualizarAprobacionPorNumero(numero_reserva, aprobacion);
   
       if (!reserva) {
         return res.status(404).json({ error: "Reserva no encontrada." });
       }
   
-      res.json({ mensaje: "Reserva actualizada correctamente", reserva });
+      // Ocultamos el id si quieres
+      const { id, ...reservaSinId } = reserva.toJSON();
+  
+      res.json({ mensaje: "Reserva actualizada correctamente", reserva: reservaSinId });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
+  
   
 }
 

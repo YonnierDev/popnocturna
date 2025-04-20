@@ -18,7 +18,8 @@ router.post(
   multerMiddleware.single("imagen"),
   PropietarioController.crearLugarPropietario
 );
-//superadmin
+
+//Super admin, administrador y propietario
 
 router.patch(
   "/propietario/aprobar/:id",
