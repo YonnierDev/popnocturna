@@ -20,7 +20,7 @@ class CategoriaUsuarioRolService {
           model: Lugar,
           as: "lugares",
           required: true,
-          attributes: ["nombre", "descripcion", "ubicacion"],
+          attributes: ["nombre", "imagen", "descripcion", "ubicacion"],
           where: { usuarioid, estado: true },
         },
       ],
