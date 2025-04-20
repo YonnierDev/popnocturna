@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      
       eventoid: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -36,6 +37,11 @@ module.exports = (sequelize, DataTypes) => {
       },
       estado: {
         type: DataTypes.BOOLEAN,
+      },
+      numero_reserva: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
       },
     },
     {

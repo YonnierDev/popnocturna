@@ -1,26 +1,61 @@
 const { Reserva, Usuario, Evento } = require("../models");
+const { v4: uuidv4 } = require("uuid");
 
 class ReservaService {
   async listarReservas() {
-    return await Reserva.findAll({
-      include: [
-        {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["nombre", "correo"],
-        },
-        {
-          model: Evento,
-          as: "evento",
-          attributes: ["descripcion", "fecha_hora"],
-        },
-      ],
-    });
+    try {
+      const reservas = await Reserva.findAll({
+        attributes: [
+          "id",
+          "usuarioid",
+          "eventoid",
+          "fecha_hora",
+          "aprobacion",
+          "estado",
+          "numero_reserva",
+          "createdAt",
+          "updatedAt"
+        ],
+        include: [
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre", "correo"],
+          },
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["nombre", "fecha_hora"], 
+          },
+        ],
+      });
+  
+      return reservas;
+    } catch (error) {
+      console.error("Error al listar reservas:", error);
+      throw new Error("Error al obtener las reservas");
+    }
   }
+  
 
   async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
-    return await Reserva.create({ usuarioid, eventoid, fecha_hora, aprobacion, estado });
+
+    const ultimoNumeroReserva = await Reserva.max('numero_reserva'); // Obtén el último número de reserva
+    const ultimoNumero = ultimoNumeroReserva ? parseInt(ultimoNumeroReserva.split('-')[1]) : 0; // Extrae el número
+  
+    // Generar el siguiente número de reserva con el formato RES-XXXX
+    const nuevoNumeroReserva = `RES-${String(ultimoNumero + 1).padStart(4, '0')}`;
+  
+    return await Reserva.create({
+      usuarioid,
+      eventoid,
+      fecha_hora,
+      aprobacion,
+      estado,
+      numero_reserva: nuevoNumeroReserva, 
+    });
   }
+  
 
   async buscarReserva(id) {
     return await Reserva.findByPk(id);
@@ -69,18 +104,34 @@ class ReservaService {
     return await this.listarReservas();
   }
 
-  async buscarReserva(req, res) {
+  async buscarReserva(numero_reserva) {
     try {
-      const { id } = req.params;
-      const reserva = await ReservaService.buscarPorId(id);
+      console.log("Buscando reserva con numero_reserva:", numero_reserva);
+  
+      const reserva = await Reserva.findOne({
+        where: { numero_reserva }, // Buscar por el campo numero_reserva
+        include: [
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['nombre', 'correo'], 
+          },
+          {
+            model: Evento,
+            as: 'evento',
+            attributes: ['descripcion', 'fecha_hora'], 
+          },
+        ],
+      });
   
       if (!reserva) {
-        return res.status(404).json({ mensaje: "Reserva no encontrada" });
+        console.log("No se encontró la reserva.");
+        return null;
       }
   
-      // Estructuramos la respuesta
       const reservaResponse = {
         id: reserva.id,
+        numero_reserva: reserva.numero_reserva,
         usuario: {
           nombre: reserva.usuario.nombre,
           correo: reserva.usuario.correo,
@@ -92,12 +143,15 @@ class ReservaService {
         estado: reserva.estado,
         fecha_hora: reserva.fecha_hora,
       };
-  
-      res.json(reservaResponse);
+    
+      return reservaResponse;
     } catch (error) {
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      console.error("Error al buscar reserva:", error);
+      throw new Error("Error en la búsqueda de reserva: " + error.message); 
     }
   }
+  
+
 
   async actualizarAprobacion(id, aprobacion) {
     try {

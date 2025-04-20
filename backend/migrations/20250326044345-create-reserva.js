@@ -9,6 +9,11 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      numero_reserva: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+      },
       usuarioid: {
         type: Sequelize.INTEGER,
         reference:{
