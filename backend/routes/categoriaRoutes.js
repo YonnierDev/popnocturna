@@ -24,12 +24,12 @@ router.put(
   CategoriaController.actualizarCategoria
 );
 router.delete(
-  '/categoria/:id', 
+  '/categoria/:id', autentiMiddleware, 
   validarRol(1, 2), 
   CategoriaController.eliminarCategoria
 );
 router.patch(
-  '/categoria/estado/:id', 
+  '/categoria/estado/:id', autentiMiddleware,
   validarRol(1, 2), 
   CategoriaController.actualizarEstado
 );
