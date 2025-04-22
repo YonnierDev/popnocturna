@@ -4,12 +4,12 @@ const router = express.Router();
 const autentiMiddleare = require("../middlewares/autentiMiddleware");
 const validarRol = require("../middlewares/validarRol");
 
-router.get("/reservas", autentiMiddleare, validarRol(1, 2, 3), ReservaController.listarReservas);
-router.get("/reserva/:numero_reserva", autentiMiddleare, validarRol(1, 2), ReservaController.buscarReserva);
+router.get("/reservas", autentiMiddleare, validarRol(1, 2, 3, 8), ReservaController.listarReservas);
+router.get("/reserva/:numero_reserva", autentiMiddleare, validarRol(1, 2, 3), ReservaController.buscarReserva);
 router.post("/reserva", autentiMiddleare, validarRol(1, 2, 8), ReservaController.crearReserva);
-router.put("/reserva/:id", autentiMiddleare, validarRol(1, 2), ReservaController.actualizarReserva);
+router.put("/reserva/:id", autentiMiddleare, validarRol(1, 2, 8), ReservaController.actualizarReserva);
 router.delete("/reserva/:id", autentiMiddleare, validarRol(1, 2), ReservaController.eliminarReserva);
-router.patch("/reserva/estado/:id", autentiMiddleare, validarRol(1, 2), ReservaController.actualizarEstado);
+router.patch("/reserva/estado/:id", autentiMiddleare, validarRol(1, 2, 3), ReservaController.actualizarEstado);
 
 //super Admin, Administrador, propietario
 router.patch("/reserva/aprobar/:numero_reserva", autentiMiddleare, validarRol(1, 2, 3), ReservaController.aprobarReserva);
