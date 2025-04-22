@@ -1,7 +1,6 @@
 const categoriasParaUsuarioService = require('../../service/usuariosService/categoriasParaUsuarioService');
 
 class CategoriaParaUsuarioController {
-  // Obtener todas las categorías con sus lugares
   async categoriasParaUsuario(req, res) {
       try {
           const categorias = await categoriasParaUsuarioService.categoriasConLugares();
@@ -11,7 +10,6 @@ class CategoriaParaUsuarioController {
       }
   }
 
-  // Obtener lugares por categoría específica
   async lugaresDeCadaCaregoria(req, res) {
       try {
         const { categoriaid } = req.params;  

@@ -1,30 +1,41 @@
 const { Lugar, Evento } = require("../../models");
 
 class PropietarioEventoReservaService {
-  async obtenerLugaresConEventos(usuarioid) {
+  async obtenerReservasEventoLugar(usuarioid) {
     try {
-      const lugares = await Lugar.findAll({
-        where: { usuarioid }, 
-        attributes: ['nombre','imagen'],
+      const reservas = await Reserva.findAll({
         include: [
           {
             model: Evento,
-            as: 'eventos',
-
-            where: {
-              estado: true 
-             },
-
-            attributes: ['nombre', 'fecha_hora'] 
-          }
-        ]
+            as: "evento",
+            attributes: ["nombre", "fecha_hora"],
+            include: [
+              {
+                model: Lugar,
+                as: "lugar",
+                attributes: ["nombre", "imagen"],
+                where: { usuarioid },
+              },
+            ],
+          },
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre", "apellido", "correo"],
+          },
+        ],
+        where: {
+          estado: true,
+        },
+        attributes: ["id", "fecha_hora", "aprobacion", "estado"],
       });
-
-      return lugares; 
+  
+      return reservas;
     } catch (error) {
-      return "Error al obtener lugares y eventos: " + error.message;
+      return "Error al obtener las reservas del propietario: " + error.message;
     }
   }
+  
 }
 
 module.exports = new PropietarioEventoReservaService();

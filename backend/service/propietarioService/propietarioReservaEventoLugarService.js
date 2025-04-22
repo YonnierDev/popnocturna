@@ -1,4 +1,4 @@
-const { Reserva, Evento, Lugar } = require("../../models");
+const { Reserva, Evento, Lugar, Usuario } = require("../../models");
 
 class PropietarioReservaEventoLugarService {
   async obtenerReservasEventoLugar(usuarioid) {
@@ -17,22 +17,62 @@ class PropietarioReservaEventoLugarService {
               },
             ],
           },
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre", "correo"],
+          },
         ],
-        where: {
-          "$evento.lugar.usuarioid$": usuarioid,
-        },
         where: {
           estado: true,
           "$evento.lugar.usuarioid$": usuarioid,
         },
-        attributes: ["id", "fecha_hora", "aprobacion", "estado"],
+        attributes: ["numero_reserva", "fecha_hora", "aprobacion", "estado"],
       });
-
+  
       return reservas;
     } catch (error) {
       return "Error al obtener las reservas del propietario: " + error.message;
     }
   }
+
+  async obtenerReservasEventoLugarPendientes(usuarioid) {
+    try {
+      const reservas = await Reserva.findAll({
+        include: [
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["nombre"],
+            include: [
+              {
+                model: Lugar,
+                as: "lugar",
+                attributes: ["nombre"],
+                where: { usuarioid }
+              }
+            ]
+          },
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre", "correo"]
+          }
+        ],
+        where: {
+          aprobacion: "pendiente",
+          estado: true
+        },
+        attributes: ["id","numero_reserva", "fecha_hora", "aprobacion", "estado"]
+      });
+  
+      return reservas;
+    } catch (error) {
+      throw new Error("Error al obtener reservas pendientes: " + error.message);
+    }
+  }
+  
+  
 }
 
 module.exports = new PropietarioReservaEventoLugarService();

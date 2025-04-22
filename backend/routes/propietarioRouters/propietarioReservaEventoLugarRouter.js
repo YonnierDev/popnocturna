@@ -11,4 +11,13 @@ router.get(
   propietarioReservaEventoLugarController.obtenerReservasEventoLugar
 );
 
+//reservas en pendiente
+router.get(
+  '/propietario/reservas/pendientes',
+  autentiMiddleware,
+  validarRol(3), 
+  propietarioReservaEventoLugarController.obtenerReservasPendientes
+);
+
+
 module.exports = router;

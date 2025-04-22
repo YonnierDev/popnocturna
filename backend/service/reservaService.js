@@ -1,60 +1,115 @@
-const { Reserva, Usuario, Evento } = require("../models");
+const { Reserva, Usuario, Evento, Lugar } = require("../models");
 const { v4: uuidv4 } = require("uuid");
 
 class ReservaService {
+
   async listarReservas() {
-    try {
-      const reservas = await Reserva.findAll({
-        attributes: [
-          "id",
-          "usuarioid",
-          "eventoid",
-          "fecha_hora",
-          "aprobacion",
-          "estado",
-          "numero_reserva",
-          "createdAt",
-          "updatedAt"
-        ],
-        include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["nombre", "correo"],
-          },
-          {
-            model: Evento,
-            as: "evento",
-            attributes: ["nombre", "fecha_hora"], 
-          },
-        ],
-      });
-  
-      return reservas;
-    } catch (error) {
-      console.error("Error al listar reservas:", error);
-      throw new Error("Error al obtener las reservas");
-    }
-  }
-  
-
-  async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
-
-    const ultimoNumeroReserva = await Reserva.max('numero_reserva'); // Obtén el último número de reserva
-    const ultimoNumero = ultimoNumeroReserva ? parseInt(ultimoNumeroReserva.split('-')[1]) : 0; // Extrae el número
-  
-    // Generar el siguiente número de reserva con el formato RES-XXXX
-    const nuevoNumeroReserva = `RES-${String(ultimoNumero + 1).padStart(4, '0')}`;
-  
-    return await Reserva.create({
-      usuarioid,
-      eventoid,
-      fecha_hora,
-      aprobacion,
-      estado,
-      numero_reserva: nuevoNumeroReserva, 
+    return await Reserva.findAll({
+      include: [
+        { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
+        { model: Evento, as: "evento", attributes: ["nombre", "fecha_hora"],
+          include: [{ model: Lugar, as: "lugar", attributes: ["nombre"] }]
+        }
+      ],
+      attributes: ["id", "fecha_hora", "aprobacion", "estado", "numero_reserva"]
     });
   }
+
+  
+  async listarReservasPorPropietario(usuarioid) {
+    return await Reserva.findAll({
+      include: [
+        {
+          model: Evento,
+          as: "evento",
+          include: [
+            {
+              model: Lugar,
+              as: "lugar",
+              where: { usuarioid }, 
+              attributes: ["nombre"]
+            }
+          ],
+          attributes: ["nombre", "fecha_hora"]
+        },
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"]
+        }
+      ],
+      attributes: ["numero_reserva", "fecha_hora", "aprobacion", "estado", "numero_reserva"],
+      where: { estado: true }
+    });
+  }
+
+  async listarReservasPorUsuario(usuarioid) {
+    return await Reserva.findAll({
+      where: {
+        usuarioid,
+        estado: true,
+      },
+      include: [
+        {
+          model: Evento,
+          as: "evento",
+          attributes: ["nombre", "fecha_hora"],
+          include: [{
+            model: Lugar,
+            as: "lugar",
+            attributes: ["nombre"]
+          }]
+        }
+      ],
+      attributes: [ "numero_reserva", "fecha_hora", "aprobacion"],
+    });
+  }
+  
+  
+
+async verificarUsuario(usuarioid) {
+  return await Usuario.findOne({
+    where: {
+      id: usuarioid,
+      estado: true,
+    },
+  });
+}
+
+async verificarEvento(eventoid) {
+  return await Evento.findOne({
+    where: {
+      id: eventoid,
+      estado: true,
+    },
+    include: {
+      model: Lugar,
+      as: "lugar",
+      where: {
+        estado: true,
+      },
+    },
+  });
+}
+
+async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
+  const ultimoNumeroReserva = await Reserva.max("numero_reserva");
+
+  const ultimoNumero = ultimoNumeroReserva
+    ? parseInt(ultimoNumeroReserva.split("-")[1])
+    : 0;
+
+  const nuevoNumeroReserva = `RES-${String(ultimoNumero + 1).padStart(4, "0")}`;
+
+  return await Reserva.create({
+    usuarioid,
+    eventoid,
+    fecha_hora,
+    aprobacion,
+    estado,
+    numero_reserva: nuevoNumeroReserva,
+  });
+}
   
 
   async buscarReserva(id) {
@@ -75,8 +130,19 @@ class ReservaService {
   }
 
   async verificarEvento(eventoid) {
-    return await Evento.findByPk(eventoid);
+    const evento = await Evento.findOne({
+      where: { id: eventoid, estado: true },
+      include: {
+        model: Lugar,
+        as: "lugar",
+        attributes: ["id", "nombre", "usuarioid", "estado"],
+        where: { estado: true },
+      },
+    });
+  
+    return evento;
   }
+  
 
   async actualizarEstado(id, estado) {
     return await Reserva.update({ estado }, { where: { id } });
@@ -104,51 +170,39 @@ class ReservaService {
     return await this.listarReservas();
   }
 
-  async buscarReserva(numero_reserva) {
-    try {
-      console.log("Buscando reserva con numero_reserva:", numero_reserva);
-  
-      const reserva = await Reserva.findOne({
-        where: { numero_reserva }, // Buscar por el campo numero_reserva
-        include: [
-          {
-            model: Usuario,
-            as: 'usuario',
-            attributes: ['nombre', 'correo'], 
-          },
-          {
-            model: Evento,
-            as: 'evento',
-            attributes: ['descripcion', 'fecha_hora'], 
-          },
-        ],
-      });
-  
-      if (!reserva) {
-        console.log("No se encontró la reserva.");
-        return null;
-      }
-  
-      const reservaResponse = {
-        id: reserva.id,
-        numero_reserva: reserva.numero_reserva,
-        usuario: {
-          nombre: reserva.usuario.nombre,
-          correo: reserva.usuario.correo,
+  async buscarReservaPorId(id) {
+    return await Reserva.findByPk(id, {
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'correo'],
         },
-        evento: {
-          descripcion: reserva.evento.descripcion,
-          fecha_hora: reserva.evento.fecha_hora,
+        {
+          model: Evento,
+          as: 'evento',
+          attributes: ['nombre', 'fecha_hora'],
         },
-        estado: reserva.estado,
-        fecha_hora: reserva.fecha_hora,
-      };
-    
-      return reservaResponse;
-    } catch (error) {
-      console.error("Error al buscar reserva:", error);
-      throw new Error("Error en la búsqueda de reserva: " + error.message); 
-    }
+      ],
+    });
+  }
+  
+  async buscarReservaPorNumero(numero_reserva) {
+    return await Reserva.findOne({
+      where: { numero_reserva },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"],
+        },
+        {
+          model: Evento,
+          as: "evento",
+          attributes: ["nombre", "fecha_hora"],
+        },
+      ],
+    });
   }
   
 

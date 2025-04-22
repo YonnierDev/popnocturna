@@ -5,4 +5,7 @@ const autenriMiddleware = require('../../middlewares/autentiMiddleware')
 
 router.get('/usuarios/nombre/buscar', autenriMiddleware, ListarUsuarioController.listarUsuariosNombre);
 
+
+
+
 module.exports = router;
