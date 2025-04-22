@@ -38,21 +38,19 @@ class ReservaService {
           model: Evento,
           as: "evento",
           attributes: ["nombre", "fecha_hora"],
-          where: { estado: true },
           include: [
             {
               model: Lugar,
               as: "lugar",
               attributes: ["nombre"],
-              where: { usuarioid, estado: true }
+              where: { usuarioid }
             }
           ]
         },
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["nombre", "correo"],
-          where: { estado: true }
+          attributes: ["nombre", "correo"]
         }
       ],
       attributes: [
@@ -60,8 +58,7 @@ class ReservaService {
         "fecha_hora",
         "aprobacion",
         "estado"
-      ],
-      where: { estado: true }
+      ]
     });
   }
 
