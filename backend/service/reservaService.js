@@ -6,12 +6,27 @@ class ReservaService {
   async listarReservas() {
     return await Reserva.findAll({
       include: [
-        { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
-        { model: Evento, as: "evento", attributes: ["nombre", "fecha_hora"],
-          include: [{ model: Lugar, as: "lugar", attributes: ["nombre"] }]
+        { 
+          model: Usuario, 
+          as: "usuario", 
+          attributes: ["nombre", "correo"],
+          where: { estado: true }
+        },
+        { 
+          model: Evento, 
+          as: "evento", 
+          attributes: ["nombre", "fecha_hora"],
+          where: { estado: true },
+          include: [{ 
+            model: Lugar, 
+            as: "lugar", 
+            attributes: ["nombre"],
+            where: { estado: true }
+          }]
         }
       ],
-      attributes: ["id", "fecha_hora", "aprobacion", "estado", "numero_reserva"]
+      attributes: ["numero_reserva", "fecha_hora", "aprobacion", "estado"],
+      where: { estado: true }
     });
   }
 
@@ -22,46 +37,55 @@ class ReservaService {
         {
           model: Evento,
           as: "evento",
+          attributes: ["nombre", "fecha_hora"],
+          where: { estado: true },
           include: [
             {
               model: Lugar,
               as: "lugar",
-              where: { usuarioid }, 
-              attributes: ["nombre"]
+              attributes: ["nombre"],
+              where: { usuarioid, estado: true }
             }
-          ],
-          attributes: ["nombre", "fecha_hora"]
+          ]
         },
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["nombre", "correo"]
+          attributes: ["nombre", "correo"],
+          where: { estado: true }
         }
       ],
-      attributes: ["numero_reserva", "fecha_hora", "aprobacion", "estado", "numero_reserva"],
+      attributes: [
+        "numero_reserva",
+        "fecha_hora",
+        "aprobacion",
+        "estado"
+      ],
       where: { estado: true }
     });
   }
 
   async listarReservasPorUsuario(usuarioid) {
     return await Reserva.findAll({
-      where: {
-        usuarioid,
-        estado: true,
-      },
       include: [
         {
           model: Evento,
           as: "evento",
           attributes: ["nombre", "fecha_hora"],
+          where: { estado: true },
           include: [{
             model: Lugar,
             as: "lugar",
-            attributes: ["nombre"]
+            attributes: ["nombre", "ubicacion"],
+            where: { estado: true }
           }]
         }
       ],
-      attributes: [ "numero_reserva", "fecha_hora", "aprobacion"],
+      attributes: ["numero_reserva", "fecha_hora", "aprobacion"],
+      where: { 
+        usuarioid,
+        estado: true 
+      }
     });
   }
   
