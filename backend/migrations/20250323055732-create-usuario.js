@@ -1,72 +1,103 @@
 "use strict";
-/** @type {import('sequelize-cli').Migration} */
-module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("usuarios", {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
+
+const { Model } = require("sequelize");
+
+module.exports = (sequelize, DataTypes) => {
+  class Usuario extends Model {
+    static associate(models) {
+      Usuario.belongsTo(models.Rol, {
+        foreignKey: "rolid",
+        as: "rol",
+      });
+
+      Usuario.hasMany(models.Lugar, {
+        foreignKey: "usuarioid",
+        as: "lugares",
+      });
+
+      Usuario.hasMany(models.Reserva, {
+        foreignKey: "usuarioid",
+        as: "reservas",
+      });
+
+      Usuario.hasMany(models.Comentario, {
+        foreignKey: "usuarioid",
+        as: "comentarios",
+      });
+
+      Usuario.hasMany(models.Calificacion, {
+        foreignKey: "usuarioid",
+        as: "calificaciones",
+      });
+
+      Usuario.hasMany(models.Evento, {
+        foreignKey: "usuarioid",
+        as: "eventos",
+      });
+    }
+  }
+
+  Usuario.init(
+    {
       nombre: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       apellido: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       correo: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true,
+        validate: {
+          isEmail: true,
+        },
       },
       fecha_nacimiento: {
-        type: Sequelize.DATE,
+        type: DataTypes.DATE,
+        allowNull: false,
       },
       contrasena: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       genero: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       estado: {
-        type: Sequelize.BOOLEAN,
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
       },
       imagen: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       rolid: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 2,
         references: {
-          model: "rols",
-          key: "id",
+          model: "Rol",
+          key: "rolid",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
-      // Agregar el campo `usuarioid` (comentado por ahora)
-      /*
+      // Este campo adicional solo si es estrictamente necesario
       usuarioid: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'usuarios',
-          key: 'id'
-        }
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
-      */
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    });
-  },
+    },
+    {
+      sequelize,
+      modelName: "Usuario",
+      tableName: "usuarios",
+    }
+  );
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("usuarios");
-  },
+  return Usuario;
 };

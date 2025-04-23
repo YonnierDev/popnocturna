@@ -1,184 +1,82 @@
-const ComentarioService = require('../service/comentarioService');
+const comentarioService = require('../service/comentarioService');
 
 class ComentarioController {
-  // GET /comentarios
+
   async listarComentarios(req, res) {
+    const { id, rol } = req.usuario;
+
     try {
-      const usuarioid = req.usuario.id;
-      const rol = req.usuario.rolid;
-      
-      const comentarios = await ComentarioService.listarComentarios(usuarioid, rol);
-      res.json({
-        mensaje: "Comentarios obtenidos exitosamente",
-        datos: comentarios
-      });
+      const comentarios = await comentarioService.listarPorRol(id, rol);
+      res.json(comentarios);
     } catch (error) {
-      console.error('Error al listar comentarios:', error);
-      res.status(500).json({ 
-        mensaje: "Error al obtener comentarios",
-        error: error.message 
-      });
+      res.status(500).json({ error: error.message });
     }
   }
 
-  // GET /comentarios/evento/:eventoid
   async listarComentariosPorEvento(req, res) {
-    try {
-      const { eventoid } = req.params;
-      const usuarioid = req.usuario?.id;
-      const rol = req.usuario?.rolid || 8;
+    const { eventoid } = req.params;
+    const { limit, offset } = req.query;
 
-      const comentarios = await ComentarioService.listarComentariosPorEvento(eventoid, usuarioid, rol);
-      res.json({
-        mensaje: "Comentarios del evento obtenidos exitosamente",
-        datos: comentarios
+    try {
+      const comentarios = await comentarioService.listarComentariosPorEvento(eventoid, {
+        limit: parseInt(limit) || 10,
+        offset: parseInt(offset) || 0
       });
+      res.json(comentarios);
     } catch (error) {
-      console.error('Error al listar comentarios del evento:', error);
-      res.status(500).json({ 
-        mensaje: "Error al obtener comentarios del evento",
-        error: error.message 
-      });
+      res.status(500).json({ error: error.message });
     }
   }
 
-  // POST /comentario (solo usuarios rol 8)
   async crearComentario(req, res) {
     try {
-      const { eventoid, contenido } = req.body;
-      const usuarioid = req.usuario.id;
-      const rol = req.usuario.rol;
-
-      if (rol !== 8) {
-        return res.status(403).json({
-          mensaje: "Solo los usuarios pueden crear comentarios"
-        });
-      }
-
-      if (!contenido || contenido.trim() === "") {
-        return res.status(400).json({ 
-          mensaje: "El comentario no puede estar vacío" 
-        });
-      }
-
-      const nuevoComentario = await ComentarioService.crearComentario({
-        usuarioid,
-        eventoid,
-        contenido
+      const nuevoComentario = await comentarioService.crearComentario({
+        ...req.body,
+        usuarioid: req.usuario.id
       });
-
-      res.status(201).json({
-        mensaje: "Comentario creado exitosamente",
-        datos: nuevoComentario
-      });
+      res.status(201).json(nuevoComentario);
     } catch (error) {
-      res.status(500).json({ 
-        mensaje: error.message
-      });
+      res.status(400).json({ error: error.message });
     }
   }
 
-  // PUT /comentario/:id
   async actualizarComentario(req, res) {
+    const { id } = req.params;
+    const { contenido } = req.body;
+    const { id: usuarioid, rol } = req.usuario;
+
     try {
-      const { id } = req.params;
-      const { contenido } = req.body;
-      const usuarioid = req.usuario.id;
-      const rol = req.usuario.rolid;
-
-      if (!contenido || contenido.trim() === "") {
-        return res.status(400).json({ 
-          mensaje: "El comentario no puede estar vacío" 
-        });
-      }
-
-      await ComentarioService.actualizarComentario(id, usuarioid, contenido, rol);
-
-      res.json({ 
-        mensaje: "Comentario actualizado correctamente" 
-      });
+      const actualizado = await comentarioService.actualizarComentario(id, usuarioid, contenido, rol);
+      res.json({ mensaje: 'Comentario actualizado', actualizado });
     } catch (error) {
-      console.error('Error al actualizar comentario:', error);
-      if (error.message.includes('No tienes permiso')) {
-        return res.status(403).json({ mensaje: error.message });
-      }
-      res.status(500).json({ 
-        mensaje: "Error al actualizar el comentario",
-        error: error.message 
-      });
+      res.status(403).json({ error: error.message });
     }
   }
 
-  // DELETE /comentario/:id (solo admin y propietario)
   async eliminarComentario(req, res) {
-    try {
-      const { id } = req.params;
-      const usuarioid = req.usuario.id;
-      const rol = req.usuario.rolid;
+    const { id } = req.params;
+    const { id: usuarioid, rol } = req.usuario;
 
-      await ComentarioService.eliminarComentario(id, usuarioid, rol);
-      
-      res.json({ 
-        mensaje: "Comentario eliminado correctamente" 
-      });
+    try {
+      await comentarioService.eliminarComentario(id, usuarioid, rol);
+      res.status(204).send(); 
     } catch (error) {
-      console.error('Error al eliminar comentario:', error);
-      if (error.message.includes('No tienes permiso')) {
-        return res.status(403).json({ mensaje: error.message });
-      }
-      res.status(500).json({ 
-        mensaje: "Error al eliminar el comentario",
-        error: error.message 
-      });
+      res.status(403).json({ error: error.message });
     }
   }
 
-  // POST /comentario/:id/reportar (solo propietarios)
   async reportarComentario(req, res) {
+    const { id } = req.params;
+    const { motivo_reporte } = req.body;
+    const { id: usuarioid } = req.usuario;
+
     try {
-      const { id } = req.params;
-      const { motivo_reporte } = req.body;
-      const usuarioid = req.usuario.id;
-
-      if (!motivo_reporte || motivo_reporte.trim() === "") {
-        return res.status(400).json({ 
-          mensaje: "El motivo del reporte es requerido" 
-        });
-      }
-
-      // Validar que el usuario es propietario del evento relacionado
-      const comentario = await Comentario.findByPk(id, {
-        include: [{
-          model: Evento,
-          as: 'evento',
-          attributes: ['propietario_id']
-        }]
-      });
-
-      if (!comentario?.evento || comentario.evento.propietario_id !== usuarioid) {
-        return res.status(403).json({
-          mensaje: "Solo el propietario del evento puede reportar comentarios"
-        });
-      }
-
-      const resultado = await ComentarioService.reportarComentario(
-        id,
-        motivo_reporte
-      );
-
-      res.status(200).json({
-        mensaje: "Comentario reportado exitosamente",
-        datos: resultado
-      });
+      await comentarioService.reportarComentario(id, motivo_reporte, usuarioid);
+      res.status(200).json({ mensaje: 'Comentario reportado correctamente' });
     } catch (error) {
-      res.status(500).json({
-        mensaje: "Error al reportar el comentario",
-        error: error.message 
-      });
+      res.status(403).json({ error: error.message });
     }
   }
 }
 
-// Exportar una instancia de la clase
-const comentarioController = new ComentarioController();
-module.exports = comentarioController;
+module.exports = new ComentarioController();

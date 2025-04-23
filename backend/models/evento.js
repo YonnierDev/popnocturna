@@ -25,11 +25,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "calificaciones",
       });
 
-      // Comentar la relación con Usuario
-      // Evento.belongsTo(models.Usuario, {
-      //   foreignKey: "usuarioid",
-      //   as: "usuario",
-      // });
+      Evento.belongsTo(models.Usuario, {
+        foreignKey: "usuarioid",
+        as: "usuario",
+      });
     }
   }
 
@@ -64,12 +63,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: true,
       },
 
-      // Comentar el campo usuarioid
-      // usuarioid: {
-      //   type: DataTypes.INTEGER,
-      //   allowNull: false,
-      // },
-      
+      usuarioid: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       sequelize,

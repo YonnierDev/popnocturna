@@ -1,12 +1,39 @@
-const EventoController = require('../controllers/eventoController');
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const EventoController = require("../controllers/eventoController");
+const autentiMiddleware = require("../middlewares/autentiMiddleware");
 
-router.get('/eventos', EventoController.listarEventos);
-router.get('/evento/:id', EventoController.buscarEvento);
-router.post('/evento', EventoController.crearEvento);
-router.put('/evento/:id', EventoController.actualizarEvento);
-router.delete('/evento/:id', EventoController.eliminarEvento);
-router.patch("/evento/estado/:id", EventoController.actualizarEstado);
+// Listar eventos activos
+router.get("/eventos", autentiMiddleware, EventoController.listarEventos);
+
+// Ver evento por ID
+router.get("/evento/:id", autentiMiddleware, EventoController.verEvento);
+
+// Crear evento
+router.post("/evento", autentiMiddleware, EventoController.crearEvento);
+
+// Actualizar evento
+router.put("/evento/:id", autentiMiddleware, EventoController.actualizarEvento);
+
+// Eliminar evento
+router.delete(
+  "/evento/:id",
+  autentiMiddleware,
+  EventoController.eliminarEvento
+);
+
+// Ver comentarios de un evento
+router.get(
+  "/evento/:eventoId/comentarios",
+  autentiMiddleware,
+  EventoController.verComentarios
+);
+
+// estado de evento (booleano)
+router.patch(
+  "/evento/estado/:id",
+  autentiMiddleware,
+  EventoController.cambiarEstadoEvento
+);
 
 module.exports = router;

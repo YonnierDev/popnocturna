@@ -29,12 +29,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "usuarioid",
         as: "calificaciones",
       });
-      
-      // Comentar esta parte temporalmente
-      // Usuario.hasMany(models.Evento, {
-      //   foreignKey: "eventoid",
-      //   as: "eventos", // Relación para indicar los eventos creados por el usuario
-      // });
+
+      Usuario.hasMany(models.Evento, {
+        foreignKey: "usuarioid",
+        as: "eventos",
+      });
     }
   }
 
@@ -73,9 +72,9 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       imagen: {
-              type: DataTypes.STRING,
-              allowNull: true,
-            },
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       rolid: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -87,11 +86,6 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      // Comentar el campo usuarioid temporalmente
-      // usuarioid: {
-      //   type: DataTypes.INTEGER,
-      //   allowNull: false,
-      // },
     },
     {
       sequelize,
