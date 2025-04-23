@@ -10,26 +10,25 @@ class ReservaService {
         { 
           model: Usuario, 
           as: "usuario", 
-          attributes: ["nombre", "correo"],
-          where: { estado: true }
+          attributes: ["nombre", "correo"]
+          // Ya no estamos filtrando por estado en Usuario
         },
         { 
           model: Evento, 
           as: "evento", 
           attributes: ["nombre", "fecha_hora"],
-          where: { estado: true },
           include: [{ 
             model: Lugar, 
             as: "lugar", 
-            attributes: ["nombre"],
-            where: { estado: true }
+            attributes: ["nombre"]
+
           }]
         }
       ],
       attributes: ["numero_reserva", "fecha_hora", "aprobacion", "estado"],
-      where: { estado: true }
     });
   }
+  
 
   
   async listarReservasPorPropietario(usuarioid) {

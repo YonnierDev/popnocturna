@@ -36,6 +36,7 @@ class ReservaController {
     }
   }
   
+  
   async actualizarEstado(req, res) {
     try {
       const { id } = req.params;
