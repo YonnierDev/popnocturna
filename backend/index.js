@@ -31,6 +31,7 @@ app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRou
 app.use("/api", require("./routes/propietarioRouters/propietarioReservaEventoLugarRouter"));
 app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
 app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
+app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"))
 
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
