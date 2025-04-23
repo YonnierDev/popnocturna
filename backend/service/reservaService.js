@@ -1,5 +1,6 @@
 const { Reserva, Usuario, Evento, Lugar } = require("../models");
 const { v4: uuidv4 } = require("uuid");
+const { Op } = require("sequelize");
 
 class ReservaService {
 
@@ -32,35 +33,44 @@ class ReservaService {
 
   
   async listarReservasPorPropietario(usuarioid) {
-    return await Reserva.findAll({
-      include: [
-        {
-          model: Evento,
-          as: "evento",
-          attributes: ["nombre", "fecha_hora"],
-          include: [
-            {
-              model: Lugar,
-              as: "lugar",
-              attributes: ["nombre"],
-              where: { usuarioid }
-            }
-          ]
-        },
-        {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["nombre", "correo"]
-        }
-      ],
-      attributes: [
-        "numero_reserva",
-        "fecha_hora",
-        "aprobacion",
-        "estado"
-      ]
-    });
+    try {
+      const reservas = await Reserva.findAll({
+        include: [
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["nombre", "fecha_hora"],
+            include: [
+              {
+                model: Lugar,
+                as: "lugar",
+                attributes: ["nombre", "usuarioid"],
+                // Aquí está la clave: traer solo los lugares del propietario
+                where: { usuarioid }
+              }
+            ]
+          },
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre", "correo"]
+          }
+        ],
+        attributes: [
+          "numero_reserva",
+          "fecha_hora",
+          "aprobacion",
+          "estado"
+        ]
+      });
+  
+      return reservas;
+    } catch (error) {
+      console.error("Error al listar reservas del propietario:", error);
+      throw new Error("No se pudieron obtener las reservas");
+    }
   }
+  
 
   async listarReservasPorUsuario(usuarioid) {
     return await Reserva.findAll({
