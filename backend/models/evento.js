@@ -24,6 +24,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "eventoid",
         as: "calificaciones",
       });
+
+      // Comentar la relación con Usuario
+      // Evento.belongsTo(models.Usuario, {
+      //   foreignKey: "usuarioid",
+      //   as: "usuario",
+      // });
     }
   }
 
@@ -57,6 +63,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+
+      // Comentar el campo usuarioid
+      // usuarioid: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: false,
+      // },
+      
     },
     {
       sequelize,

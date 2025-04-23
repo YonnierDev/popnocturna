@@ -1,60 +1,73 @@
-'use strict';
+"use strict";
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('eventos', {
+    await queryInterface.createTable("eventos", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       lugarid: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'lugares',
-          key: 'id'
+          model: "lugares",
+          key: "id",
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE' 
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       nombre: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       capacidad: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
       },
       precio: {
         type: Sequelize.DECIMAL,
-        allowNull: false
+        allowNull: false,
       },
       descripcion: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       fecha_hora: {
         type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
       },
       estado: {
         type: Sequelize.BOOLEAN,
-        defaultValue: true
+        defaultValue: true,
       },
+      // Agregar el campo `usuarioid` (comentado por ahora)
+      /*
+      usuarioid: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'usuarios',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
+      */
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('eventos');
-  }
+    await queryInterface.dropTable("eventos");
+  },
 };

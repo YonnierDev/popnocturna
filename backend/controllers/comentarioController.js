@@ -1,112 +1,184 @@
 const ComentarioService = require('../service/comentarioService');
 
 class ComentarioController {
+  // GET /comentarios
   async listarComentarios(req, res) {
     try {
-      const listaComentarios = await ComentarioService.listarComentariosConRelaciones();
-      res.json(listaComentarios);
+      const usuarioid = req.usuario.id;
+      const rol = req.usuario.rolid;
+      
+      const comentarios = await ComentarioService.listarComentarios(usuarioid, rol);
+      res.json({
+        mensaje: "Comentarios obtenidos exitosamente",
+        datos: comentarios
+      });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error });
+      console.error('Error al listar comentarios:', error);
+      res.status(500).json({ 
+        mensaje: "Error al obtener comentarios",
+        error: error.message 
+      });
     }
   }
 
-  async buscarComentario(req, res) {
+  // GET /comentarios/evento/:eventoid
+  async listarComentariosPorEvento(req, res) {
     try {
-      const { id } = req.params;
-      const comentario = await ComentarioService.buscarComentarioConRelaciones(id);
+      const { eventoid } = req.params;
+      const usuarioid = req.usuario?.id;
+      const rol = req.usuario?.rolid || 8;
 
-      if (!comentario) {
-        return res.status(404).json({ mensaje: "Comentario no encontrado" });
-      }
-
-      res.json(comentario);
+      const comentarios = await ComentarioService.listarComentariosPorEvento(eventoid, usuarioid, rol);
+      res.json({
+        mensaje: "Comentarios del evento obtenidos exitosamente",
+        datos: comentarios
+      });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio", error });
+      console.error('Error al listar comentarios del evento:', error);
+      res.status(500).json({ 
+        mensaje: "Error al obtener comentarios del evento",
+        error: error.message 
+      });
     }
   }
 
+  // POST /comentario (solo usuarios rol 8)
   async crearComentario(req, res) {
     try {
-      const { usuarioid, eventoid, contenido, fecha_hora } = req.body;
-      const estado = true;
+      const { eventoid, contenido } = req.body;
+      const usuarioid = req.usuario.id;
+      const rol = req.usuario.rol;
 
-      const usuarioExistente = await ComentarioService.verificarUsuario(usuarioid);
-      if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario seleccionado no existe" });
+      if (rol !== 8) {
+        return res.status(403).json({
+          mensaje: "Solo los usuarios pueden crear comentarios"
+        });
       }
 
       if (!contenido || contenido.trim() === "") {
-        return res.status(400).json({ mensaje: "El comentario no puede estar vacío" });
+        return res.status(400).json({ 
+          mensaje: "El comentario no puede estar vacío" 
+        });
       }
 
       const nuevoComentario = await ComentarioService.crearComentario({
         usuarioid,
         eventoid,
-        contenido,
-        fecha_hora,
-        estado
+        contenido
       });
 
-      res.status(201).json(nuevoComentario);
+      res.status(201).json({
+        mensaje: "Comentario creado exitosamente",
+        datos: nuevoComentario
+      });
     } catch (error) {
-      console.error("Error al crear comentario:", error);
-      res.status(500).json({ mensaje: "Error en el servicio", error: error.message });
+      res.status(500).json({ 
+        mensaje: error.message
+      });
     }
   }
 
-  async cambiarEstadoComentario(req, res) {
-    try {
-      const { id } = req.params;
-      const { estado } = req.body;
-
-      const resultado = await ComentarioService.actualizarEstadoComentario(id, estado);
-
-      if (resultado[0] === 0) {
-        return res.status(404).json({ mensaje: "Comentario no encontrado" });
-      }
-
-      res.json({ mensaje: "Estado del comentario actualizado correctamente" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error al actualizar estado", error });
-    }
-  }
-
+  // PUT /comentario/:id
   async actualizarComentario(req, res) {
     try {
       const { id } = req.params;
-      const { usuarioid, contenido, fecha_hora, estado } = req.body;
+      const { contenido } = req.body;
+      const usuarioid = req.usuario.id;
+      const rol = req.usuario.rolid;
 
-      const comentario = await ComentarioService.buscarComentario(id);
-      if (!comentario) {
-        return res.status(404).json({ mensaje: "Comentario no encontrado" });
+      if (!contenido || contenido.trim() === "") {
+        return res.status(400).json({ 
+          mensaje: "El comentario no puede estar vacío" 
+        });
       }
 
-      await ComentarioService.actualizarComentario(id, usuarioid, contenido, fecha_hora, estado);
-      res.json({ mensaje: "Comentario actualizado correctamente" });
+      await ComentarioService.actualizarComentario(id, usuarioid, contenido, rol);
+
+      res.json({ 
+        mensaje: "Comentario actualizado correctamente" 
+      });
     } catch (error) {
-      res.status(500).json({ mensaje: "Error al actualizar comentario", error: error.message });
+      console.error('Error al actualizar comentario:', error);
+      if (error.message.includes('No tienes permiso')) {
+        return res.status(403).json({ mensaje: error.message });
+      }
+      res.status(500).json({ 
+        mensaje: "Error al actualizar el comentario",
+        error: error.message 
+      });
     }
   }
 
+  // DELETE /comentario/:id (solo admin y propietario)
   async eliminarComentario(req, res) {
     try {
       const { id } = req.params;
+      const usuarioid = req.usuario.id;
+      const rol = req.usuario.rolid;
 
-      const comentario = await ComentarioService.buscarComentario(id);
-      if (!comentario) {
-        return res.status(404).json({ mensaje: "Comentario no encontrado" });
+      await ComentarioService.eliminarComentario(id, usuarioid, rol);
+      
+      res.json({ 
+        mensaje: "Comentario eliminado correctamente" 
+      });
+    } catch (error) {
+      console.error('Error al eliminar comentario:', error);
+      if (error.message.includes('No tienes permiso')) {
+        return res.status(403).json({ mensaje: error.message });
+      }
+      res.status(500).json({ 
+        mensaje: "Error al eliminar el comentario",
+        error: error.message 
+      });
+    }
+  }
+
+  // POST /comentario/:id/reportar (solo propietarios)
+  async reportarComentario(req, res) {
+    try {
+      const { id } = req.params;
+      const { motivo_reporte } = req.body;
+      const usuarioid = req.usuario.id;
+
+      if (!motivo_reporte || motivo_reporte.trim() === "") {
+        return res.status(400).json({ 
+          mensaje: "El motivo del reporte es requerido" 
+        });
       }
 
-      await ComentarioService.eliminarComentario(id);
-      res.json({ mensaje: "Comentario eliminado correctamente" });
+      // Validar que el usuario es propietario del evento relacionado
+      const comentario = await Comentario.findByPk(id, {
+        include: [{
+          model: Evento,
+          as: 'evento',
+          attributes: ['propietario_id']
+        }]
+      });
+
+      if (!comentario?.evento || comentario.evento.propietario_id !== usuarioid) {
+        return res.status(403).json({
+          mensaje: "Solo el propietario del evento puede reportar comentarios"
+        });
+      }
+
+      const resultado = await ComentarioService.reportarComentario(
+        id,
+        motivo_reporte
+      );
+
+      res.status(200).json({
+        mensaje: "Comentario reportado exitosamente",
+        datos: resultado
+      });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({
+        mensaje: "Error al reportar el comentario",
+        error: error.message 
+      });
     }
   }
 }
 
-module.exports = new ComentarioController();
+// Exportar una instancia de la clase
+const comentarioController = new ComentarioController();
+module.exports = comentarioController;
