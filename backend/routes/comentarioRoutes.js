@@ -1,41 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const comentarioController = require('../controllers/comentarioController');
-const autentiMiddleware = require('../middlewares/autentiMiddleware');
-const validarRol = require('../middlewares/validarRol');
+const comentarioController = require("../controllers/comentarioController");
+const autentiMiddleware = require("../middlewares/autentiMiddleware");
+const { verificarRol } = require("../middlewares/rolMiddleware");
 
+// Ruta para listar comentarios por evento
 router.get('/comentarios/evento/:eventoid', 
   autentiMiddleware,
-  comentarioController.listarComentariosPorEvento
+  comentarioController.obtenerPorEvento
 );
 
-router.get('/comentarios', 
-  autentiMiddleware, 
-  comentarioController.listarComentarios
-);
-
+// Ruta para crear un nuevo comentario (solo usuarios con rol 8)
 router.post('/comentario', 
-  autentiMiddleware, 
-  validarRol(8), 
-  comentarioController.crearComentario
+  autentiMiddleware,
+  verificarRol([8]),
+  comentarioController.crear
 );
 
+// Ruta para actualizar un comentario (solo el usuario dueño del comentario o admin)
 router.put('/comentario/:id', 
-  autentiMiddleware, 
-  validarRol(8), 
-  comentarioController.actualizarComentario
+  autentiMiddleware,
+  comentarioController.actualizar
 );
 
+// Ruta para eliminar un comentario (admin/superadmin pueden eliminar cualquier comentario,
+// usuarios pueden eliminar sus propios comentarios)
 router.delete('/comentario/:id', 
-  autentiMiddleware, 
-  validarRol(1, 2), 
-  comentarioController.eliminarComentario
+  autentiMiddleware,
+  verificarRol([1, 2, 8]),
+  comentarioController.eliminar
 );
 
+// Ruta para reportar un comentario (solo propietario)
 router.post('/comentario/:id/reportar',
   autentiMiddleware,
-  validarRol(3),
-  comentarioController.reportarComentario
+  verificarRol([3]),
+  comentarioController.reportar
+);
+
+// Ruta para listar comentarios reportados (solo admin y superadmin)
+router.get('/comentario/reportados',
+  autentiMiddleware,
+  verificarRol([1, 2]),
+  comentarioController.listarReportados
+);
+
+// Ruta para actualizar estado de comentario reportado (solo admin y superadmin)
+router.put('/comentario/:id/estado',
+  autentiMiddleware,
+  verificarRol([1, 2]),
+  comentarioController.actualizarEstado
 );
 
 module.exports = router;

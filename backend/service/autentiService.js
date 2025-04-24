@@ -89,21 +89,37 @@ class AutentiService {
   }
 
   static async login({ correo, contrasena }) {
+    console.log('=== Inicio de login ===');
+    console.log('Datos recibidos:', { correo });
+    
     const usuario = await UsuarioService.buscarPorCorreo(correo);
     if (!usuario || !usuario.estado) {
+      console.log('Error: Usuario no encontrado o no validado');
       throw new Error("Usuario no validado o no existe");
     }
 
     const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValido) {
+      console.log('Error: Contraseña incorrecta');
       throw new Error("Contraseña incorrecta");
     }
 
+    const payload = { 
+      id: usuario.id, 
+      correo: usuario.correo, 
+      rol: usuario.rolid 
+    };
+    console.log('Payload para token:', payload);
+    
+    const secret = process.env.JWT_SECRET || "secreto";
+    console.log('Secret usado para token:', secret);
+    
     const token = jwt.sign(
-      { id: usuario.id, correo: usuario.correo, rol: usuario.rolid },
-      process.env.JWT_SECRET || "secreto",
+      payload,
+      secret,
       { expiresIn: "2h" }
     );
+    console.log('Token generado:', token);
 
     return { token, usuario };
   }

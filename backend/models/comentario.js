@@ -39,6 +39,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      aprobacion: {
+        type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado'),
+        allowNull: true,
+      },
+      motivo_reporte: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       sequelize,

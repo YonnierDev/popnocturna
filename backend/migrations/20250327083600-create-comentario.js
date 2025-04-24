@@ -41,6 +41,10 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         defaultValue: true
       },
+      motivo_reporte: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
