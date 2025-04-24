@@ -4,6 +4,12 @@ const comentarioController = require("../controllers/comentarioController");
 const autentiMiddleware = require("../middlewares/autentiMiddleware");
 const { verificarRol } = require("../middlewares/rolMiddleware");
 
+// Ruta para obtener comentarios según el rol del usuario
+router.get('/comentarios',
+  autentiMiddleware,
+  comentarioController.obtenerComentarios
+);
+
 // Ruta para listar comentarios por evento
 router.get('/comentarios/evento/:eventoid', 
   autentiMiddleware,

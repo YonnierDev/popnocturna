@@ -33,19 +33,26 @@ class ComentarioService {
   async listarComentariosPropietario(propietarioId) {
     return await Comentario.findAll({
       include: [
-        { model: Usuario, as: "usuario", attributes: ["nombre"] },
+        { 
+          model: Usuario, 
+          as: "usuario", 
+          attributes: ["id", "nombre", "correo"] 
+        },
         {
           model: Evento,
           as: "evento",
-          attributes: ["nombre"],
+          required: true,
+          attributes: ["id", "nombre", "fecha_hora"],
           include: {
             model: Lugar,
             as: "lugar",
-            attributes: ["nombre"],
-            where: { usuarioid: propietarioId },
-          },
-        },
+            required: true,
+            attributes: ["id", "nombre", "usuarioid"],
+            where: { usuarioid: propietarioId }
+          }
+        }
       ],
+      order: [['fecha_hora', 'DESC']]
     });
   }
 

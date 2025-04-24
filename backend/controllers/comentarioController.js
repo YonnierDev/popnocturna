@@ -182,6 +182,38 @@ class ComentarioController {
             });
         }
     }
+
+    // Obtener comentarios según el rol del usuario
+    async obtenerComentarios(req, res) {
+        try {
+            const { id: usuarioid, rol } = req.usuario;
+            let comentarios;
+
+            if ([1, 2].includes(rol)) {
+                // Admin y SuperAdmin ven todos los comentarios
+                comentarios = await ComentarioService.listarComentariosAdmin();
+            } else if (rol === 3) {
+                // Propietarios ven solo comentarios de sus eventos
+                comentarios = await ComentarioService.listarComentariosPropietario(usuarioid);
+            } else if (rol === 8) {
+                // Usuarios ven solo sus propios comentarios
+                comentarios = await ComentarioService.listarComentariosUsuario(usuarioid);
+            } else {
+                return res.status(403).json({ mensaje: "No tienes permiso para ver los comentarios" });
+            }
+
+            res.json({
+                mensaje: "Comentarios obtenidos exitosamente",
+                comentarios
+            });
+        } catch (error) {
+            console.error('Error al obtener comentarios:', error);
+            res.status(500).json({ 
+                mensaje: "Error al obtener los comentarios",
+                error: error.message 
+            });
+        }
+    }
 }
 
 module.exports = new ComentarioController();
