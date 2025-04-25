@@ -1,4 +1,3 @@
-
 # 🌃 Popayán Nocturna - Backend
 
 Backend del sistema **Popayán Nocturna**, una plataforma para la gestión de lugares turísticos y experiencias nocturnas en la ciudad de Popayán. Este sistema permite a los usuarios registrarse, reservar lugares, ganar recompensas y recibir notificaciones, todo administrado mediante roles y un panel de control completo.
@@ -151,3 +150,227 @@ Este proyecto es open-source. Siéntete libre de colaborar, usar y mejorar el c�
 ---
 
 > Proyecto desarrollado en el SENA – 2025. Inspirado en la magia nocturna de Popayán 🌙
+
+# API de Comentarios
+
+## Estructura de Estados
+
+### Estado de Visibilidad
+- `estado: boolean`
+  - `true`: Comentario visible
+  - `false`: Comentario oculto
+
+### Estado de Aprobación
+- `aprobacion: ENUM`
+  - `'pendiente'`: Comentario reportado, esperando revisión
+  - `'aceptado'`: Comentario reportado y aprobado
+  - `'rechazado'`: Comentario reportado y rechazado
+
+## Endpoints Disponibles
+
+### 1. Listar Comentarios por Evento
+- **Ruta**: `GET /api/comentarios/evento/:eventoid`
+- **Roles**: Todos los roles autenticados
+- **Descripción**: Obtiene los comentarios de un evento específico
+- **Respuesta**:
+```json
+[
+  {
+    "id": number,
+    "contenido": string,
+    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
+    "usuario": {
+      "id": number,
+      "nombre": string
+    }
+  }
+]
+```
+
+### 2. Listar Todos los Comentarios
+- **Ruta**: `GET /api/comentarios`
+- **Roles**: 
+  - 1,2 (SuperAdmin, Admin): ven todos los comentarios
+  - 3 (Propietario): ven comentarios de sus lugares
+  - 8 (Usuario): ven sus propios comentarios
+- **Descripción**: Lista comentarios según el rol del usuario
+
+### 3. Crear Comentario
+- **Ruta**: `POST /api/comentario`
+- **Roles**: 8 (Usuario)
+- **Body**: 
+```json
+{
+  "eventoid": number,
+  "contenido": string
+}
+```
+- **Respuesta**:
+```json
+{
+  "id": number,
+  "contenido": string,
+  "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
+  "estado": true,
+  "aprobacion": null
+}
+```
+
+### 4. Actualizar Comentario
+- **Ruta**: `PUT /api/comentario/:id`
+- **Roles**: 
+  - 1,2 (SuperAdmin, Admin): pueden actualizar cualquier comentario
+  - 8 (Usuario): solo pueden actualizar sus propios comentarios
+- **Body**: 
+```json
+{
+  "contenido": string
+}
+```
+- **Respuesta**:
+```json
+{
+  "mensaje": "Comentario actualizado exitosamente",
+  "comentario": {
+    "id": number,
+    "contenido": string,
+    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ"
+  }
+}
+```
+
+### 5. Eliminar Comentario
+- **Ruta**: `DELETE /api/comentario/:id`
+- **Roles**:
+  - 1,2 (SuperAdmin, Admin): pueden eliminar cualquier comentario
+  - 8 (Usuario): solo pueden eliminar sus propios comentarios
+- **Respuesta**:
+```json
+{
+  "mensaje": "Comentario eliminado exitosamente",
+  "comentario": {
+    "id": number,
+    "contenido": string,
+    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ"
+  }
+}
+```
+
+### 6. Reportar Comentario
+- **Ruta**: `POST /api/comentario/:id/reportar`
+- **Roles**: 3 (Propietario)
+- **Body**: 
+```json
+{
+  "motivo": string
+}
+```
+- **Respuesta**:
+```json
+{
+  "mensaje": "Comentario reportado exitosamente",
+  "comentario": {
+    "id": number,
+    "estado": "pendiente",
+    "contenido": string,
+    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
+    "motivo_reporte": string
+  }
+}
+```
+
+### 7. Ver Comentarios Reportados
+- **Ruta**: `GET /api/comentario/reportados`
+- **Roles**: 1,2 (SuperAdmin, Admin)
+- **Respuesta**:
+```json
+{
+  "mensaje": "Comentarios reportados pendientes de revisión",
+  "total": number,
+  "comentarios": [
+    {
+      "id": number,
+      "contenido": string,
+      "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
+      "motivo_reporte": string,
+      "usuario": {
+        "id": number,
+        "nombre": string,
+        "correo": string
+      },
+      "evento": {
+        "id": number,
+        "nombre": string,
+        "descripcion": string,
+        "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
+        "lugar": {
+          "id": number,
+          "nombre": string,
+          "propietario": {
+            "id": number,
+            "nombre": string,
+            "correo": string
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+### 8. Actualizar Estado de Comentario Reportado
+- **Ruta**: `PUT /api/comentario/:id/estado`
+- **Roles**: 1,2 (SuperAdmin, Admin)
+- **Body**: 
+```json
+{
+  "estado": "aceptado" | "rechazado"
+}
+```
+- **Respuesta**:
+```json
+{
+  "mensaje": "Estado del comentario actualizado exitosamente",
+  "comentario": {
+    "id": number,
+    "estado": string,
+    "contenido": string,
+    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
+    "motivo_reporte": string
+  }
+}
+```
+
+## Códigos de Error Comunes
+
+- `400`: Solicitud incorrecta
+- `403`: No autorizado
+- `404`: Recurso no encontrado
+- `500`: Error del servidor
+
+## Notas de Implementación
+
+1. Los comentarios nuevos se crean con:
+   - `estado: true`
+   - `aprobacion: null`
+
+2. Al reportar un comentario:
+   - Se mantiene `estado: true`
+   - Se establece `aprobacion: 'pendiente'`
+   - Se guarda el `motivo_reporte`
+
+3. Al aprobar/rechazar:
+   - Se mantiene `estado: true`
+   - Se cambia `aprobacion` a `'aceptado'` o `'rechazado'`
+
+4. Al eliminar:
+   - Se establece `estado: false`
+
+## Estado de Producción
+
+✅ Todos los endpoints están implementados y probados  
+✅ La documentación está completa y actualizada  
+✅ Los roles y permisos están correctamente configurados  
+✅ El manejo de estados de comentarios está funcionando  
+✅ Las respuestas JSON están estandarizadas  
+✅ Los errores están manejados apropiadamente
