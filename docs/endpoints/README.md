@@ -1,0 +1,299 @@
+# 📚 Documentación de Endpoints - Popayán Nocturna
+
+## 🔐 Autenticación
+
+### Login
+- **POST** `/auth/login`
+- **Descripción**: Inicio de sesión de usuarios
+- **Body**:
+```json
+{
+  "correo": "string",
+  "contrasena": "string"
+}
+```
+- **Respuesta**:
+```json
+{
+  "token": "string",
+  "usuario": {
+    "id": "number",
+    "nombre": "string",
+    "correo": "string",
+    "rolid": "number"
+  }
+}
+```
+
+### Registro
+- **POST** `/auth/registro`
+- **Descripción**: Registro de nuevos usuarios
+- **Body**:
+```json
+{
+  "nombre": "string",
+  "correo": "string",
+  "contrasena": "string",
+  "rolid": "number"
+}
+```
+- **Respuesta**:
+```json
+{
+  "mensaje": "Usuario registrado exitosamente",
+  "usuario": {
+    "id": "number",
+    "nombre": "string",
+    "correo": "string",
+    "rolid": "number"
+  }
+}
+```
+
+## 👥 Usuarios
+
+### Obtener Perfil
+- **GET** `/usuarios/perfil`
+- **Descripción**: Obtener información del usuario autenticado
+- **Headers**: `Authorization: Bearer <token>`
+- **Respuesta**:
+```json
+{
+  "id": "number",
+  "nombre": "string",
+  "correo": "string",
+  "rolid": "number",
+  "imagen": "string"
+}
+```
+
+### Actualizar Perfil
+- **PUT** `/usuarios/perfil`
+- **Descripción**: Actualizar información del usuario
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**:
+```json
+{
+  "nombre": "string",
+  "imagen": "File"
+}
+```
+
+## 🌃 Eventos
+
+### Listar Eventos
+- **GET** `/eventos`
+- **Descripción**: Obtener lista de eventos
+- **Query Params**:
+  - `page`: número de página
+  - `limit`: elementos por página
+  - `categoria`: filtro por categoría
+- **Respuesta**:
+```json
+{
+  "total": "number",
+  "pagina": "number",
+  "porPagina": "number",
+  "eventos": [
+    {
+      "id": "number",
+      "nombre": "string",
+      "descripcion": "string",
+      "fecha": "string",
+      "imagen": "string",
+      "categoria": {
+        "id": "number",
+        "nombre": "string"
+      }
+    }
+  ]
+}
+```
+
+### Crear Evento
+- **POST** `/eventos`
+- **Descripción**: Crear nuevo evento
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**:
+```json
+{
+  "nombre": "string",
+  "descripcion": "string",
+  "fecha": "string",
+  "categoriaid": "number",
+  "imagen": "File"
+}
+```
+
+## ⭐ Calificaciones
+
+### Listar Calificaciones
+- **GET** `/calificaciones`
+- **Descripción**: Obtener lista de calificaciones según rol
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Params**:
+  - `page`: número de página
+  - `limit`: elementos por página
+- **Permisos**:
+  - Admin: todas las calificaciones
+  - Propietario: calificaciones de sus eventos
+  - Usuario: sus propias calificaciones
+
+### Crear Calificación
+- **POST** `/calificaciones`
+- **Descripción**: Crear nueva calificación
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**:
+```json
+{
+  "eventoid": "number",
+  "puntuacion": "number"
+}
+```
+- **Validaciones**:
+  - Puntuación entre 1 y 5
+  - Usuario no puede ser propietario
+
+## 💬 Comentarios
+
+### Listar Comentarios
+- **GET** `/comentarios`
+- **Descripción**: Obtener lista de comentarios
+- **Query Params**:
+  - `eventoid`: filtro por evento
+  - `page`: número de página
+  - `limit`: elementos por página
+
+### Crear Comentario
+- **POST** `/comentarios`
+- **Descripción**: Crear nuevo comentario
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**:
+```json
+{
+  "eventoid": "number",
+  "contenido": "string"
+}
+```
+
+## 📝 Reservas
+
+### Listar Reservas
+- **GET** `/reservas`
+- **Descripción**: Obtener lista de reservas
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Params**:
+  - `page`: número de página
+  - `limit`: elementos por página
+
+### Crear Reserva
+- **POST** `/reservas`
+- **Descripción**: Crear nueva reserva
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**:
+```json
+{
+  "eventoid": "number",
+  "fecha": "string",
+  "cantidad": "number"
+}
+```
+
+## 🔔 Notificaciones
+
+### Listar Notificaciones
+- **GET** `/notificaciones`
+- **Descripción**: Obtener lista de notificaciones
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Params**:
+  - `page`: número de página
+  - `limit`: elementos por página
+
+### Marcar como Leída
+- **PUT** `/notificaciones/:id/leer`
+- **Descripción**: Marcar notificación como leída
+- **Headers**: `Authorization: Bearer <token>`
+
+## 🎁 Recompensas
+
+### Listar Recompensas
+- **GET** `/recompensas`
+- **Descripción**: Obtener lista de recompensas disponibles
+- **Headers**: `Authorization: Bearer <token>`
+
+### Canjear Recompensa
+- **POST** `/recompensas/:id/canjear`
+- **Descripción**: Canjear una recompensa
+- **Headers**: `Authorization: Bearer <token>`
+
+## 📊 Dashboard
+
+### Estadísticas Generales
+- **GET** `/dashboard/estadisticas`
+- **Descripción**: Obtener estadísticas generales
+- **Headers**: `Authorization: Bearer <token>`
+- **Permisos**: Solo administradores
+
+### Estadísticas por Evento
+- **GET** `/dashboard/eventos/:id/estadisticas`
+- **Descripción**: Obtener estadísticas de un evento
+- **Headers**: `Authorization: Bearer <token>`
+- **Permisos**: Administradores y propietarios del evento
+
+## 🔒 Códigos de Estado
+
+- `200`: OK
+- `201`: Creado
+- `400`: Solicitud incorrecta
+- `401`: No autorizado
+- `403`: Prohibido
+- `404`: No encontrado
+- `500`: Error del servidor
+
+## 📝 Notas para Frontend
+
+1. **Autenticación**:
+   - Guardar token en localStorage/sessionStorage
+   - Incluir token en headers: `Authorization: Bearer <token>`
+   - Manejar expiración del token
+
+2. **Paginación**:
+   - Implementar paginación en todas las listas
+   - Usar query params: `page` y `limit`
+
+3. **Manejo de Errores**:
+   - Mostrar mensajes de error amigables
+   - Manejar códigos de estado HTTP
+   - Implementar reintentos para errores 500
+
+4. **Carga de Archivos**:
+   - Usar FormData para subir imágenes
+   - Mostrar previsualización antes de subir
+   - Manejar tipos y tamaños de archivo
+
+5. **Roles y Permisos**:
+   - Ocultar/mostrar funcionalidades según rol
+   - Validar permisos antes de acciones
+   - Manejar redirecciones según rol
+
+## 🔄 Flujos de Trabajo
+
+1. **Registro y Login**:
+   - Validar correo único
+   - Enviar correo de verificación
+   - Redirigir según rol después de login
+
+2. **Reservas**:
+   - Verificar disponibilidad
+   - Calcular puntos de recompensa
+   - Enviar confirmación por correo
+
+3. **Calificaciones**:
+   - Validar puntuación
+   - Verificar permisos por rol
+   - Actualizar promedio del evento
+
+4. **Notificaciones**:
+   - Marcar como leídas
+   - Actualizar contador en tiempo real
+   - Filtrar por tipo y estado 

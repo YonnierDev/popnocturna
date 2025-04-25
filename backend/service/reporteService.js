@@ -124,7 +124,7 @@ class ReporteService {
         }
     }
 
-    // Métodos para reportes de lugares
+    // Métodos para ver lugares en estado pendiente de  aprobación
     async listarLugaresPendientes() {
         try {
             console.log('=== Inicio listarLugaresPendientes ===');

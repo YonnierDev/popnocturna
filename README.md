@@ -263,3 +263,139 @@ El sistema implementa logs detallados para:
   "error": "La puntuación debe estar entre 1 y 5"
 }
 ```
+
+# Sistema de Reportes y Notificaciones
+
+## Endpoints de Reportes
+
+### Reportes de Comentarios
+- `GET /api/reportes/comentarios/pendientes`
+  - Descripción: Lista los comentarios reportados pendientes de revisión
+  - Roles permitidos: 1 (Super Admin), 2 (Admin)
+  - Respuesta exitosa:
+    ```json
+    {
+      "mensaje": "Reportes pendientes obtenidos exitosamente",
+      "reportes": [
+        {
+          "id": 1,
+          "contenido": "Contenido del comentario",
+          "aprobacion": "pendiente",
+          "usuario": {
+            "id": 1,
+            "nombre": "Nombre Usuario",
+            "correo": "usuario@ejemplo.com"
+          },
+          "evento": {
+            "id": 1,
+            "nombre": "Nombre Evento",
+            "fecha_hora": "2024-02-20T15:00:00Z"
+          }
+        }
+      ]
+    }
+    ```
+
+- `PUT /api/reporte/comentario/:id/estado`
+  - Descripción: Actualiza el estado de un comentario reportado
+  - Roles permitidos: 1, 2
+  - Body requerido:
+    ```json
+    {
+      "aprobacion": "aceptado|rechazado",
+      "motivo": "Motivo de la decisión"
+    }
+    ```
+
+- `POST /api/comentario/:id/reportar`
+  - Descripción: Reporta un comentario
+  - Roles permitidos: 3 (Propietario)
+  - Body requerido:
+    ```json
+    {
+      "motivo": "Motivo del reporte"
+    }
+    ```
+
+### Notificaciones
+- `GET /api/reportes/notificaciones`
+  - Descripción: Obtiene notificaciones de reportes pendientes
+  - Roles permitidos: 1, 2
+  - Respuesta exitosa:
+    ```json
+    {
+      "reportesPendientes": 5,
+      "mensaje": "Tienes 5 reporte(s) pendiente(s) de revisión"
+    }
+    ```
+
+- `GET /api/lugares/notificaciones`
+  - Descripción: Obtiene notificaciones de lugares pendientes
+  - Roles permitidos: 1, 2
+  - Respuesta exitosa:
+    ```json
+    {
+      "lugaresPendientes": 3,
+      "mensaje": "Tienes 3 lugar(es) pendiente(s) de aprobación"
+    }
+    ```
+
+### Lugares Pendientes
+- `GET /api/lugares/pendientes`
+  - Descripción: Lista los lugares pendientes de aprobación
+  - Roles permitidos: 1, 2
+  - Respuesta exitosa:
+    ```json
+    {
+      "mensaje": "Lugares pendientes obtenidos exitosamente",
+      "lugares": [
+        {
+          "id": 1,
+          "nombre": "Nombre Lugar",
+          "descripcion": "Descripción del lugar",
+          "ubicacion": "Ubicación del lugar",
+          "usuario": {
+            "id": 1,
+            "nombre": "Nombre Propietario",
+            "correo": "propietario@ejemplo.com"
+          },
+          "categoria": {
+            "id": 1,
+            "tipo": "Tipo de Categoría"
+          }
+        }
+      ]
+    }
+    ```
+
+- `PUT /api/lugar/:id/estado`
+  - Descripción: Actualiza el estado de un lugar
+  - Roles permitidos: 1, 2
+  - Body requerido:
+    ```json
+    {
+      "estado": true|false
+    }
+    ```
+
+## Flujo de Estados
+
+### Comentarios Reportados
+1. Estado inicial: "pendiente"
+2. Si se acepta:
+   - El comentario se oculta de las vistas públicas
+   - Solo visible para roles 1, 2 y 3
+3. Si se rechaza:
+   - El comentario permanece visible
+   - Se mantiene como si no hubiera sido reportado
+
+### Lugares
+1. Estado inicial: `aprobacion: false`
+2. Al aprobar: `aprobacion: true`
+3. Al rechazar: Se mantiene en `false`
+
+## Mensajes de Error Comunes
+- 403: "No tienes permisos para realizar esta acción"
+- 400: "Ya existe una solicitud de reporte en revisión"
+- 400: "Este comentario ya fue revisado anteriormente"
+- 500: "Error al procesar la solicitud"
