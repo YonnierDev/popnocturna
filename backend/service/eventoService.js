@@ -281,7 +281,10 @@ class EventoService {
       }]
     });
 
-    if (!evento) throw new Error("Evento no encontrado o no tienes permisos");
+    if (!evento) {
+      throw new Error("Evento no encontrado o no tienes permisos para eliminarlo");
+    }
+
     await evento.destroy();
   }
 

@@ -172,17 +172,28 @@ class EventoController {
       const { id } = req.params;
       const { rol: rolid, id: usuarioid } = req.usuario;
 
+      // Solo administradores (roles 1 y 2) pueden eliminar cualquier evento
       if (rolid === 1 || rolid === 2) {
         await eventoService.eliminarEventoAdmin(id);
-      } else if (rolid === 3) {
+      } 
+      // Propietarios (rol 3) solo pueden eliminar sus propios eventos
+      else if (rolid === 3) {
         await eventoService.eliminarEventoPropietario(id, usuarioid);
-      } else {
+      } 
+      // Otros roles no tienen permiso para eliminar eventos
+      else {
         return res.status(403).json({ mensaje: "No tienes permiso para eliminar eventos" });
       }
 
       res.json({ mensaje: "Evento eliminado correctamente" });
     } catch (error) {
       console.error("Error al eliminar evento:", error);
+      if (error.message.includes("no tienes permisos")) {
+        return res.status(403).json({ mensaje: error.message });
+      }
+      if (error.message.includes("no encontrado")) {
+        return res.status(404).json({ mensaje: error.message });
+      }
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
