@@ -1,4 +1,4 @@
-const { Usuario, Evento, Lugar, Reserva } = require("../models");
+const { Usuario, Evento, Lugar, Reserva, Rol } = require("../models");
 const { Op } = require("sequelize");
 
 class ReservaService {
@@ -95,15 +95,84 @@ class ReservaService {
     });
   }
 
+  // Verificar evento
+  async verificarEvento(eventoid) {
+    try {
+      const evento = await Evento.findByPk(eventoid, {
+        attributes: ["id", "nombre", "fecha_hora", "estado", "capacidad", "precio"],
+        include: [{
+          model: Lugar,
+          as: "lugar",
+          attributes: ["id", "nombre", "estado", "aprobacion"]
+        }]
+      });
+
+      if (!evento) {
+        throw new Error("El evento no existe");
+      }
+
+      if (!evento.estado) {
+        throw new Error("El evento está inactivo");
+      }
+
+      return evento;
+    } catch (error) {
+      console.error("Error en verificarEvento:", error);
+      throw error;
+    }
+  }
+
   // Crear nueva reserva
   async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
-    return await Reserva.create({
-      usuarioid,
-      eventoid,
-      fecha_hora,
-      aprobacion,
-      estado
-    });
+    try {
+      // Verificar que el evento existe y está activo
+      const evento = await this.verificarEvento(eventoid);
+      
+      // Verificar que el usuario existe
+      const usuario = await this.verificarUsuario(usuarioid);
+      if (!usuario) {
+        throw new Error("El usuario no existe");
+      }
+
+      // Generar número de reserva único más corto
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const numero_reserva = `RES${timestamp}${random}`;
+
+      // Crear la reserva con todas las relaciones
+      const reserva = await Reserva.create({
+        usuarioid,
+        eventoid,
+        fecha_hora,
+        aprobacion,
+        estado,
+        numero_reserva
+      });
+
+      // Obtener la reserva con todas sus relaciones
+      return await Reserva.findByPk(reserva.id, {
+        include: [
+          { 
+            model: Usuario, 
+            as: "usuario", 
+            attributes: ["id", "nombre", "correo"] 
+          },
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["id", "nombre", "fecha_hora", "descripcion", "precio"],
+            include: [{
+              model: Lugar,
+              as: "lugar",
+              attributes: ["id", "nombre", "ubicacion"]
+            }]
+          }
+        ]
+      });
+    } catch (error) {
+      console.error("Error en crearReserva:", error);
+      throw error;
+    }
   }
 
   // Actualizar reserva
@@ -145,12 +214,16 @@ class ReservaService {
     });
   }
 
+  // Verificar usuario
   async verificarUsuario(usuarioid) {
-    return await Usuario.findByPk(usuarioid);
-  }
-
-  async verificarEvento(eventoid) {
-    return await Evento.findByPk(eventoid);
+    return await Usuario.findByPk(usuarioid, {
+      attributes: ["id", "nombre", "correo", "rolid"],
+      include: [{
+        model: Rol,
+        as: "rol",
+        attributes: ["id", "nombre"]
+      }]
+    });
   }
 }
 
