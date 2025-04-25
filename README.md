@@ -151,226 +151,115 @@ Este proyecto es open-source. Siéntete libre de colaborar, usar y mejorar el c�
 
 > Proyecto desarrollado en el SENA – 2025. Inspirado en la magia nocturna de Popayán 🌙
 
-# API de Comentarios
+# Sistema de Calificaciones - PopNocturna
 
-## Estructura de Estados
+## Descripción
+Sistema de gestión de calificaciones para eventos, implementando control de acceso basado en roles.
 
-### Estado de Visibilidad
-- `estado: boolean`
-  - `true`: Comentario visible
-  - `false`: Comentario oculto
+## Roles y Permisos
 
-### Estado de Aprobación
-- `aprobacion: ENUM`
-  - `'pendiente'`: Comentario reportado, esperando revisión
-  - `'aceptado'`: Comentario reportado y aprobado
-  - `'rechazado'`: Comentario reportado y rechazado
+### Administradores (roles 1 y 2)
+- Pueden ver todas las calificaciones
+- Pueden crear, actualizar y eliminar cualquier calificación
+- Pueden cambiar el estado de las calificaciones
 
-## Endpoints Disponibles
+### Propietarios (rol 3)
+- Solo pueden ver las calificaciones de sus eventos
+- No pueden crear calificaciones
+- No pueden actualizar calificaciones
+- No pueden eliminar calificaciones
+- No pueden cambiar el estado de las calificaciones
 
-### 1. Listar Comentarios por Evento
-- **Ruta**: `GET /api/comentarios/evento/:eventoid`
-- **Roles**: Todos los roles autenticados
-- **Descripción**: Obtiene los comentarios de un evento específico
-- **Respuesta**:
-```json
-[
-  {
-    "id": number,
-    "contenido": string,
-    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
-    "usuario": {
-      "id": number,
-      "nombre": string
-    }
-  }
-]
+### Usuarios Normales (rol 8)
+- Pueden ver todas las calificaciones
+- Pueden crear calificaciones
+- Solo pueden actualizar sus propias calificaciones
+- Solo pueden eliminar sus propias calificaciones
+- No pueden cambiar el estado de las calificaciones
+
+## Endpoints
+
+### Listar Calificaciones
+- **GET** `/calificaciones`
+- Permisos: Todos los roles
+- Paginación: Sí
+- Filtros: Por rol del usuario
+
+### Ver Calificación
+- **GET** `/calificaciones/:id`
+- Permisos: 
+  - Admins: Cualquier calificación
+  - Propietarios: Solo calificaciones de sus eventos
+  - Usuarios: Sus propias calificaciones
+
+### Crear Calificación
+- **POST** `/calificaciones`
+- Permisos: Admins y usuarios normales
+- Validaciones:
+  - Puntuación entre 1 y 5
+  - Usuario no puede ser propietario
+
+### Actualizar Calificación
+- **PUT** `/calificaciones/:id`
+- Permisos:
+  - Admins: Cualquier calificación
+  - Usuarios: Solo sus propias calificaciones
+- Validaciones:
+  - Puntuación entre 1 y 5
+  - Usuario no puede ser propietario
+
+### Eliminar Calificación
+- **DELETE** `/calificaciones/:id`
+- Permisos:
+  - Admins: Cualquier calificación
+  - Usuarios: Solo sus propias calificaciones
+- Validaciones:
+  - Usuario no puede ser propietario
+
+### Cambiar Estado de Calificación
+- **PUT** `/calificaciones/:id/estado`
+- Permisos: Solo administradores
+- Validaciones: Estado debe ser booleano
+
+## Estructura del Proyecto
+
+```
+backend/
+├── controllers/
+│   └── calificacionController.js
+├── service/
+│   └── calificacionService.js
+└── models/
+    └── Calificacion.js
 ```
 
-### 2. Listar Todos los Comentarios
-- **Ruta**: `GET /api/comentarios`
-- **Roles**: 
-  - 1,2 (SuperAdmin, Admin): ven todos los comentarios
-  - 3 (Propietario): ven comentarios de sus lugares
-  - 8 (Usuario): ven sus propios comentarios
-- **Descripción**: Lista comentarios según el rol del usuario
+## Logs y Diagnóstico
+El sistema implementa logs detallados para:
+- Verificación de roles
+- Operaciones de CRUD
+- Validaciones de permisos
+- Errores y excepciones
 
-### 3. Crear Comentario
-- **Ruta**: `POST /api/comentario`
-- **Roles**: 8 (Usuario)
-- **Body**: 
-```json
-{
-  "eventoid": number,
-  "contenido": string
-}
-```
-- **Respuesta**:
-```json
-{
-  "id": number,
-  "contenido": string,
-  "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
-  "estado": true,
-  "aprobacion": null
-}
-```
+## Ejemplos de Respuestas
 
-### 4. Actualizar Comentario
-- **Ruta**: `PUT /api/comentario/:id`
-- **Roles**: 
-  - 1,2 (SuperAdmin, Admin): pueden actualizar cualquier comentario
-  - 8 (Usuario): solo pueden actualizar sus propios comentarios
-- **Body**: 
+### Éxito
 ```json
 {
-  "contenido": string
-}
-```
-- **Respuesta**:
-```json
-{
-  "mensaje": "Comentario actualizado exitosamente",
-  "comentario": {
-    "id": number,
-    "contenido": string,
-    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ"
-  }
-}
-```
-
-### 5. Eliminar Comentario
-- **Ruta**: `DELETE /api/comentario/:id`
-- **Roles**:
-  - 1,2 (SuperAdmin, Admin): pueden eliminar cualquier comentario
-  - 8 (Usuario): solo pueden eliminar sus propios comentarios
-- **Respuesta**:
-```json
-{
-  "mensaje": "Comentario eliminado exitosamente",
-  "comentario": {
-    "id": number,
-    "contenido": string,
-    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ"
-  }
+  "mensaje": "Calificación eliminada correctamente"
 }
 ```
 
-### 6. Reportar Comentario
-- **Ruta**: `POST /api/comentario/:id/reportar`
-- **Roles**: 3 (Propietario)
-- **Body**: 
+### Error de Permisos
 ```json
 {
-  "motivo": string
-}
-```
-- **Respuesta**:
-```json
-{
-  "mensaje": "Comentario reportado exitosamente",
-  "comentario": {
-    "id": number,
-    "estado": "pendiente",
-    "contenido": string,
-    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
-    "motivo_reporte": string
-  }
+  "error": "Los propietarios no tienen permiso para eliminar calificaciones",
+  "rol": 3
 }
 ```
 
-### 7. Ver Comentarios Reportados
-- **Ruta**: `GET /api/comentario/reportados`
-- **Roles**: 1,2 (SuperAdmin, Admin)
-- **Respuesta**:
+### Error de Validación
 ```json
 {
-  "mensaje": "Comentarios reportados pendientes de revisión",
-  "total": number,
-  "comentarios": [
-    {
-      "id": number,
-      "contenido": string,
-      "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
-      "motivo_reporte": string,
-      "usuario": {
-        "id": number,
-        "nombre": string,
-        "correo": string
-      },
-      "evento": {
-        "id": number,
-        "nombre": string,
-        "descripcion": string,
-        "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
-        "lugar": {
-          "id": number,
-          "nombre": string,
-          "propietario": {
-            "id": number,
-            "nombre": string,
-            "correo": string
-          }
-        }
-      }
-    }
-  ]
+  "error": "La puntuación debe estar entre 1 y 5"
 }
 ```
-
-### 8. Actualizar Estado de Comentario Reportado
-- **Ruta**: `PUT /api/comentario/:id/estado`
-- **Roles**: 1,2 (SuperAdmin, Admin)
-- **Body**: 
-```json
-{
-  "estado": "aceptado" | "rechazado"
-}
-```
-- **Respuesta**:
-```json
-{
-  "mensaje": "Estado del comentario actualizado exitosamente",
-  "comentario": {
-    "id": number,
-    "estado": string,
-    "contenido": string,
-    "fecha_hora": "YYYY-MM-DDTHH:mm:ss.sssZ",
-    "motivo_reporte": string
-  }
-}
-```
-
-## Códigos de Error Comunes
-
-- `400`: Solicitud incorrecta
-- `403`: No autorizado
-- `404`: Recurso no encontrado
-- `500`: Error del servidor
-
-## Notas de Implementación
-
-1. Los comentarios nuevos se crean con:
-   - `estado: true`
-   - `aprobacion: null`
-
-2. Al reportar un comentario:
-   - Se mantiene `estado: true`
-   - Se establece `aprobacion: 'pendiente'`
-   - Se guarda el `motivo_reporte`
-
-3. Al aprobar/rechazar:
-   - Se mantiene `estado: true`
-   - Se cambia `aprobacion` a `'aceptado'` o `'rechazado'`
-
-4. Al eliminar:
-   - Se establece `estado: false`
-
-## Estado de Producción
-
-✅ Todos los endpoints están implementados y probados  
-✅ La documentación está completa y actualizada  
-✅ Los roles y permisos están correctamente configurados  
-✅ El manejo de estados de comentarios está funcionando  
-✅ Las respuestas JSON están estandarizadas  
-✅ Los errores están manejados apropiadamente
