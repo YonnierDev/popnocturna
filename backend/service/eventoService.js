@@ -1,189 +1,401 @@
 const { Evento, Comentario, Usuario, Lugar } = require("../models");
+const { Op } = require("sequelize");
 
 class EventoService {
-  async listarEventos(usuario) {
-    const { rol, id: usuarioid } = usuario;
+  async listarEventosAdmin({ offset, limit, estado, fechaDesde, fechaHasta }) {
+    const where = {};
+    if (estado !== undefined) where.estado = estado;
+    if (fechaDesde) where.fecha_hora = { [Op.gte]: fechaDesde };
+    if (fechaHasta) where.fecha_hora = { [Op.lte]: fechaHasta };
 
-    if (rol === 1 || rol === 2) {
-      return await Evento.findAll({
-        where: { estado: true },
-        include: [
-          {
-            model: Comentario,
-            as: "comentarios",
-            where: { estado: true },
-            required: false,
-          },
-          { model: Lugar, as: "lugar" },
-        ],
-      });
-    }
-
-    if (rol === 3) {
-      const eventos = await Evento.findAll({
-        where: { estado: true, usuarioid },
-        include: [
-          {
-            model: Comentario,
-            as: "comentarios",
-            where: { estado: true },
-            required: false,
-          },
-          { model: Lugar, as: "lugar" },
-        ],
-      });
-
-      if (eventos.length === 0) {
-        return { mensaje: "Aún no tienes eventos asociados.", eventos: [] };
-      }
-
-      return eventos;
-    }
-
-    if (rol === 8) {
-      return await Evento.findAll({
-        where: { estado: true },
-        include: [
-          {
-            model: Comentario,
-            as: "comentarios",
-            where: { estado: true },
-            required: false,
-          },
-        ],
-      });
-    }
-
-    throw new Error("Rol no autorizado para listar eventos");
+    return await Evento.findAll({
+      where,
+      include: [
+        { 
+          model: Lugar, 
+          as: "lugar",
+          attributes: ['id', 'nombre', 'ubicacion', 'descripcion'],
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre', 'correo']
+            }
+          ]
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          where: { estado: true },
+          required: false,
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
+      ],
+      order: [['fecha_hora', 'DESC']],
+      offset,
+      limit
+    });
   }
 
-  async verEventoPorId(eventoId, usuarioId) {
-    const evento = await Evento.findOne({
-      where: { id: eventoId },
-      include: [
-        { model: Comentario, as: "comentarios" },
-        { model: Lugar, as: "lugar" },
-      ],
-    });
+  async listarEventosPorPropietario(propietarioId, { offset, limit, fechaDesde, fechaHasta }) {
+    const where = { estado: true };
+    if (fechaDesde) where.fecha_hora = { [Op.gte]: fechaDesde };
+    if (fechaHasta) where.fecha_hora = { [Op.lte]: fechaHasta };
 
+    return await Evento.findAll({
+      where,
+      include: [
+        {
+          model: Lugar,
+          as: "lugar",
+          where: { usuarioid: propietarioId },
+          attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
+        },
+        { 
+          model: Comentario, 
+          as: "comentarios",
+          where: { estado: true },
+          required: false,
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
+      ],
+      order: [['fecha_hora', 'DESC']],
+      offset,
+      limit
+    });
+  }
+
+  async listarEventosPorUsuario(usuarioId, { offset, limit, fechaDesde, fechaHasta }) {
+    const where = { estado: true }; // Solo eventos activos
+    if (fechaDesde) where.fecha_hora = { [Op.gte]: fechaDesde };
+    if (fechaHasta) where.fecha_hora = { [Op.lte]: fechaHasta };
+
+    return await Evento.findAll({
+      where,
+      include: [
+        { 
+          model: Lugar, 
+          as: "lugar",
+          attributes: ['id', 'nombre', 'direccion', 'ciudad', 'pais']
+        },
+        { 
+          model: Comentario, 
+          as: "comentarios",
+          where: { estado: true },
+          required: false,
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
+      ],
+      order: [['fecha_hora', 'DESC']],
+      offset,
+      limit
+    });
+  }
+
+  async verEventoAdmin(id) {
+    return await Evento.findByPk(id, {
+      include: [
+        { 
+          model: Lugar, 
+          as: "lugar",
+          attributes: ['id', 'nombre', 'ubicacion', 'descripcion'],
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre', 'correo']
+            }
+          ]
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          where: { estado: true },
+          required: false,
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
+      ]
+    });
+  }
+
+  async verEventoPropietario(id, propietarioId) {
+    try {
+      console.log('\n=== Inicio verEventoPropietario ===');
+      console.log('ID del evento:', id);
+      console.log('ID del propietario:', propietarioId);
+
+      const evento = await Evento.findOne({
+        where: { id },
+        include: [
+          {
+            model: Lugar,
+            as: "lugar",
+            where: { usuarioid: propietarioId },
+            attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
+          },
+          { 
+            model: Comentario, 
+            as: "comentarios",
+            where: { estado: true },
+            required: false,
+            include: [
+              {
+                model: Usuario,
+                as: "usuario",
+                attributes: ['id', 'nombre']
+              }
+            ]
+          }
+        ]
+      });
+
+      if (!evento) {
+        console.log('Error: Evento no encontrado o no pertenece al propietario');
+        return null;
+      }
+
+      console.log('Evento encontrado:', evento.toJSON());
+      return evento;
+    } catch (error) {
+      console.error("Error en verEventoPropietario:", error);
+      throw error;
+    }
+  }
+
+  async verEventoUsuario(id, usuarioId) {
+    return await Evento.findOne({
+      where: { id, estado: true },
+      include: [
+        { model: Lugar, as: "lugar" },
+        { 
+          model: Comentario, 
+          as: "comentarios",
+          where: { usuarioid: usuarioId, estado: true },
+          required: false
+        }
+      ]
+    });
+  }
+
+  async crearEventoAdmin(datos, usuarioid) {
+    return await Evento.create({
+      ...datos,
+      estado: true,
+      usuarioid
+    });
+  }
+
+  async crearEventoPropietario(datos, propietarioId) {
+    const lugar = await Lugar.findOne({ where: { usuarioid: propietarioId } });
+    if (!lugar) throw new Error("No tienes lugares asociados");
+
+    return await Evento.create({
+      ...datos,
+      estado: false,
+      usuarioid: propietarioId,
+      lugarid: lugar.id
+    });
+  }
+
+  async actualizarEventoAdmin(id, datos) {
+    console.log('\n=== Inicio actualizarEventoAdmin ===');
+    console.log('ID del evento:', id);
+    console.log('Datos a actualizar:', datos);
+
+    const evento = await Evento.findByPk(id);
+    console.log('Evento encontrado:', evento ? 'Sí' : 'No');
+    
     if (!evento) {
+      console.log('Error: Evento no encontrado');
       throw new Error("Evento no encontrado");
     }
 
-    const usuario = await Usuario.findByPk(usuarioId);
-    if (![1, 2].includes(usuario.rol)) {
-      if (usuario.rol === 3 && evento.lugar.usuarioid !== usuarioId) {
-        throw new Error("No tienes permisos para ver este evento");
-      }
-    }
-
+    await evento.update(datos);
+    console.log('Evento actualizado exitosamente');
     return evento;
   }
 
-  async crearEventoPorAdmin(data, usuarioid) {
-    const usuario = await Usuario.findByPk(usuarioid);
-    if (!usuario) throw new Error("Usuario no encontrado");
+  async actualizarEventoPropietario(id, datos, propietarioId) {
+    console.log('\n=== Inicio actualizarEventoPropietario ===');
+    console.log('ID del evento:', id);
+    console.log('ID del propietario:', propietarioId);
+    console.log('Datos a actualizar:', datos);
 
-    if (![1, 2].includes(usuario.rolid)) {
-      throw new Error("Solo administradores pueden usar este método");
+    const evento = await Evento.findOne({
+      where: { id },
+      include: [{
+        model: Lugar,
+        as: "lugar",
+        where: { usuarioid: propietarioId }
+      }]
+    });
+
+    console.log('Evento encontrado:', evento ? 'Sí' : 'No');
+    if (!evento) {
+      console.log('Error: Evento no encontrado o no pertenece al propietario');
+      throw new Error("Evento no encontrado o no tienes permisos para modificarlo");
     }
 
-    return await Evento.create({
-      ...data,
-      estado: true,
-      usuarioid,
-    });
+    await evento.update(datos);
+    console.log('Evento actualizado exitosamente');
+    return evento;
   }
 
-  async crearEventoPorPropietario(data, usuarioid) {
-    const usuario = await Usuario.findByPk(usuarioid);
-    if (!usuario) throw new Error("Usuario no encontrado");
-
-    if (usuario.rolid !== 3) {
-      throw new Error("Solo propietarios pueden usar este método");
-    }
-
-    return await Evento.create({
-      ...data,
-      estado: false,
-      usuarioid,
-    });
-  }
-
-  async actualizarEvento(id, data, usuarioid) {
-    const { lugarid, capacidad, precio, descripcion, fecha_hora, estado } =
-      data;
-
+  async eliminarEventoAdmin(id) {
     const evento = await Evento.findByPk(id);
     if (!evento) throw new Error("Evento no encontrado");
-
-    const usuario = await Usuario.findByPk(usuarioid);
-    if (!usuario) throw new Error("Usuario no encontrado");
-
-    if (![1, 2].includes(usuario.rolid)) {
-      throw new Error("No tienes permisos para actualizar el evento");
-    }
-
-    await Evento.update(
-      { lugarid, capacidad, precio, descripcion, fecha_hora, estado },
-      { where: { id } }
-    );
-
-    return await Evento.findByPk(id);
+    await evento.destroy();
   }
 
-  async eliminarEvento(id, usuarioid) {
-    const evento = await Evento.findByPk(id);
-    if (!evento) throw new Error("Evento no encontrado");
+  async eliminarEventoPropietario(id, propietarioId) {
+    const evento = await Evento.findOne({
+      where: { id },
+      include: [{
+        model: Lugar,
+        as: "lugar",
+        where: { usuarioid: propietarioId }
+      }]
+    });
 
-    const usuario = await Usuario.findByPk(usuarioid);
-    if (!usuario || ![1, 2].includes(usuario.rolid)) {
-      throw new Error("No tienes permisos para eliminar el evento");
-    }
-
-    await Evento.destroy({ where: { id } });
+    if (!evento) throw new Error("Evento no encontrado o no tienes permisos");
+    await evento.destroy();
   }
 
-  async verComentarios(eventoId, usuarioid) {
-    const evento = await Evento.findByPk(eventoId);
-    if (!evento) throw new Error("Evento no encontrado");
-
-    const usuario = await Usuario.findByPk(usuarioid);
-
-    if (usuario.rol === 8) {
-      return await Comentario.findAll({
-        where: { eventoId, usuarioid, estado: true },
-        include: [
-          { model: Usuario, as: "usuario", attributes: ["nombre", "apellido"] },
-        ],
-      });
-    }
-
-    if (usuario.rol === 3 && evento.usuarioid === usuarioid) {
-      return await Comentario.findAll({
-        where: { eventoId },
-        include: [
-          { model: Usuario, as: "usuario", attributes: ["nombre", "apellido"] },
-        ],
-      });
-    }
-
+  async verComentariosAdmin(eventoId) {
     return await Comentario.findAll({
-      where: { eventoId },
+      where: { eventoid: eventoId, estado: true },
       include: [
-        { model: Usuario, as: "usuario", attributes: ["nombre", "apellido"] },
+        { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] }
       ],
+      order: [['fecha_hora', 'DESC']]
     });
   }
 
-  async cambiarEstadoEvento(id, nuevoEstado) {
+  async verComentariosPropietario(eventoId, propietarioId) {
+    return await Comentario.findAll({
+      where: { eventoid: eventoId, estado: true },
+      include: [
+        { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] },
+        {
+          model: Evento,
+          as: "evento",
+          include: [{
+            model: Lugar,
+            as: "lugar",
+            where: { usuarioid: propietarioId }
+          }]
+        }
+      ],
+      order: [['fecha_hora', 'DESC']]
+    });
+  }
+
+  async verComentariosUsuario(eventoId, usuarioId) {
+    return await Comentario.findAll({
+      where: { eventoid: eventoId, usuarioid: usuarioId, estado: true },
+      include: [
+        { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] }
+      ],
+      order: [['fecha_hora', 'DESC']]
+    });
+  }
+
+  async cambiarEstadoEventoAdmin(id, estado) {
     const evento = await Evento.findByPk(id);
     if (!evento) throw new Error("Evento no encontrado");
-
-    evento.estado = nuevoEstado;
-    await evento.save();
-
+    await evento.update({ estado });
     return evento;
+  }
+
+  async cambiarEstadoEventoPropietario(id, estado, propietarioId) {
+    const evento = await Evento.findOne({
+      where: { id },
+      include: [{
+        model: Lugar,
+        as: "lugar",
+        where: { usuarioid: propietarioId }
+      }]
+    });
+
+    if (!evento) throw new Error("Evento no encontrado o no tienes permisos");
+    await evento.update({ estado });
+    return evento;
+  }
+
+  // Métodos públicos
+  async listarEventosPublicos({ offset, limit, fechaDesde, fechaHasta }) {
+    const where = { estado: true };
+    if (fechaDesde) where.fecha_hora = { [Op.gte]: fechaDesde };
+    if (fechaHasta) where.fecha_hora = { [Op.lte]: fechaHasta };
+
+    return await Evento.findAll({
+      where,
+      include: [
+        { 
+          model: Lugar, 
+          as: "lugar",
+          attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
+        }
+      ],
+      attributes: ['id', 'nombre', 'descripcion', 'fecha_hora', 'precio', 'capacidad'],
+      order: [['fecha_hora', 'DESC']],
+      offset,
+      limit
+    });
+  }
+
+  async verEventoPublico(id) {
+    return await Evento.findOne({
+      where: { 
+        id,
+        estado: true
+      },
+      include: [
+        { 
+          model: Lugar, 
+          as: "lugar",
+          attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
+        },
+        {
+          model: Comentario,
+          as: "comentarios",
+          where: { estado: true },
+          required: false,
+          include: [
+            {
+              model: Usuario,
+              as: "usuario",
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
+      ],
+      attributes: ['id', 'nombre', 'descripcion', 'fecha_hora', 'precio', 'capacidad']
+    });
   }
 }
 

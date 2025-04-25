@@ -1,8 +1,9 @@
 const jwt = require("jsonwebtoken");
 
 const autentiMiddleware = (req, res, next) => {
-  console.log('=== Inicio de autenticación ===');
+  console.log('\n=== Inicio de autenticación ===');
   console.log('Headers recibidos:', req.headers);
+  console.log('Authorization header:', req.headers.authorization);
   
   const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
   console.log('Token extraído:', token);
@@ -13,7 +14,7 @@ const autentiMiddleware = (req, res, next) => {
   }
 
   try {
-    console.log('Intentando verificar token con secret:', process.env.JWT_SECRET);
+    console.log('JWT_SECRET:', process.env.JWT_SECRET);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Token decodificado:', decoded);
     
@@ -24,7 +25,8 @@ const autentiMiddleware = (req, res, next) => {
   } catch (error) {
     console.error('Error al verificar token:', {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      name: error.name
     });
     return res.status(401).json({ mensaje: "Token inválido o expirado" });
   }
