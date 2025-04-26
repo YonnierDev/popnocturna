@@ -1,4 +1,5 @@
 const CalificacionService = require("../service/calificacionService");
+const {formatearRespuestaPaginada} = require("./paginacionController");
 
 class CalificacionController {
   async listarCalificaciones(req, res) {
@@ -15,32 +16,41 @@ class CalificacionController {
         limit
       });
 
-      let calificaciones;
+      let resultado;
 
       // Si es admin o super admin (roles 1 y 2), ver toda la información sin restricciones
       if (rolid === 1 || rolid === 2) {
         console.log('Acceso como administrador (rol:', rolid, ')');
-        calificaciones = await CalificacionService.listarCalificacionesAdmin({ page, limit });
+        resultado = await CalificacionService.listarCalificacionesAdmin({ page, limit });
       } 
       // Si es propietario (rol 3), ver solo calificaciones de sus eventos
       else if (rolid === 3) {
         console.log('Acceso como propietario');
-        calificaciones = await CalificacionService.listarCalificacionesPorPropietario(usuarioid, { page, limit });
+        resultado = await CalificacionService.listarCalificacionesPorPropietario(
+          usuarioid, 
+          { page, limit }
+        );
       } 
       // Si es usuario normal (rol 8), ver todas las calificaciones
       else if (rolid === 8) {
         console.log('Acceso como usuario normal');
-        calificaciones = await CalificacionService.listarCalificacionesPorUsuario(usuarioid, { page, limit });
+        resultado = await CalificacionService.listarCalificacionesPorUsuario(usuarioid, { page, limit });
       } 
       else {
         console.log('Acceso denegado - Rol no permitido:', rolid);
         return res.status(403).json({ mensaje: "No tienes permiso para ver calificaciones" });
       }
 
-      console.log('Calificaciones encontradas:', calificaciones?.length || 0);
-      res.json({ 
-        mensaje: "Calificaciones obtenidas correctamente", 
-        datos: calificaciones 
+      // Unifica la respuesta paginada para todos los roles
+      res.json({
+        mensaje: "Calificaciones obtenidas correctamente",
+        datos: formatearRespuestaPaginada({
+          total: resultado.count,
+          rows: resultado.rows,
+          page,
+          limit,
+          nombreColeccion: 'calificaciones'
+        })
       });
     } catch (error) {
       console.error("Error al listar calificaciones:", error);

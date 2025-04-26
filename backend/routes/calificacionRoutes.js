@@ -3,7 +3,6 @@ const router = express.Router();
 const CalificacionController = require('../controllers/calificacionController');
 const autentiMiddleware = require('../middlewares/autentiMiddleware');
 
-// Endpoints protegidos (requieren autenticación)
 // Listar calificaciones (todos los roles)
 router.get('/calificaciones', 
   autentiMiddleware,

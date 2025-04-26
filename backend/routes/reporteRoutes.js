@@ -4,12 +4,7 @@ const reporteController = require('../controllers/reporteController');
 const autentiMiddleware = require('../middlewares/autentiMiddleware');
 const { verificarRol } = require('../middlewares/rolMiddleware');
 
-// Rutas para administradores (roles 1 y 2)
-router.get('/reportes/comentarios/pendientes',
-    autentiMiddleware,
-    verificarRol([1, 2]),
-    reporteController.listarReportesComentariosPendientes
-);
+// Ruta para administradores (roles 1 y 2)
 
 router.put('/reporte/comentario/:id/estado',
     autentiMiddleware,

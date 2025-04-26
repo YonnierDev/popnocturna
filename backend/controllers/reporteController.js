@@ -2,18 +2,6 @@ const ReporteService = require('../service/reporteService');
 
 class ReporteController {
     // Métodos para reportes de comentarios
-    async listarReportesComentariosPendientes(req, res) {
-        try {
-            const reportes = await ReporteService.listarReportesComentariosPendientes();
-            res.json({
-                mensaje: "Reportes pendientes obtenidos exitosamente",
-                reportes: reportes
-            });
-        } catch (error) {
-            console.error('Error en listarReportesComentariosPendientes:', error);
-            res.status(500).json({ mensaje: "Error al obtener los reportes pendientes" });
-        }
-    }
 
     async actualizarEstadoReporteComentario(req, res) {
         try {

@@ -2,33 +2,6 @@ const { Comentario, Usuario, Evento, Lugar, Categoria } = require('../models');
 
 class ReporteService {
     // Métodos para reportes de comentarios
-    async listarReportesComentariosPendientes() {
-        try {
-            const reportes = await Comentario.findAll({
-                where: {
-                    aprobacion: 'pendiente'
-                },
-                include: [
-                    {
-                        model: Usuario,
-                        as: 'usuario',
-                        attributes: ['id', 'nombre', 'correo']
-                    },
-                    {
-                        model: Evento,
-                        as: 'evento',
-                        attributes: ['id', 'nombre', 'fecha_hora']
-                    }
-                ],
-                order: [['fecha_hora', 'DESC']]
-            });
-
-            return reportes;
-        } catch (error) {
-            console.error('Error al listar reportes de comentarios pendientes:', error);
-            throw error;
-        }
-    }
 
     async actualizarEstadoReporteComentario(id, aprobacion, motivo = null) {
         try {

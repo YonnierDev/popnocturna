@@ -251,10 +251,41 @@ GET /api/comentario/reportados
 
 ### Listar Calificaciones (Todos los roles)
 ```http
-GET /api/calificaciones
+GET /api/calificaciones?page={page}&limit={limit}
 ```
 - **Headers**: `Authorization: Bearer {token}`
 - **Roles Permitidos**: 1,2,3,8
+- **Descripción**: Devuelve una lista paginada de calificaciones. El formato de respuesta es consistente para todos los roles e incluye información de paginación (`total`, `page`, `limit`, `results`).
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "total": 25,
+    "page": 1,
+    "limit": 10,
+    "results": [
+      {
+        "id": 1,
+        "puntuacion": 5,
+        "comentario": "Muy bueno",
+        "usuario": {
+          "id": 10,
+          "nombre": "Juan"
+        },
+        "evento": {
+          "id": 2,
+          "nombre": "Fiesta",
+          "descripcion": "Gran evento"
+        },
+        "createdAt": "2025-04-25T12:00:00.000Z"
+      }
+    ]
+  }
+  ```
+- **Notas**:
+  - Admins (roles 1,2) ven todas las calificaciones.
+  - Propietarios (rol 3) ven solo calificaciones de sus eventos.
+  - Usuarios normales (rol 8) ven solo sus propias calificaciones.
+  - Los includes en los modelos fueron optimizados para traer solo los atributos necesarios.
 
 ### Eliminar Calificación (Roles 1,2,8)
 ```http

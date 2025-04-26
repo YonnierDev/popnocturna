@@ -44,36 +44,31 @@ const validarUsuario = [
     .notEmpty()
     .withMessage("El género es obligatorio")
     .isIn(["Masculino", "Femenino", "Otro"])
-    .withMessage("Género no válido. Escoja uno"),
+    .withMessage("Género no válido. Debe ser Masculino, Femenino u Otro"),
 
-    body("contrasena")
-  .notEmpty()
-  .withMessage("La contraseña es obligatoria")
-  .bail()
-  .isLength({ min: 8, max: 20 })
-  .withMessage("La contraseña debe tener entre 8 y 20 caracteres")
-  .bail()
-  .custom((value) => {
-    const errores = [];
-
-    if (!/[A-Z]/.test(value)) {
-      errores.push("Debe incluir al menos una letra mayúscula");
-    }
-    if (!/\d/.test(value)) {
-      errores.push("Debe incluir al menos un número");
-    }
-    if (!/[^A-Za-z\d]/.test(value)) {
-      errores.push("Debe incluir al menos un símbolo (como !@#$%^&*)");
-    }
-
-    if (errores.length > 0) {
-      throw new Error(errores.join(" | "));
-    }
-
-    return true;
-  }),
-
-  
+  body("contrasena")
+    .notEmpty()
+    .withMessage("La contraseña es obligatoria")
+    .bail()
+    .isLength({ min: 8, max: 20 })
+    .withMessage("La contraseña debe tener entre 8 y 20 caracteres")
+    .bail()
+    .custom((value) => {
+      const errores = [];
+      if (!/[A-Z]/.test(value)) {
+        errores.push("Debe incluir al menos una letra mayúscula");
+      }
+      if (!/\d/.test(value)) {
+        errores.push("Debe incluir al menos un número");
+      }
+      if (!/[^A-Za-z\d]/.test(value)) {
+        errores.push("Debe incluir al menos un símbolo (como !@#$%^&*)");
+      }
+      if (errores.length > 0) {
+        throw new Error(errores.join(" | "));
+      }
+      return true;
+    }),
 
   body("rolid")
     .notEmpty()
@@ -88,8 +83,12 @@ const validarUsuario = [
 
   body("imagen")
     .optional()
-    .isURL()
-    .withMessage("La imagen debe ser una URL válida"),
+    .custom((value) => {
+      if (value && !value.match(/^https?:\/\/.+/)) {
+        throw new Error("La imagen debe ser una URL válida");
+      }
+      return true;
+    }),
 
   // Validar errores
   (req, res, next) => {

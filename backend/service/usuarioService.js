@@ -190,6 +190,10 @@ class UsuarioService {
     await Usuario.update({ contrasena: nuevaContrasena }, { where: { id } });
     return await this.buscarPorId(id);
   }
+
+  async buscarPorNombre(nombre) {
+    return await Usuario.findOne({ where: { nombre } });
+  }
 }
 
 module.exports = new UsuarioService();

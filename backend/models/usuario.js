@@ -66,6 +66,13 @@ module.exports = (sequelize, DataTypes) => {
       genero: {
         type: DataTypes.STRING,
         allowNull: false,
+        validate: {
+          isIn: {
+            args: [['Masculino', 'Femenino', 'Otro']],
+            msg: 'Género no válido. Debe ser Masculino, Femenino u Otro',
+            ignoreCase: true
+          }
+        }
       },
       estado: {
         type: DataTypes.BOOLEAN,

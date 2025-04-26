@@ -1,4 +1,4 @@
-const { Calificacion, Evento, Usuario } = require("../models");
+const { Calificacion, Evento, Usuario, Lugar } = require("../models");
 
 class CalificacionService {
   // Métodos para administradores (roles 1 y 2)
@@ -9,7 +9,7 @@ class CalificacionService {
           {
             model: Usuario,
             as: "usuario",
-            attributes: ["id", "nombre", "correo"],
+            attributes: ["id", "nombre", "correo"],  
           },
           {
             model: Evento,
@@ -37,7 +37,7 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion"],
+            attributes: ["id", "nombre", "descripcion", "imagen"],
           },
         ],
       });
@@ -93,9 +93,9 @@ class CalificacionService {
   }
 
   // Métodos para propietarios (rol 3)
-  async listarCalificacionesPorPropietario(usuarioid) {
+  async listarCalificacionesPorPropietario(usuarioid, { page, limit }) {
     try {
-      return await Calificacion.findAll({
+      return await Calificacion.findAndCountAll({
         include: [
           {
             model: Usuario,
@@ -105,12 +105,19 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion", "usuarioid"],
+            attributes: ["id", "nombre", "descripcion"],
             where: { usuarioid },
-            required: true
-          },
+            required: true,
+            include: [{
+              model: Lugar,
+              as: "lugar",
+              attributes: ["id", "nombre", "imagen", "ubicacion"]
+            }]
+          }
         ],
         order: [["createdAt", "DESC"]],
+        limit: parseInt(limit),
+        offset: (page - 1) * limit
       });
     } catch (error) {
       console.error("Error al listar calificaciones (propietario):", error);
@@ -135,7 +142,7 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion", "usuarioid"],
+            attributes: ["id", "nombre", "descripcion", "imagen"],
             required: false // Permitir que la calificación exista aunque el evento no
           },
         ],
@@ -243,7 +250,7 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion"],
+            attributes: ["id", "nombre", "descripcion", "imagen"],
           },
         ],
       });
