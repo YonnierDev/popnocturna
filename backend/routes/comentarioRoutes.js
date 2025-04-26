@@ -25,7 +25,7 @@ router.post('/comentario',
 
 // Ruta para actualizar un comentario (solo el usuario dueño del comentario o admin)
 router.put('/comentario/:id', 
-  autentiMiddleware,
+  autentiMiddleware, verificarRol([1,2 ,8]),
   comentarioController.actualizar
 );
 
