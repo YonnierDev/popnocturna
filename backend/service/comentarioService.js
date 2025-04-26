@@ -31,43 +31,74 @@ class ComentarioService {
   }
 
   async listarComentariosPropietario(propietarioId) {
-    return await Comentario.findAll({
-      include: [
-        { 
-          model: Usuario, 
-          as: "usuario", 
-          attributes: ["id", "nombre", "correo"] 
-        },
-        {
-          model: Evento,
-          as: "evento",
-          required: true,
-          attributes: ["id", "nombre", "fecha_hora"],
-          include: {
-            model: Lugar,
-            as: "lugar",
+    console.log('=== Inicio de listarComentariosPropietario ===');
+    console.log('Propietario ID:', propietarioId);
+
+    try {
+      const comentarios = await Comentario.findAll({
+        where: { estado: true },
+        include: [
+          { 
+            model: Usuario, 
+            as: "usuario", 
+            attributes: ["id", "nombre", "correo"] 
+          },
+          {
+            model: Evento,
+            as: "evento",
             required: true,
-            attributes: ["id", "nombre", "usuarioid"],
-            where: { usuarioid: propietarioId }
+            attributes: ["id", "nombre", "fecha_hora"],
+            include: {
+              model: Lugar,
+              as: "lugar",
+              required: true,
+              attributes: ["id", "nombre", "usuarioid"],
+              where: { usuarioid: propietarioId }
+            }
           }
-        }
-      ],
-      order: [['fecha_hora', 'DESC']]
-    });
+        ],
+        order: [['fecha_hora', 'DESC']]
+      });
+
+      console.log('Cantidad de comentarios encontrados:', comentarios.length);
+      return comentarios;
+    } catch (error) {
+      console.error('Error en listarComentariosPropietario:', error);
+      throw error;
+    }
   }
 
   async listarComentariosUsuario(usuarioId) {
-    return await Comentario.findAll({
-      where: { usuarioid: usuarioId },
-      include: [
-        {
-          model: Evento,
-          as: "evento",
-          attributes: ["nombre"],
-          include: { model: Lugar, as: "lugar", attributes: ["nombre"] },
+    console.log('=== Inicio de listarComentariosUsuario ===');
+    console.log('Usuario ID:', usuarioId);
+
+    try {
+      const comentarios = await Comentario.findAll({
+        where: { 
+          usuarioid: usuarioId,
+          estado: true 
         },
-      ],
-    });
+        include: [
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["id", "nombre", "fecha_hora"],
+            include: { 
+              model: Lugar, 
+              as: "lugar", 
+              attributes: ["id", "nombre"] 
+            },
+          },
+        ],
+        order: [['fecha_hora', 'DESC']]
+      });
+
+      console.log('Cantidad de comentarios encontrados:', comentarios.length);
+      return comentarios;
+    } catch (error) {
+      console.error('Error en listarComentariosUsuario:', error);
+      throw error;
+    }
   }
 
   async listarComentariosPorEvento(eventoid, { limit, offset }) {
@@ -84,13 +115,40 @@ class ComentarioService {
 
   async crear(data) {
     try {
-      return await Comentario.create({
-        ...data,
+      console.log('=== Inicio de crear comentario ===');
+      console.log('Datos recibidos:', data);
+
+      // Validar que el evento exista
+      const evento = await Evento.findByPk(data.eventoid);
+      if (!evento) {
+        console.log('Error: Evento no encontrado');
+        throw new Error('El evento no existe');
+      }
+
+      // Validar que el usuario exista
+      const usuario = await Usuario.findByPk(data.usuarioid);
+      if (!usuario) {
+        console.log('Error: Usuario no encontrado');
+        throw new Error('El usuario no existe');
+      }
+
+      const comentario = await Comentario.create({
+        usuarioid: data.usuarioid,
+        eventoid: data.eventoid,
+        contenido: data.contenido,
+        fecha_hora: new Date(),
         estado: true,
         aprobacion: null
       });
+
+      console.log('Comentario creado exitosamente:', comentario);
+      return comentario;
     } catch (error) {
-      console.error('Error al crear comentario:', error);
+      console.error('Error detallado al crear comentario:', {
+        message: error.message,
+        stack: error.stack,
+        data: data
+      });
       throw error;
     }
   }
@@ -130,39 +188,19 @@ class ComentarioService {
 
   async reportar(id, motivo, usuarioid) {
     try {
-      console.log('=== Inicio de reportar en servicio ===');
-      console.log('Parámetros recibidos:', { id, motivo, usuarioid });
+      console.log('=== Inicio de reportar comentario ===');
+      console.log('Datos recibidos:', { id, motivo, usuarioid });
 
-      // Verificar que el comentario existe
-      console.log('Buscando comentario con ID:', id);
       const comentario = await this.obtenerPorId(id);
-      console.log('Comentario encontrado:', comentario);
-
       if (!comentario) {
-        console.log('Error: Comentario no encontrado');
         throw new Error('Comentario no encontrado');
       }
 
-      // Verificar que el comentario no esté ya reportado
-      console.log('Estado actual del comentario:', {
-        aprobacion: comentario.aprobacion,
-        motivo_reporte: comentario.motivo_reporte
-      });
-
       if (comentario.aprobacion === 'pendiente') {
-        console.log('Error: Comentario ya reportado');
         throw new Error('Este comentario ya ha sido reportado');
       }
 
-      // Actualizar el comentario
-      console.log('Actualizando comentario con datos:', {
-        aprobacion: 'pendiente',
-        motivo_reporte: motivo,
-        reportado_por: usuarioid,
-        fecha_reporte: new Date()
-      });
-
-      const [updated] = await Comentario.update(
+      const actualizado = await Comentario.update(
         {
           aprobacion: 'pendiente',
           motivo_reporte: motivo,
@@ -172,25 +210,13 @@ class ComentarioService {
         { where: { id } }
       );
 
-      console.log('Resultado de la actualización:', updated);
-
-      if (!updated) {
-        console.log('Error: No se pudo actualizar el comentario');
+      if (!actualizado[0]) {
         throw new Error('Error al actualizar el comentario');
       }
 
-      // Obtener el comentario actualizado con toda la información
-      console.log('Obteniendo comentario actualizado...');
-      const comentarioActualizado = await this.obtenerPorId(id);
-      console.log('Comentario actualizado:', comentarioActualizado);
-
-      return comentarioActualizado;
+      return await this.obtenerPorId(id);
     } catch (error) {
-      console.error('Error detallado en reportar comentario:', {
-        message: error.message,
-        stack: error.stack,
-        code: error.code
-      });
+      console.error('Error en reportar:', error);
       throw error;
     }
   }
@@ -223,20 +249,90 @@ class ComentarioService {
 
   async actualizarEstado(id, estado) {
     try {
+      console.log('=== Inicio de actualizarEstado ===');
+      console.log('Datos recibidos:', { id, estado });
+
+      // Validar que el estado sea válido
+      const estadosValidos = ['aceptado', 'rechazado'];
+      if (!estadosValidos.includes(estado)) {
+        throw new Error('Estado no válido. Debe ser "aceptado" o "rechazado"');
+      }
+
+      // Buscar el comentario
       const comentario = await this.obtenerPorId(id);
-      if (!comentario) throw new Error('Comentario no encontrado');
+      if (!comentario) {
+        throw new Error('Comentario no encontrado');
+      }
+
+      // Verificar que el comentario esté reportado
+      if (comentario.aprobacion !== 'pendiente') {
+        throw new Error('Este comentario no está reportado');
+      }
+
+      // Actualizar el estado
+      const [actualizado] = await Comentario.update(
+        { 
+          aprobacion: estado,
+          // Si se rechaza, mantener el comentario activo pero marcado como rechazado
+          // Si se acepta, desactivar el comentario
+          estado: estado === 'aceptado' ? false : true
+        },
+        { where: { id } }
+      );
+
+      if (!actualizado) {
+        throw new Error('No se pudo actualizar el estado del comentario');
+      }
+
+      // Obtener el comentario actualizado con toda la información
+      const comentarioActualizado = await this.obtenerComentarioPorId(id);
       
-      return await comentario.update({ aprobacion: estado });
+      console.log('Estado actualizado exitosamente:', comentarioActualizado);
+      return comentarioActualizado;
     } catch (error) {
-      console.error('Error al actualizar estado:', error);
+      console.error('Error en actualizarEstado:', error);
       throw error;
     }
   }
 
   async obtenerPorEvento(eventoid) {
     try {
-      return await Comentario.findAll({
-        where: { eventoid, estado: true },
+      console.log('=== Inicio de obtenerPorEvento ===');
+      console.log('Evento ID:', eventoid);
+
+      const comentarios = await Comentario.findAll({
+        where: { 
+          eventoid,
+          estado: true 
+        },
+        include: [
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'correo']
+          }
+        ],
+        order: [['fecha_hora', 'DESC']]
+      });
+
+      console.log('Cantidad de comentarios encontrados:', comentarios.length);
+      return comentarios;
+    } catch (error) {
+      console.error('Error en obtenerPorEvento:', error);
+      throw error;
+    }
+  }
+
+  async obtenerPorEventoPropietario(eventoid, propietarioId) {
+    try {
+      console.log('=== Inicio de obtenerPorEventoPropietario ===');
+      console.log('Evento ID:', eventoid, 'Propietario ID:', propietarioId);
+
+      const comentarios = await Comentario.findAll({
+        where: { 
+          eventoid,
+          estado: true 
+        },
         include: [
           {
             model: Usuario,
@@ -246,29 +342,34 @@ class ComentarioService {
           {
             model: Evento,
             as: 'evento',
-            attributes: ['id', 'nombre', 'descripcion', 'fecha_hora'],
-            include: [
-              {
-                model: Lugar,
-                as: 'lugar',
-                attributes: ['id', 'nombre']
-              }
-            ]
+            required: true,
+            include: {
+              model: Lugar,
+              as: 'lugar',
+              required: true,
+              where: { usuarioid: propietarioId }
+            }
           }
         ],
         order: [['fecha_hora', 'DESC']]
       });
+
+      console.log('Cantidad de comentarios encontrados:', comentarios.length);
+      return comentarios;
     } catch (error) {
-      console.error('Error al obtener comentarios por evento:', error);
-      throw new Error('Error al obtener los comentarios del evento');
+      console.error('Error en obtenerPorEventoPropietario:', error);
+      throw error;
     }
   }
 
   async obtenerReportados() {
     try {
-      return await Comentario.findAll({
+      console.log('=== Inicio de obtenerReportados ===');
+
+      const comentarios = await Comentario.findAll({
         where: { 
-          aprobacion: 'pendiente'
+          aprobacion: 'pendiente',
+          estado: true
         },
         include: [
           {
@@ -291,9 +392,12 @@ class ComentarioService {
         ],
         order: [['fecha_hora', 'DESC']]
       });
+
+      console.log('Cantidad de comentarios reportados encontrados:', comentarios.length);
+      return comentarios;
     } catch (error) {
       console.error('Error en obtenerReportados:', error);
-      throw new Error('Error al obtener los comentarios reportados');
+      throw error;
     }
   }
 }

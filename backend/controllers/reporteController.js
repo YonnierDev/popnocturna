@@ -29,7 +29,17 @@ class ReporteController {
             });
         } catch (error) {
             console.error('Error en actualizarEstadoReporteComentario:', error);
-            res.status(500).json({ mensaje: "Error al actualizar el estado del reporte" });
+            
+            // Manejar el caso específico cuando el comentario no existe
+            if (error.message === 'Comentario no encontrado') {
+                return res.status(404).json({ 
+                    mensaje: "Comentario no encontrado"
+                });
+            }
+
+            res.status(500).json({ 
+                mensaje: "Error al actualizar el estado del reporte"
+            });
         }
     }
 
