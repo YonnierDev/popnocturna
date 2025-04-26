@@ -155,11 +155,36 @@ DELETE /api/lugar/:id
 
 ## Comentarios
 
+### Obtener Comentarios (Redirección por Rol)
+```http
+GET /api/comentarios
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Redirección por Rol**:
+  - **Roles 1,2 (Admin/SuperAdmin)**: Ve todos los comentarios
+  - **Rol 3 (Propietario)**: Ve solo comentarios de sus eventos
+  - **Rol 8 (Usuario)**: Ve solo sus propios comentarios
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Comentarios obtenidos exitosamente",
+    "comentarios": [
+      {
+        "id": 1,
+        "contenido": "Comentario 1",
+        "fecha_hora": "2024-02-20T15:30:00.000Z",
+        "estado": true
+      }
+    ]
+  }
+  ```
+
 ### Crear Comentario (Rol 8)
 ```http
 POST /api/comentario
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 8 (Usuario)
 - **Body**:
   ```json
   {
@@ -167,24 +192,14 @@ POST /api/comentario
     "contenido": "Este es un comentario de ejemplo"
   }
   ```
-- **Respuesta Exitosa**:
-  ```json
-  {
-    "mensaje": "Comentario creado exitosamente",
-    "comentario": {
-      "id": 1,
-      "contenido": "Este es un comentario de ejemplo",
-      "fecha_hora": "2024-02-20T15:30:00.000Z",
-      "estado": true
-    }
-  }
-  ```
 
-### Actualizar Comentario (Rol 8, solo propietario)
+### Actualizar Comentario (Rol 8, solo propietario del comentario)
 ```http
 PUT /api/comentario/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 8 (Usuario)
+- **Validación Adicional**: Solo puede actualizar sus propios comentarios
 - **Body**:
   ```json
   {
@@ -197,12 +212,17 @@ PUT /api/comentario/:id
 DELETE /api/comentario/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2,8
+- **Validación Adicional**: 
+  - Roles 1,2 pueden eliminar cualquier comentario
+  - Rol 8 solo puede eliminar sus propios comentarios
 
 ### Reportar Comentario (Rol 3)
 ```http
 POST /api/comentario/:id/reportar
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
 - **Body**:
   ```json
   {
@@ -210,47 +230,41 @@ POST /api/comentario/:id/reportar
   }
   ```
 
-### Obtener Comentarios por Evento
+### Obtener Comentarios por Evento (Redirección por Rol)
 ```http
 GET /api/comentarios/evento/:eventoid
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Redirección por Rol**:
+  - **Roles 1,2**: Ve todos los comentarios del evento
+  - **Rol 3**: Ve solo comentarios de sus eventos
+  - **Rol 8**: Ve todos los comentarios del evento
 
 ### Obtener Comentarios Reportados (Roles 1,2)
 ```http
 GET /api/comentario/reportados
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2 (Admin/SuperAdmin)
 
 ## Calificaciones
 
-### Listar Calificaciones
+### Listar Calificaciones (Todos los roles)
 ```http
 GET /api/calificaciones
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Respuesta Exitosa**:
-  ```json
-  {
-    "calificaciones": [
-      {
-        "id": 1,
-        "puntuacion": 5,
-        "comentario": "Excelente lugar",
-        "usuario": {
-          "id": 1,
-          "nombre": "Usuario 1"
-        }
-      }
-    ]
-  }
-  ```
+- **Roles Permitidos**: 1,2,3,8
 
 ### Eliminar Calificación (Roles 1,2,8)
 ```http
 DELETE /api/calificacion/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2,8
+- **Validación Adicional**: 
+  - Roles 1,2 pueden eliminar cualquier calificación
+  - Rol 8 solo puede eliminar sus propias calificaciones
 
 ## Reservas
 
@@ -259,18 +273,24 @@ DELETE /api/calificacion/:id
 GET /api/reservas
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Redirección por Rol**:
+  - **Roles 1,2**: Ve todas las reservas
+  - **Rol 3**: Ve reservas de sus eventos
+  - **Rol 8**: Ve solo sus reservas
 
 ### Buscar Reserva por Número (Roles 1,2,3)
 ```http
 GET /api/reserva/:numero_reserva
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2,3
 
 ### Eliminar Reserva (Roles 1,2)
 ```http
 DELETE /api/reserva/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2 (Admin/SuperAdmin)
 
 ## Códigos de Estado
 
@@ -284,14 +304,20 @@ DELETE /api/reserva/:id
 
 ## Notas Importantes
 
-1. Todos los endpoints requieren autenticación mediante token JWT (excepto los marcados)
-2. Los roles se manejan de la siguiente manera:
-   - 1: SuperAdmin
-   - 2: Admin
-   - 3: Propietario
-   - 8: Usuario normal
-3. Los estados de aprobación pueden ser:
-   - `pendiente`: En espera de revisión
-   - `aceptado`: Reporte aprobado
-   - `rechazado`: Reporte rechazado
-4. Los comentarios tienen un límite de 500 caracteres 
+1. **Autenticación**
+   - Todos los endpoints requieren autenticación mediante token JWT
+   - El token debe incluir el rol del usuario
+
+2. **Roles del Sistema**
+   - 1: SuperAdmin - Acceso total
+   - 2: Admin - Acceso casi total, algunas restricciones
+   - 3: Propietario - Acceso a sus recursos y funcionalidades específicas
+   - 8: Usuario - Acceso limitado a sus propios recursos
+
+3. **Redirecciones por Rol**
+   - Algunos endpoints muestran diferentes datos según el rol
+   - Las redirecciones son automáticas basadas en el rol del token
+
+4. **Validaciones Adicionales**
+   - Además del rol, algunos endpoints tienen validaciones específicas
+   - Por ejemplo, usuarios solo pueden modificar sus propios recursos 
