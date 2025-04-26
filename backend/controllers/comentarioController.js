@@ -60,18 +60,21 @@ class ComentarioController {
         try {
             const { id: usuarioid, rol } = req.usuario;
             const { id } = req.params;
-            const { contenido } = req.body;
+            const { usuarioid: bodyUsuarioId, eventoid, contenido, fecha_hora } = req.body;
 
-            // Solo usuarios con rol permitido pueden actualizar
+            // Validar roles permitidos
             if (![1, 2, 8].includes(rol)) {
                 return res.status(403).json({ mensaje: "Solo los administradores o usuarios pueden actualizar comentarios" });
             }
 
-            // Validar que se proporcione el contenido
-            if (!contenido) {
-                return res.status(400).json({ 
-                    mensaje: "El contenido del comentario es requerido"
-                });
+            // Validar que todos los campos requeridos estén presentes y no sean null ni undefined
+            if (
+                bodyUsuarioId == null ||
+                eventoid == null ||
+                contenido == null ||
+                fecha_hora == null
+            ) {
+                return res.status(400).json({ mensaje: "Todos los campos son requeridos: usuarioid, eventoid, contenido, fecha_hora" });
             }
 
             // Validar longitud del contenido
@@ -93,7 +96,13 @@ class ComentarioController {
                 return res.status(403).json({ mensaje: "No tienes permiso para editar este comentario" });
             }
 
-            const actualizado = await ComentarioService.actualizar(id, contenido);
+            // Actualizar el comentario
+            const actualizado = await ComentarioService.actualizar(id, {
+                usuarioid: bodyUsuarioId,
+                eventoid,
+                contenido,
+                fecha_hora
+            });
             res.json({
                 mensaje: "Comentario actualizado exitosamente",
                 comentario: actualizado
