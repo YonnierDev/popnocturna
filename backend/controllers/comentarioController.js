@@ -62,9 +62,9 @@ class ComentarioController {
             const { id } = req.params;
             const { contenido } = req.body;
 
-            // Solo usuarios (rol 8) pueden actualizar sus propios comentarios
-            if (rol !== 8) {
-                return res.status(403).json({ mensaje: "Solo los usuarios pueden actualizar sus comentarios" });
+            // Solo usuarios con rol permitido pueden actualizar
+            if (![1, 2, 8].includes(rol)) {
+                return res.status(403).json({ mensaje: "Solo los administradores o usuarios pueden actualizar comentarios" });
             }
 
             // Validar que se proporcione el contenido
@@ -88,8 +88,8 @@ class ComentarioController {
                 return res.status(404).json({ mensaje: "Comentario no encontrado" });
             }
 
-            // Verificar que el usuario es el dueño del comentario
-            if (comentario.usuarioid !== usuarioid) {
+            // Si es admin/superadmin puede actualizar cualquier comentario, si es usuario solo el suyo
+            if ((rol === 8 && comentario.usuarioid !== usuarioid) || (rol !== 8 && ![1,2].includes(rol))) {
                 return res.status(403).json({ mensaje: "No tienes permiso para editar este comentario" });
             }
 
@@ -101,7 +101,7 @@ class ComentarioController {
         } catch (error) {
             console.error('Error al actualizar comentario:', error);
             res.status(500).json({ 
-                mensaje: "Error al actualizar el comentario",
+                mensaje: "Error interno al actualizar el comentario",
                 error: error.message 
             });
         }
