@@ -201,18 +201,52 @@
 
 ## 🔔 Notificaciones
 
-### Listar Notificaciones
-- **GET** `/notificaciones`
-- **Descripción**: Obtener lista de notificaciones
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `page`: número de página
-  - `limit`: elementos por página
+- Antiguas rutas de notificaciones simplificadas se reemplazan por las siguientes:
 
-### Marcar como Leída
-- **PUT** `/notificaciones/:id/leer`
-- **Descripción**: Marcar notificación como leída
+### HTTP
+#### Listar notificaciones de reportes
+- **GET** `/api/comentario/reportes/notificaciones`
+- **Descripción**: Cantidad de comentarios reportados pendientes de revisión
+- **Permisos**: roles 1 y 2
 - **Headers**: `Authorization: Bearer <token>`
+- **Respuesta**:
+```json
+{
+  "reportesPendientes": number,
+  "mensaje": "Tienes X reporte(s) pendiente(s) de revisión"
+}
+```
+
+#### Listar notificaciones de lugares
+- **GET** `/api/lugares/creacion/notificaciones`
+- **Descripción**: Cantidad de lugares pendientes de aprobación
+- **Permisos**: roles 1 y 2
+- **Headers**: `Authorization: Bearer <token>`
+- **Respuesta**:
+```json
+{
+  "lugaresPendientes": number,
+  "mensaje": "Tienes X lugar(es) pendiente(s) de aprobación"
+}
+```
+
+### Socket.IO (Tiempo Real)
+#### Evento: `nuevo-lugar`
+- **Descripción**: Se emite cuando un propietario (rol 3) crea un nuevo lugar
+- **Payload**:
+```json
+{
+  "propietario": "string",
+  "lugar": { /* objeto lugar creado */ },
+  "timestamp": "string (ISO 8601)"
+}
+```
+- **Escucha en cliente**:
+```js
+socket.on('nuevo-lugar', data => {
+  console.log('📍 Nuevo lugar:', data);
+});
+```
 
 ## 🎁 Recompensas
 
