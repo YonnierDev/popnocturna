@@ -1,4 +1,4 @@
-const { Comentario, Usuario, Evento, Lugar, Categoria } = require('../models');
+const { Comentario, Lugar, Usuario, Categoria, Evento } = require("../models");
 
 class ReporteService {
     // Métodos para reportes de comentarios

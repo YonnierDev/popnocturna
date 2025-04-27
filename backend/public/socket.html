@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Socket.IO Test</title>
+  <style>body{font-family:sans-serif;}#messages{list-style:none;padding:0;}#messages li{padding:4px;border-bottom:1px solid #ddd;}</style>
+</head>
+<body>
+  <h1>Socket.IO Notifications</h1>
+  <ul id="messages"></ul>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const list = document.getElementById('messages');
+    function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}    
+    socket.on('connect', ()=> add(`✅ Conectado: ${socket.id}`));
+    socket.on('nuevo-lugar', data => {
+      add(`📍 Nuevo lugar creado por ${data.propietario}: ${data.lugar.nombre} (${data.timestamp})`);
+    });
+    socket.on('reporte-comentario', data => {
+      add(`🚩 Reporte de comentario por ${data.reportador}: id=${data.comentarioId}, motivo='${data.motivo}', contenido='${data.contenido}' (${data.timestamp})`);
+    });
+    socket.on('disconnect', ()=> add('🔴 Desconectado'));
+  </script>
+</body>
+</html>

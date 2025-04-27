@@ -33,13 +33,13 @@ router.put('/lugar/:id/estado',
 );
 
 // Rutas para notificaciones (roles 1 y 2)
-router.get('/reportes/notificaciones',
+router.get('/comentario/reportes/notificaciones',
     autentiMiddleware,
     verificarRol([1, 2]),
     reporteController.obtenerNotificacionesReportes
 );
 
-router.get('/lugares/notificaciones',
+router.get('/lugares/creacion/notificaciones',
     autentiMiddleware,
     verificarRol([1, 2]),
     reporteController.obtenerNotificacionesLugares

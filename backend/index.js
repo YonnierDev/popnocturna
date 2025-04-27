@@ -1,6 +1,9 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -21,6 +24,22 @@ app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes"));
 app.use("/api", require("./routes/calificacionRoutes"));
+// Configurar Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*', methods: ['GET','POST','PATCH','DELETE'] } });
+app.set('io', io);
+
+// Servir archivos estáticos (para socket-test.html)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Socket.IO: manejar nuevas conexiones
+io.on('connection', socket => {
+  console.log('Nuevo cliente conectado:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
+  });
+});
+
 app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/comentarioRoutes"));
 app.use("/api", require("./routes/reporteRoutes"));
@@ -35,6 +54,6 @@ app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 
 const PORT = process.env.PORT || 7000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+server.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
 
 module.exports = app;

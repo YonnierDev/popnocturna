@@ -2,23 +2,19 @@ const { Calificacion, Evento, Usuario, Lugar } = require("../models");
 
 class CalificacionService {
   // Métodos para administradores (roles 1 y 2)
-  async listarCalificacionesAdmin() {
+  async listarCalificacionesAdmin({ page = 1, limit = 10 }) {
     try {
-      return await Calificacion.findAll({
+      const offset = (page - 1) * limit;
+      const result = await Calificacion.findAndCountAll({
         include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["id", "nombre", "correo"],  
-          },
-          {
-            model: Evento,
-            as: "evento",
-            attributes: ["id", "nombre", "descripcion"],
-          },
+          { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] },
+          { model: Evento, as: "evento", attributes: ["id", "nombre", "descripcion"] },
         ],
         order: [["createdAt", "DESC"]],
+        limit: parseInt(limit, 10),
+        offset,
       });
+      return result;
     } catch (error) {
       console.error("Error al listar calificaciones (admin):", error);
       throw error;
@@ -29,16 +25,15 @@ class CalificacionService {
     try {
       const calificacion = await Calificacion.findByPk(id, {
         include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["id", "nombre", "correo"],
-          },
+          { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] },
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion", "imagen"],
-          },
+            attributes: ["id", "nombre"],
+            include: [
+              { model: Lugar, as: "lugar", attributes: ["id", "nombre"] }
+            ]
+          }
         ],
       });
 
@@ -93,9 +88,10 @@ class CalificacionService {
   }
 
   // Métodos para propietarios (rol 3)
-  async listarCalificacionesPorPropietario(usuarioid, { page, limit }) {
+  async listarCalificacionesPorPropietario(usuarioid, { page = 1, limit = 10 }) {
     try {
-      return await Calificacion.findAndCountAll({
+      const offset = (page - 1) * limit;
+      const result = await Calificacion.findAndCountAll({
         include: [
           {
             model: Usuario,
@@ -116,9 +112,10 @@ class CalificacionService {
           }
         ],
         order: [["createdAt", "DESC"]],
-        limit: parseInt(limit),
-        offset: (page - 1) * limit
+        limit: parseInt(limit, 10),
+        offset,
       });
+      return result;
     } catch (error) {
       console.error("Error al listar calificaciones (propietario):", error);
       throw error;
@@ -142,9 +139,12 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion", "imagen"],
-            required: false // Permitir que la calificación exista aunque el evento no
-          },
+            attributes: ["id", "nombre"],
+            required: false,
+            include: [
+              { model: Lugar, as: "lugar", attributes: ["id", "nombre"] }
+            ]
+          }
         ],
       });
 
@@ -194,39 +194,25 @@ class CalificacionService {
   }
 
   // Métodos para usuarios normales (rol 8)
-  async listarCalificacionesPorUsuario(usuarioid, { page = 1, limit = 10 }) {
+  async listarCalificacionesPorUsuario(usuarioid, { page = 1, limit = 10, eventoid }) {
     try {
-      console.log('=== Inicio listarCalificacionesPorUsuario ===');
-      console.log('Buscando calificaciones para usuario:', usuarioid);
-
+      if (!eventoid) {
+        throw new Error("El parámetro eventoid es obligatorio para usuarios");
+      }
       const offset = (page - 1) * limit;
-      
-      const { count, rows: calificaciones } = await Calificacion.findAndCountAll({
-        where: { usuarioid },
+      // Filtrar solo por evento y estado activo
+      const whereClausula = { eventoid: parseInt(eventoid, 10), estado: true };
+      const result = await Calificacion.findAndCountAll({
+        where: whereClausula,
         include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["id", "nombre", "correo"],
-          },
-          {
-            model: Evento,
-            as: "evento",
-            attributes: ["id", "nombre", "descripcion"],
-          },
+          { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] },
+          { model: Evento, as: "evento", attributes: ["id", "nombre", "descripcion"] },
         ],
         order: [["createdAt", "DESC"]],
-        limit,
+        limit: parseInt(limit, 10),
         offset,
       });
-
-      console.log('Calificaciones encontradas:', count);
-      return {
-        total: count,
-        pagina: page,
-        porPagina: limit,
-        calificaciones,
-      };
+      return result;
     } catch (error) {
       console.error("Error al listar calificaciones (usuario):", error);
       throw error;
@@ -240,7 +226,7 @@ class CalificacionService {
       console.log('Para usuario con ID:', usuarioid);
 
       const calificacion = await Calificacion.findOne({
-        where: { id, usuarioid },
+        where: { id, usuarioid, estado: true },
         include: [
           {
             model: Usuario,
@@ -250,7 +236,14 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion", "imagen"],
+            attributes: ["id", "nombre"],
+            include: [
+              {
+                model: Lugar,
+                as: "lugar",
+                attributes: ["id", "nombre"],
+              },
+            ],
           },
         ],
       });

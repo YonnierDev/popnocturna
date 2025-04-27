@@ -5,7 +5,7 @@ class ReservaController {
     try {
       const { rol: rolid, id: usuarioid } = req.usuario;
       const { page = 1, limit = 10, estado, fechaDesde, fechaHasta } = req.query;
-  
+
       const opciones = {
         offset: (page - 1) * limit,
         limit: parseInt(limit),
@@ -13,9 +13,9 @@ class ReservaController {
         fechaDesde,
         fechaHasta,
       };
-  
+
       let reservas;
-  
+
       if (rolid === 1 || rolid === 2) {
         reservas = await ReservaService.listarReservas(opciones);
       } else if (rolid === 3) {
@@ -25,7 +25,7 @@ class ReservaController {
       } else {
         return res.status(403).json({ mensaje: "No tienes permiso para ver reservas" });
       }
-  
+
       res.json({ 
         mensaje: "Reservas obtenidas correctamente", 
         datos: reservas 

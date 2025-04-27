@@ -76,6 +76,13 @@ class PropietarioLugarController {
         mensaje: "Lugar creado con éxito",
         lugar: nuevoLugar,
       });
+      // Emitir socket al crear nuevo lugar
+      const io = req.app.get('io');
+      io.emit('nuevo-lugar', {
+        propietario: req.usuario.nombre,
+        lugar: nuevoLugar,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error("Error al crear lugar:", error);
       res

@@ -15,6 +15,10 @@ class ReporteController {
                 mensaje: "Estado del reporte actualizado exitosamente",
                 reporte: actualizado
             });
+            // Emitir socket al actualizar estado de reporte
+            const io = req.app.get('io');
+            const notificacionesReportes = await ReporteService.obtenerNotificacionesReportes(req.usuario.rol);
+            io.emit('notificaciones-reportes', notificacionesReportes);
         } catch (error) {
             console.error('Error en actualizarEstadoReporteComentario:', error);
             
@@ -123,6 +127,10 @@ class ReporteController {
                 mensaje: "Estado del lugar actualizado exitosamente",
                 lugar: actualizado
             });
+            // Emitir socket al actualizar estado de lugar
+            const io = req.app.get('io');
+            const notificacionesLugares = await ReporteService.obtenerNotificacionesLugares(req.usuario.rol);
+            io.emit('notificaciones-lugares', notificacionesLugares);
         } catch (error) {
             console.error('Error en actualizarEstadoLugar:', error);
             res.status(500).json({ mensaje: "Error al actualizar el estado del lugar" });

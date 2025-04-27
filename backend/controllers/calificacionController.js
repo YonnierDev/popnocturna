@@ -8,40 +8,43 @@ class CalificacionController {
       console.log('Usuario autenticado:', req.usuario);
       
       const { rol: rolid, id: usuarioid } = req.usuario;
-      const { page = 1, limit = 10 } = req.query;
+      const { page = 1, limit = 10, eventoid } = req.query;
 
       console.log('Parámetros recibidos:', {
         rolid,
         page,
-        limit
+        limit,
+        eventoid
       });
 
       let resultado;
 
-      // Si es admin o super admin (roles 1 y 2), ver toda la información sin restricciones
-      if (rolid === 1 || rolid === 2) {
-        console.log('Acceso como administrador (rol:', rolid, ')');
+      // Roles: 1=SuperAdmin, 2=Admin, 3=Propietario, 8=Usuario Normal
+      if (rolid === 1) {
+        console.log('Acceso como Super Admin');
         resultado = await CalificacionService.listarCalificacionesAdmin({ page, limit });
-      } 
-      // Si es propietario (rol 3), ver solo calificaciones de sus eventos
-      else if (rolid === 3) {
-        console.log('Acceso como propietario');
-        resultado = await CalificacionService.listarCalificacionesPorPropietario(
-          usuarioid, 
-          { page, limit }
-        );
-      } 
-      // Si es usuario normal (rol 8), ver todas las calificaciones
-      else if (rolid === 8) {
-        console.log('Acceso como usuario normal');
-        resultado = await CalificacionService.listarCalificacionesPorUsuario(usuarioid, { page, limit });
-      } 
-      else {
+      } else if (rolid === 2) {
+        console.log('Acceso como Admin');
+        resultado = await CalificacionService.listarCalificacionesAdmin({ page, limit });
+      } else if (rolid === 3) {
+        console.log('Acceso como Propietario');
+        resultado = await CalificacionService.listarCalificacionesPorPropietario(usuarioid, { page, limit });
+      } else if (rolid === 8) {
+        console.log('Acceso como Usuario Normal');
+        // Validar que el query param eventoid esté presente
+        if (!eventoid) {
+          console.log('Error: Parámetro eventoid faltante');
+          return res.status(400).json({ mensaje: "El parámetro eventoid es obligatorio para ver calificaciones." });
+        }
+        console.log('Filtrando calificaciones por eventoid:', eventoid);
+        resultado = await CalificacionService.listarCalificacionesPorUsuario(usuarioid, { page, limit, eventoid });
+      } else {
         console.log('Acceso denegado - Rol no permitido:', rolid);
         return res.status(403).json({ mensaje: "No tienes permiso para ver calificaciones" });
       }
+      console.log('Resultado listarCalificaciones:', resultado);
 
-      // Unifica la respuesta paginada para todos los roles
+      // Formatear paginación en el controller según rol
       res.json({
         mensaje: "Calificaciones obtenidas correctamente",
         datos: formatearRespuestaPaginada({
@@ -67,20 +70,22 @@ class CalificacionController {
       console.log('Datos recibidos:', { id, rolid, usuarioid });
 
       let calificacion;
-      if (rolid === 1 || rolid === 2) {
-        console.log('Acceso como administrador');
+      if (rolid === 1) {
+        console.log('Ver calificación como Super Admin');
+        calificacion = await CalificacionService.verCalificacionAdmin(id);
+      } else if (rolid === 2) {
+        console.log('Ver calificación como Admin');
         calificacion = await CalificacionService.verCalificacionAdmin(id);
       } else if (rolid === 3) {
-        console.log('Acceso como propietario');
+        console.log('Ver calificación como Propietario');
         calificacion = await CalificacionService.verCalificacionPropietario(id, usuarioid);
       } else if (rolid === 8) {
-        console.log('Acceso como usuario normal');
+        console.log('Ver calificación como Usuario Normal');
         calificacion = await CalificacionService.verCalificacionUsuario(id, usuarioid);
       } else {
-        console.log('Error: Rol no autorizado');
+        console.log('Error: Rol no autorizado:', rolid);
         return res.status(403).json({ error: "No tienes permisos para ver esta calificación" });
       }
-
       console.log('Calificación obtenida:', calificacion);
       res.json(calificacion);
     } catch (error) {
@@ -117,6 +122,9 @@ class CalificacionController {
       });
 
       console.log('Calificación creada exitosamente');
+      // Emitir socket al crear nueva calificación
+      const io = req.app.get('io');
+      io.emit('nueva-calificacion', nuevaCalificacion);
       res.status(201).json(nuevaCalificacion);
     } catch (error) {
       console.error("Error al crear calificación:", error);
