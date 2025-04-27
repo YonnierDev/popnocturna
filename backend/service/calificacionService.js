@@ -131,7 +131,7 @@ class CalificacionService {
       console.log('Buscando calificación con ID:', id);
       console.log('Para propietario con ID:', usuarioid);
 
-      // Primero buscar la calificación sin restricciones
+      // Buscar la calificación y asegurar que el evento asociado pertenezca al propietario
       const calificacion = await Calificacion.findByPk(id, {
         include: [
           {
@@ -142,50 +142,28 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion", "imagen"],
-            required: false // Permitir que la calificación exista aunque el evento no
+            attributes: ["id", "nombre", "descripcion", "fecha_hora"],
+            required: true,
+            include: [
+              {
+                model: Lugar,
+                as: "lugar",
+                attributes: ["id", "nombre", "imagen", "ubicacion", "usuarioid"]
+              }
+            ]
           },
         ],
       });
 
-      console.log('Calificación encontrada:', calificacion);
-      console.log('Evento en calificación:', calificacion?.evento);
-      console.log('Evento ID en calificación:', calificacion?.eventoid);
-
       if (!calificacion) {
-        console.log('Error: Calificación no encontrada');
         throw new Error("Calificación no encontrada");
       }
 
-      // Si el evento no viene en la inclusión, buscarlo por separado
-      if (!calificacion.evento) {
-        console.log('Evento no encontrado en la inclusión, buscando por separado...');
-        const evento = await Evento.findByPk(calificacion.eventoid);
-        console.log('Evento encontrado por separado:', evento);
-        
-        if (!evento) {
-          console.log('Advertencia: El evento asociado a esta calificación no existe');
-          // En lugar de lanzar error, devolvemos la calificación sin evento
-          return {
-            ...calificacion.toJSON(),
-            evento: null,
-            mensaje: "El evento asociado a esta calificación ya no existe"
-          };
-        }
-        calificacion.evento = evento;
-      }
-
-      // Verificar si el evento pertenece al propietario
-      console.log('Verificando propiedad del evento...');
-      console.log('Evento usuarioid:', calificacion.evento?.usuarioid);
-      console.log('Usuario ID:', usuarioid);
-
-      if (calificacion.evento && calificacion.evento.usuarioid !== usuarioid) {
-        console.log('Error: No tienes permisos para ver esta calificación');
+      // Verificar que el evento pertenezca al propietario
+      if (!calificacion.evento || !calificacion.evento.lugar || calificacion.evento.lugar.usuarioid !== usuarioid) {
         throw new Error("No tienes permisos para ver esta calificación");
       }
 
-      console.log('=== Fin verCalificacionPropietario ===');
       return calificacion;
     } catch (error) {
       console.error("Error al ver calificación (propietario):", error);

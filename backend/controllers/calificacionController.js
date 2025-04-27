@@ -72,7 +72,15 @@ class CalificacionController {
         calificacion = await CalificacionService.verCalificacionAdmin(id);
       } else if (rolid === 3) {
         console.log('Acceso como propietario');
-        calificacion = await CalificacionService.verCalificacionPropietario(id, usuarioid);
+        try {
+          calificacion = await CalificacionService.verCalificacionPropietario(id, usuarioid);
+        } catch (error) {
+          // Si es error de permisos, responde con array vacío y mensaje amigable
+          if (error.message === "No tienes permisos para ver esta calificación" || error.message === "Calificación no encontrada") {
+            return res.json({ mensaje: "No hay calificaciones para este propietario", calificaciones: [] });
+          }
+          throw error;
+        }
       } else if (rolid === 8) {
         console.log('Acceso como usuario normal');
         calificacion = await CalificacionService.verCalificacionUsuario(id, usuarioid);
