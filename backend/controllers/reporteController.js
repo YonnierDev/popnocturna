@@ -119,18 +119,32 @@ class ReporteController {
 
     async actualizarEstadoLugar(req, res) {
         try {
+            console.log('== actualizarEstadoLugar llamado ==');
             const { id } = req.params;
-            const { estado } = req.body;
+            // Aceptar campo 'estado' o 'aprobacion'
+            let raw = req.body.estado;
+            if (raw === undefined) raw = req.body.aprobacion;
+            // Convertir a boolean
+            const estado = (typeof raw === 'string')
+                ? raw.toLowerCase() === 'true'
+                : Boolean(raw);
+            console.log('Estado calculado para actualizarLugar:', estado);
 
             const actualizado = await ReporteService.actualizarEstadoLugar(id, estado);
-            res.json({
-                mensaje: "Estado del lugar actualizado exitosamente",
-                lugar: actualizado
-            });
-            // Emitir socket al actualizar estado de lugar
+            console.log('Lugar tras actualizar:', actualizado.toJSON());
+
+            // Enviar respuesta
+            const mensaje = estado ? 'aprobado' : 'lugar no aprobado';
+            res.json({ mensaje, lugar: actualizado });
+            // Notificar siempre al propietario (rol 3)
             const io = req.app.get('io');
-            const notificacionesLugares = await ReporteService.obtenerNotificacionesLugares(req.usuario.rol);
-            io.emit('notificaciones-lugares', notificacionesLugares);
+            const room = `usuario-${actualizado.usuarioid}`;
+            console.log(`Emitiendo lugar-actualizado a sala ${room}:`, { mensaje, lugar: actualizado });
+            io.to(room).emit('lugar-actualizado', {
+                mensaje,
+                lugar: actualizado,
+                timestamp: new Date().toISOString()
+            });
         } catch (error) {
             console.error('Error en actualizarEstadoLugar:', error);
             res.status(500).json({ mensaje: "Error al actualizar el estado del lugar" });

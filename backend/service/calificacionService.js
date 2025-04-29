@@ -96,18 +96,18 @@ class CalificacionService {
           {
             model: Usuario,
             as: "usuario",
-            attributes: ["id", "nombre", "correo"],
+            attributes: ["nombre"],
           },
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre", "descripcion"],
+            attributes: ["nombre"],
             where: { usuarioid },
             required: true,
             include: [{
               model: Lugar,
               as: "lugar",
-              attributes: ["id", "nombre", "imagen", "ubicacion"]
+              attributes: ["nombre"]
             }]
           }
         ],

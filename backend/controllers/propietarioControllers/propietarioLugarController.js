@@ -79,7 +79,7 @@ class PropietarioLugarController {
       // Emitir socket al crear nuevo lugar
       const io = req.app.get('io');
       io.emit('nuevo-lugar', {
-        propietario: req.usuario.nombre,
+        propietario: req.usuario.correo,
         lugar: nuevoLugar,
         timestamp: new Date().toISOString()
       });

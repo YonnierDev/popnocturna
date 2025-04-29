@@ -35,6 +35,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Socket.IO: manejar nuevas conexiones
 io.on('connection', socket => {
   console.log('Nuevo cliente conectado:', socket.id);
+  // permitir que el cliente se una a su sala personal
+  socket.on('join', ({ userId }) => {
+    const room = `usuario-${userId}`;
+    socket.join(room);
+    console.log(`Socket ${socket.id} entró en sala ${room}`);
+  });
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);
   });

@@ -10,17 +10,38 @@
   <ul id="messages"></ul>
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    const userId = parseInt(prompt('Ingresa tu userId para sala personal'), 10);
     const socket = io();
     const list = document.getElementById('messages');
-    function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}    
-    socket.on('connect', ()=> add(`✅ Conectado: ${socket.id}`));
+    function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}
+    socket.on('connect', () => {
+      console.log(`✅ Conectado: ${socket.id}`);
+      socket.emit('join', { userId });
+    });
     socket.on('nuevo-lugar', data => {
+      console.log('EVENT nuevo-lugar:', data);
       add(`📍 Nuevo lugar creado por ${data.propietario}: ${data.lugar.nombre} (${data.timestamp})`);
     });
+    socket.on('lugar-actualizado', data => {
+      console.log('EVENT lugar-actualizado:', data);
+      add(`📬 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
+    });
+    socket.on('lugar-publicado', data => {
+      console.log('EVENT lugar-publicado:', data);
+      add(`✅ Lugar publicado: ${data.lugar.nombre} (${data.timestamp})`);
+    });
+    socket.on('lugar-rechazado', data => {
+      console.log('EVENT lugar-rechazado:', data);
+      add(`❌ Lugar rechazado: ${data.lugar.nombre} (${data.timestamp})`);
+    });
     socket.on('reporte-comentario', data => {
+      console.log('EVENT reporte-comentario:', data);
       add(`🚩 Reporte de comentario por ${data.reportador}: id=${data.comentarioId}, motivo='${data.motivo}', contenido='${data.contenido}' (${data.timestamp})`);
     });
-    socket.on('disconnect', ()=> add('🔴 Desconectado'));
+    socket.on('disconnect', () => {
+      console.log('🔴 Desconectado');
+      add('🔴 Desconectado');
+    });
   </script>
 </body>
 </html>
