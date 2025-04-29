@@ -93,22 +93,13 @@ npm run dev
 ## 🧪 Scripts útiles
 
 ```bash
-npm run dev         # Desarrollo con nodemon
-npm run start       # Producción
-npm run test        # Pruebas unitarias
+npm start - Backend
+npm run dev - Frontend
+
 ```
 
 ---
 
-## ✅ Pruebas y QA
-
-- Pruebas unitarias con `Jest` y `Supertest`
-- Mock de datos y servicios
-- Cobertura mínima del 80% usando `nyc`
-- Linter automático con `ESLint` + `Prettier`
-- Integración con GitHub Actions para CI
-
----
 
 ## 🔒 Seguridad
 
@@ -123,17 +114,18 @@ npm run test        # Pruebas unitarias
 
 - **API desplegada en Vercel**
 - **Base de datos MySQL en Clever Cloud**
+- **Frontend desplegado en Vercel**
 - Configuración automática de variables de entorno en Vercel
 
 ---
 
 ## 👥 Colaboradores
 
-- **Yonnier (Backend & Scrum Master)**
+- Yonnier (Backend & Scrum Master)
 - Marlon (Frontend)
 - Camilo (Frontend)
-- Jhoan (Admin Dashboard)
-- Cristian (QA & Admin Dashboard)
+- Jhoan (Fronted)
+- Cristian (Fronted)
 
 ---
 
