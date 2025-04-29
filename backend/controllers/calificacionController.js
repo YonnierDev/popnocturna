@@ -87,7 +87,9 @@ class CalificacionController {
         return res.status(403).json({ error: "No tienes permisos para ver esta calificación" });
       }
       console.log('Calificación obtenida:', calificacion);
-      res.json(calificacion);
+      const calificacionData = calificacion.toJSON();
+      calificacionData.nombreEvento = calificacion.evento?.nombre || null;
+      res.json(calificacionData);
     } catch (error) {
       console.error("Error al ver calificación:", error);
       res.status(500).json({ error: error.message });
