@@ -13,42 +13,66 @@ class AutentiService {
   }
 
   static validarContrasena(contrasena) {
-    const regex = /^(?=.[A-Z])(?=.\d)(?=.*[\W_]).{8,20}$/;
-    return regex.test(contrasena);
+    if (contrasena.length < 8 || contrasena.length > 20) {
+      return "La contraseña debe tener entre 8 y 20 caracteres.";
+    }
+  
+    if (!/[A-Z]/.test(contrasena)) {
+      return "La contraseña debe incluir al menos una letra mayúscula.";
+    }
+  
+    if (!/[a-z]/.test(contrasena)) {
+      return "La contraseña debe incluir al menos una letra minúscula.";
+    }
+  
+    if (!/\d/.test(contrasena)) {
+      return "La contraseña debe incluir al menos un número.";
+    }
+  
+    if (!/[\W_]/.test(contrasena)) {
+      return "La contraseña debe incluir al menos un símbolo.";
+    }
+  
+    return true;
   }
+  
 
   static async validarCamposRegistro(datos) {
     const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = datos;
-
+  
     if (!nombre || !apellido || !correo || !fecha_nacimiento || !contrasena || !genero) {
       throw new Error("Todos los campos son obligatorios");
     }
-
+  
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
       throw new Error("Correo no válido");
     }
-
-    if (!this.validarContrasena(contrasena)) {
-      throw new Error("La contraseña debe tener entre 8 y 20 caracteres, incluir una mayúscula, un número y un símbolo.");
+  
+    const validacionContrasena = this.validarContrasena(contrasena);
+    if (validacionContrasena !== true) {
+      throw new Error(validacionContrasena); 
     }
-
+  
     const generosPermitidos = ["Masculino", "Femenino", "Otro"];
     if (!generosPermitidos.includes(genero)) {
       throw new Error("Género no válido");
     }
-
+  
     const fechaNacimiento = new Date(fecha_nacimiento);
     const hoy = new Date();
     const edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
     const mes = hoy.getMonth() - fechaNacimiento.getMonth();
     const dia = hoy.getDate() - fechaNacimiento.getDate();
     const edadExacta = mes < 0 || (mes === 0 && dia < 0) ? edad - 1 : edad;
-
-    if (edadExacta < 16) {
-      throw new Error("Edad mínima de registro: 16 años");
+  
+    if (edadExacta < 18) {
+      throw new Error("Edad mínima de registro: 18 años");
     }
   }
+  
+  
+  
 
   static async registrarUsuario(datos) {
     await this.validarCamposRegistro(datos);
@@ -69,6 +93,7 @@ class AutentiService {
       ...datos,
       contrasena: contrasenaHash,
       estado: false,
+      rolid: 8,
     });
 
     return { usuario, codigo };

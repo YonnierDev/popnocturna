@@ -85,7 +85,6 @@ module.exports = (sequelize, DataTypes) => {
       rolid: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 2,
         references: {
           model: "Rol",
           key: "rolid",

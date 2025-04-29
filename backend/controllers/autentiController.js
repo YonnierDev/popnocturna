@@ -5,13 +5,21 @@ class AutentiController {
   static async registrar(req, res) {
     try {
       const datos = req.body;
+  
       const resultado = await AutentiService.registrarUsuario(datos);
       res.status(201).json(resultado);
     } catch (error) {
-      res.status(400).json({ mensaje: error.message });
+  
+      const mensaje = error.message || "Error desconocido";
+      const errores = error.errors || null;
+  
+      res.status(400).json({
+        mensaje,
+        errores,
+      });
     }
   }
-
+  
   static async validarCodigo(req, res) {
     try {
       const { correo, codigo } = req.body;
