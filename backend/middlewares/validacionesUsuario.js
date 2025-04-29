@@ -81,14 +81,14 @@ const validarUsuario = [
     .isBoolean()
     .withMessage("El estado debe ser verdadero o falso"),
 
-  body("imagen")
+  /*body("imagen")
     .optional()
     .custom((value) => {
       if (value && !value.match(/^https?:\/\/.+/)) {
         throw new Error("La imagen debe ser una URL válida");
       }
       return true;
-    }),
+    }),*/
 
   // Validar errores
   (req, res, next) => {
