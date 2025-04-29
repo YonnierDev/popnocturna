@@ -139,7 +139,7 @@ class CalificacionService {
           {
             model: Evento,
             as: "evento",
-            attributes: ["nombre"],
+            attributes: ["id", "nombre", "usuarioid"],
             required: false,
             include: [
               { model: Lugar, as: "lugar", attributes: ["nombre"] }
