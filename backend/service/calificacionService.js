@@ -134,15 +134,15 @@ class CalificacionService {
           {
             model: Usuario,
             as: "usuario",
-            attributes: ["id", "nombre", "correo"],
+            attributes: ["nombre", "correo"],
           },
           {
             model: Evento,
             as: "evento",
-            attributes: ["id", "nombre"],
+            attributes: ["nombre"],
             required: false,
             include: [
-              { model: Lugar, as: "lugar", attributes: ["id", "nombre"] }
+              { model: Lugar, as: "lugar", attributes: ["nombre"] }
             ]
           }
         ],
