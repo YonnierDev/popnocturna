@@ -1,6 +1,6 @@
 const verificarRol = (rolesPermitidos) => {
   return (req, res, next) => {
-    const { rol } = req.usuario;
+    const { rol, id } = req.usuario;
 
     if (!rolesPermitidos.includes(rol)) {
       return res.status(403).json({ 
@@ -10,8 +10,20 @@ const verificarRol = (rolesPermitidos) => {
       });
     }
 
+    // Filtro para propietarios (rol 3)
+    if (rol === 3) {
+      req.filtroRol = { usuarioid: id }; // para lugares o eventos del propietario
+    }
+
+    // Filtro para usuarios normales (rol 8)
+    if (rol === 8) {
+      req.filtroRol = { idUsuario: id }; // para reservas o datos personales
+    }
+
+    // Super admin (1) y admin (2) no tienen restricciones
+
     next();
   };
 };
 
-module.exports = { verificarRol }; 
+module.exports = { verificarRol };

@@ -94,7 +94,6 @@ npm run dev
 
 ```bash
 npm start - Backend
-npm run dev - Frontend
 
 ```
 

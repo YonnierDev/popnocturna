@@ -1,4 +1,4 @@
-const { Lugar, Usuario, Categoria } = require("../../models");
+const { Lugar, Usuario, Categoria, Comentario, Calificacion, Evento } = require("../../models");
 
 class PropietarioLugarService {
   async listarLugaresPropietario(usuarioid) {
@@ -44,7 +44,7 @@ class PropietarioLugarService {
 
   async buacarLugarPropietarioDetallado(nombre, usuarioid) {
     try {
-      const lugar = await Lugar.findAll( {
+      const lugar = await Lugar.findAll({
         where: { nombre: { [require("sequelize").Op.like]: `%${nombre}%` }, usuarioid },
         include: [
           {
@@ -65,6 +65,104 @@ class PropietarioLugarService {
       throw error;
     }
   }
+
+  async listarComentariosYCalificacionesLugar(lugarid, page = 1, limit = 10) {
+    try {
+      const offset = (page - 1) * limit;
+  
+      // Comentarios del lugar paginados
+      const { count: totalComentarios, rows: comentarios } = await Comentario.findAndCountAll({
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            where: { lugarid },
+            attributes: ['id'],
+            include: [
+              {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'correo']
+              },
+              {
+                model: Lugar,
+                as: 'lugar',
+                attributes: ['id', 'nombre']
+              }
+            ]
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+  
+      // Calificaciones del lugar
+      const { count: totalCalificaciones, rows: calificaciones } = await Calificacion.findAndCountAll({
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            where: { lugarid },
+            attributes: ['id'],
+            include: [
+              {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'correo']
+              },
+              {
+                model: Lugar,
+                as: 'lugar',
+                attributes: ['id', 'nombre']
+              }
+            ]
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+  
+      // Promedio de calificaciones
+      const sumaPuntuaciones = calificaciones.reduce((acc, calif) => acc + calif.puntuacion, 0);
+      const promedioCalificaciones = totalCalificaciones > 0
+        ? (sumaPuntuaciones / totalCalificaciones).toFixed(1)
+        : 0;
+  
+      // Resultado estructurado
+      return {
+        comentarios: {
+          data: comentarios,
+          total: totalComentarios,
+          totalPages: Math.ceil(totalComentarios / limit),
+          currentPage: Number(page),
+          hasMore: Number(page) < Math.ceil(totalComentarios / limit),
+          limit: Number(limit)
+        },
+        calificaciones: {
+          data: calificaciones,
+          total: totalCalificaciones,
+          promedio: promedioCalificaciones
+        }
+      };
+    } catch (error) {
+      console.error("Error al listar comentarios y calificaciones:", error);
+      throw error;
+    }
+  }
+  
+
+  async obtenerLugarPorIdConUsuario(lugarid) {
+    return await Lugar.findOne({
+      where: { id: lugarid },
+      include: {
+        model: Usuario,
+        as: "usuario",
+        attributes: ["id", "nombre", "apellido", "rolid"]
+      }
+    });
+  }
+
+
 }
 
 module.exports = new PropietarioLugarService();

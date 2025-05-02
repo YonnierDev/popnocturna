@@ -108,6 +108,56 @@ class PropietarioLugarController {
         .json({ error: "Error al buscar el lugar", detalles: error.message });
     }
   }
+
+  
+  
+  async listarComentariosYCalificacionesLugar(req, res) {
+    try {
+      const { lugarid } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+  
+      // Buscar el lugar y traer su dueño (usuario)
+      const lugar = await PropietarioLugarService.obtenerLugarPorIdConUsuario(lugarid);
+  
+      if (!lugar) {
+        return res.status(404).json({
+          success: false,
+          mensaje: "Lugar no encontrado"
+        });
+      }
+  
+      // Verificar si el lugar le pertenece al usuario autenticado
+      if (lugar.usuarioid !== req.usuario.id) {
+        return res.status(403).json({
+          success: false,
+          mensaje: "Este lugar no te pertenece"
+        });
+      }
+  
+      // Verificar si el usuario tiene el rol de propietario (rolid === 3)
+      if (lugar.usuario.rolid !== 3) {
+        return res.status(403).json({
+          success: false,
+          mensaje: "No tienes permisos para ver esta información"
+        });
+      }
+  
+      // Todo OK, obtener comentarios y calificaciones
+      const data = await PropietarioLugarService.listarComentariosYCalificacionesLugar(lugarid, page, limit);
+  
+      res.status(200).json(data);
+    } catch (error) {
+      console.error("Error al listar comentarios y calificaciones:", error);
+      res.status(500).json({
+        success: false,
+        mensaje: "Error al listar comentarios y calificaciones",
+        error: error.message
+      });
+    }
+  }
+  
+  
 }
 
 module.exports = new PropietarioLugarController();

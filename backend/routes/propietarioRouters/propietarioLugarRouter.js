@@ -35,4 +35,12 @@ router.get(
   PropietarioController.buscarLugarPropietario
 );
 
+// Ruta protegida: propietario ve comentarios y calificaciones de su lugar
+router.get(
+  "/propietario/lugar/:lugarid/comentarios-calificaciones",
+  autentiMiddleware,
+  validarRol(3),
+  PropietarioController.listarComentariosYCalificacionesLugar
+);
+
 module.exports = router;
