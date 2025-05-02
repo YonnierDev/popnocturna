@@ -58,17 +58,17 @@ class SolicitudOcultarComentarioController {
     try {
       const { comentarioid } = req.params;
       const comentario = await SolicitudOcultarComentarioService.obtenerDetallesComentario(comentarioid);
-  
+
       if (!comentario) {
         return res.status(404).json({
           error: "Comentario no encontrado",
         });
       }
-  
+
       const mensaje = comentario.estado === "inactivo"
         ? "Comentario inactivo"
         : "Comentario activo";
-  
+
       res.status(200).json({
         mensaje,
         datos: {
@@ -80,7 +80,7 @@ class SolicitudOcultarComentarioController {
           fecha_actualizacion: comentario.updatedAt,
         },
       });
-  
+
     } catch (error) {
       console.error("Error al obtener detalles del comentario:", error);
       res.status(500).json({
@@ -88,7 +88,7 @@ class SolicitudOcultarComentarioController {
       });
     }
   }
-  
+
 
 
   async procesarSolicitud(req, res) {
@@ -96,21 +96,21 @@ class SolicitudOcultarComentarioController {
       const { comentarioid } = req.params;  // Extraemos el comentarioid de los parámetros de la URL
       const { decision } = req.body;  // Extraemos la decisión del cuerpo de la solicitud
       const administracion_id = req.usuario.id; // ID del administrador, asumiendo que viene en el token
-    
+
       // Verificar que la decisión sea "ocultar" o "mantener"
       if (!["ocultar", "mantener"].includes(decision)) {
         return res.status(400).json({
           error: 'La decisión debe ser "ocultar" o "mantener"',
         });
       }
-    
+
       // Procesar la solicitud con el servicio
       const resultado = await SolicitudOcultarComentarioService.procesarSolicitud(
         comentarioid,
         decision,
         administracion_id
       );
-    
+
       return res.status(200).json({
         mensaje: `Comentario ${decision === "ocultar" ? "ocultado" : "mantenido"} exitosamente`,
         datos: resultado,  // Devuelves los datos del comentario actualizado
