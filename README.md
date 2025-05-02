@@ -122,8 +122,8 @@ npm start - Backend
 
 - Yonnier (Backend & Scrum Master)
 - Marlon (Frontend)
-- Camilo (Frontend)
-- Jhoan (Fronted)
+- Camilo (Backend)
+- Jhoan (Backend)
 - Cristian (Fronted)
 
 ---
