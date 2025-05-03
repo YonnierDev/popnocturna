@@ -97,30 +97,35 @@ class PropietarioLugarService {
         offset: parseInt(offset)
       });
   
-      // Calificaciones del lugar
-      const { count: totalCalificaciones, rows: calificaciones } = await Calificacion.findAndCountAll({
-        include: [
-          {
-            model: Evento,
-            as: 'evento',
-            where: { lugarid },
-            attributes: ['id'],
-            include: [
-              {
-                model: Usuario,
-                as: 'usuario',
-                attributes: ['id', 'nombre', 'correo']
-              },
-              {
-                model: Lugar,
-                as: 'lugar',
-                attributes: ['id', 'nombre']
-              }
-            ]
-          }
-        ],
-        order: [['createdAt', 'DESC']]
-      });
+     // Calificaciones del lugar
+const { count: totalCalificaciones, rows: calificaciones } = await Calificacion.findAndCountAll({
+  include: [
+    {
+      model: Usuario,
+      as: 'usuario', 
+      attributes: ['id', 'nombre', 'correo']
+    },
+    {
+      model: Evento,
+      as: 'evento',
+      where: { lugarid },
+      attributes: ['id'],
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'correo']
+        },
+        {
+          model: Lugar,
+          as: 'lugar',
+          attributes: ['id', 'nombre']
+        }
+      ]
+    }
+  ],
+  order: [['createdAt', 'DESC']]
+});
   
       // Promedio de calificaciones
       const sumaPuntuaciones = calificaciones.reduce((acc, calif) => acc + calif.puntuacion, 0);
