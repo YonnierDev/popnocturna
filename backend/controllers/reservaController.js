@@ -165,7 +165,7 @@ class ReservaController {
   async eliminarReserva(req, res) {
     try {
       const { id } = req.params;
-      const reserva = await ReservaService.buscarReserva(id);
+      const reserva = await ReservaService.buscarReservaPorId(id);
       if (!reserva) {
         return res.status(404).json({ mensaje: "Reserva no encontrada" });
       }

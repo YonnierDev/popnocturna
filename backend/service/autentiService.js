@@ -7,6 +7,15 @@ const TemporalService = require("./temporalService");
 const UsuarioService = require("./usuarioService");
 require("dotenv").config();
 
+// Configurar el transportador de nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
 class AutentiService {
   static generarCodigo() {
     return crypto.randomInt(100000, 999999).toString();
@@ -74,6 +83,29 @@ class AutentiService {
   
   
 
+  // Función para enviar correo de verificación
+  static async enviarCorreoVerificacion(correo, codigo) {
+    try {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: correo,
+        subject: 'Verificación de correo - Popayán Nocturna',
+        html: `
+          <h2>Bienvenido a Popayán Nocturna</h2>
+          <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código:</p>
+          <h3 style="font-size: 24px; color: #2196F3; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px; margin: 20px 0;">${codigo}</h3>
+          <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
+          <p>Gracias por registrarte en Popayán Nocturna.</p>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Error al enviar correo de verificación:', error);
+      throw new Error('Error al enviar el correo de verificación');
+    }
+  }
+
   static async registrarUsuario(datos) {
     await this.validarCamposRegistro(datos);
     const { correo, contrasena } = datos;
@@ -85,7 +117,7 @@ class AutentiService {
 
     const contrasenaHash = await bcrypt.hash(contrasena, 10);
     const codigo = this.generarCodigo();
-    const expiracion = new Date(Date.now() + 5 * 60 * 1000);
+    const expiracion = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
 
     await TemporalService.guardarCodigo(correo, codigo, expiracion);
 
@@ -95,6 +127,9 @@ class AutentiService {
       estado: false,
       rolid: 8,
     });
+
+    // Enviar correo de verificación
+    await this.enviarCorreoVerificacion(correo, codigo);
 
     return { usuario, codigo };
   }
@@ -154,7 +189,7 @@ class AutentiService {
     if (!usuario) throw new Error("Usuario no encontrado");
 
     const codigo = this.generarCodigo();
-    const expiracion = new Date(Date.now() + 5 * 60 * 1000);
+    const expiracion = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
     await TemporalService.guardarCodigo(correo, codigo, expiracion);
     return { codigo, expiracion };
   }
