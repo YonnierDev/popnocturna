@@ -10,17 +10,35 @@
   <ul id="messages"></ul>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const userId = parseInt(prompt('Ingresa tu userId para sala personal'), 10);
+    const usuarioid = parseInt(prompt('Ingresa tu usuarioid para sala personal'), 10);
+    const rol = prompt('Ingresa tu rol (1=superadmin, 2=admin, 3=propietario, 8=usuario)');
     const socket = io();
     const list = document.getElementById('messages');
     function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}
     socket.on('connect', () => {
       console.log(`✅ Conectado: ${socket.id}`);
-      socket.emit('join', { userId });
+      socket.emit('join', { usuarioid });
+      
+      // Unirse a sala de administradores si es rol 1 o 2
+      if (rol === '1' || rol === '2') {
+        socket.emit('join-admin-room', { rol });
+      }
+      
+      // Unirse a sala de usuarios si es rol 8
+      if (rol === '8') {
+        socket.emit('join-usuario-room', { rol });
+      }
     });
-    socket.on('nuevo-lugar', data => {
-      console.log('EVENT nuevo-lugar:', data);
-      add(`📍 Nuevo lugar creado por ${data.propietario}: ${data.lugar.nombre} (${data.timestamp})`);
+    // Notificación para administradores
+    socket.on('nuevo-lugar-admin', data => {
+      console.log('EVENT nuevo-lugar-admin:', data);
+      add(`📍 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
+    });
+
+    // Notificación específica para propietarios
+    socket.on('nuevo-lugar-propietario', data => {
+      console.log('EVENT nuevo-lugar-propietario:', data);
+      add(`✅ ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
     });
     socket.on('lugar-actualizado', data => {
       console.log('EVENT lugar-actualizado:', data);
@@ -37,6 +55,18 @@
     socket.on('reporte-comentario', data => {
       console.log('EVENT reporte-comentario:', data);
       add(`🚩 Reporte de comentario por ${data.reportador}: id=${data.comentarioId}, motivo='${data.motivo}', contenido='${data.contenido}' (${data.timestamp})`);
+    });
+
+    // Notificaciones de eventos para administradores
+    socket.on('nuevo-evento-admin', data => {
+      console.log('EVENT nuevo-evento-admin:', data);
+      add(`🌟 ${data.mensaje} - Evento: ${data.evento.nombre} (${data.timestamp})`);
+    });
+
+    // Notificaciones de eventos para usuarios
+    socket.on('nuevo-evento-usuario', data => {
+      console.log('EVENT nuevo-evento-usuario:', data);
+      add(`🎉 ${data.mensaje} - Fecha: ${data.evento.fecha_hora} (${data.timestamp})`);
     });
     socket.on('disconnect', () => {
       console.log('🔴 Desconectado');

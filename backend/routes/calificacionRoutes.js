@@ -9,6 +9,12 @@ router.get('/calificaciones',
   CalificacionController.listarCalificaciones
 );
 
+// Listar calificaciones por lugar (solo propietarios)
+router.get('/calificaciones/lugar/:lugarid', 
+  autentiMiddleware,
+  CalificacionController.listarCalificacionesPorLugar
+);
+
 // Ver calificación por ID (todos los roles)
 router.get('/calificacion/:id', 
   autentiMiddleware,

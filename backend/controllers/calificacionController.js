@@ -1,7 +1,48 @@
+const { Lugar } = require("../models");
 const CalificacionService = require("../service/calificacionService");
 const {formatearRespuestaPaginada} = require("./paginacionController");
 
 class CalificacionController {
+  async listarCalificacionesPorLugar(req, res) {
+    try {
+      const { rol: rolid, id: usuarioid } = req.usuario;
+      const { lugarid } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+
+      // Verificar que el usuario es propietario
+      if (rolid !== 3) {
+        return res.status(403).json({ mensaje: "Solo los propietarios pueden ver las calificaciones de sus lugares" });
+      }
+
+      // Verificar que el lugar pertenece al propietario
+      const lugar = await Lugar.findOne({
+        where: {
+          id: lugarid,
+          usuarioid
+        }
+      });
+
+      if (!lugar) {
+        return res.status(404).json({ mensaje: "El lugar no existe o no pertenece al propietario" });
+      }
+
+      const resultado = await CalificacionService.listarCalificacionesPorLugar(lugarid, { page, limit });
+
+      res.json({
+        mensaje: "Calificaciones obtenidas correctamente",
+        datos: formatearRespuestaPaginada({
+          total: resultado.count,
+          rows: resultado.rows,
+          page,
+          limit,
+          nombreColeccion: 'calificaciones'
+        })
+      });
+    } catch (error) {
+      console.error("Error al listar calificaciones por lugar:", error);
+      res.status(500).json({ mensaje: "Error en el servicio" });
+    }
+  }
   async listarCalificaciones(req, res) {
     try {
       console.log('\n=== Inicio listarCalificaciones ===');

@@ -1,4 +1,5 @@
 const { Calificacion, Evento, Usuario, Lugar } = require("../models");
+const { Op } = require('sequelize');
 
 class CalificacionService {
   // Métodos para administradores (roles 1 y 2)
@@ -91,6 +92,16 @@ class CalificacionService {
   async listarCalificacionesPorPropietario(usuarioid, { page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
+      
+      // Primero obtener los IDs de los lugares del propietario
+      const lugares = await Lugar.findAll({
+        where: { usuarioid },
+        attributes: ['id']
+      });
+
+      const lugarIds = lugares.map(lugar => lugar.id);
+
+      // Luego obtener las calificaciones de los eventos asociados a estos lugares
       const result = await Calificacion.findAndCountAll({
         include: [
           {
@@ -102,7 +113,49 @@ class CalificacionService {
             model: Evento,
             as: "evento",
             attributes: ["nombre"],
-            where: { usuarioid },
+            where: {
+              lugarid: {
+                [Op.in]: lugarIds
+              }
+            },
+            include: [
+              {
+                model: Lugar,
+                as: "lugar",
+                attributes: ["nombre"]
+              }
+            ]
+          }
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: parseInt(limit, 10),
+        offset,
+      });
+      return result;
+    } catch (error) {
+      console.error("Error al listar calificaciones (propietario):", error);
+      throw error;
+    }
+  }
+
+  async listarCalificacionesPorLugar(lugarid, { page = 1, limit = 10 }) {
+    try {
+      const offset = (page - 1) * limit;
+      
+      const result = await Calificacion.findAndCountAll({
+        include: [
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["nombre"],
+          },
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["nombre"],
+            where: {
+              lugarid
+            },
             required: true,
             include: [{
               model: Lugar,
@@ -117,7 +170,7 @@ class CalificacionService {
       });
       return result;
     } catch (error) {
-      console.error("Error al listar calificaciones (propietario):", error);
+      console.error("Error al listar calificaciones por lugar:", error);
       throw error;
     }
   }

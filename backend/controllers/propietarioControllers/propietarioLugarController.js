@@ -1,5 +1,7 @@
 const cloudinaryService = require("../../service/cloudinaryService");
 const PropietarioLugarService = require("../../service/propietarioService/propietarioLugarService");
+const { Op } = require("sequelize");
+const { Lugar } = require("../../models");
 
 class PropietarioLugarController {
   async listarLugaresPropietario(req, res) {
@@ -35,6 +37,23 @@ class PropietarioLugarController {
       const usuarioid = req.usuario.id;
       const { categoriaid, nombre, descripcion, ubicacion } = req.body;
       let imagenUrl = null;
+
+      // Verificar si el nombre ya existe para este propietario
+      const lugarExistente = await Lugar.findOne({
+        where: {
+          usuarioid,
+          nombre: {
+            [Op.eq]: nombre.toLowerCase()
+          }
+        }
+      });
+
+      if (lugarExistente) {
+        return res.status(400).json({
+          mensaje: "Ya tienes un lugar con este nombre",
+          error: "El nombre del lugar debe ser único para cada propietario"
+        });
+      }
 
       if (!req.file) {
         console.log("No se recibió imagen");
@@ -78,10 +97,21 @@ class PropietarioLugarController {
       });
       // Emitir socket al crear nuevo lugar
       const io = req.app.get('io');
-      io.emit('nuevo-lugar', {
+      
+      // Notificar a administradores
+      io.to('admin-room').emit('nuevo-lugar-admin', {
         propietario: req.usuario.correo,
         lugar: nuevoLugar,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        mensaje: `Nuevo lugar creado por ${req.usuario.correo}`
+      });
+
+      // Notificar al propietario específicamente
+      const propietarioSocket = `usuario-${req.usuario.id}`;
+      io.to(propietarioSocket).emit('nuevo-lugar-propietario', {
+        lugar: nuevoLugar,
+        timestamp: new Date().toISOString(),
+        mensaje: 'Tu lugar ha sido creado y está en revisión'
       });
     } catch (error) {
       console.error("Error al crear lugar:", error);
@@ -145,8 +175,14 @@ class PropietarioLugarController {
   
       // Todo OK, obtener comentarios y calificaciones
       const data = await PropietarioLugarService.listarComentariosYCalificacionesLugar(lugarid, page, limit);
-  
-      res.status(200).json(data);
+
+      // Formatear la respuesta para incluir solo el nombre del lugar
+      const response = {
+        lugar: lugar.nombre,
+        ...data
+      };
+
+      res.status(200).json(response);
     } catch (error) {
       console.error("Error al listar comentarios y calificaciones:", error);
       res.status(500).json({

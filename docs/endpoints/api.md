@@ -255,38 +255,89 @@ GET /api/comentario/reportados
 GET /api/calificaciones?page={page}&limit={limit}
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Roles Permitidos**: 1,2,3,8
-- **Descripción**: Devuelve una lista paginada de calificaciones. El formato de respuesta es consistente para todos los roles e incluye información de paginación (`total`, `page`, `limit`, `results`).
+- **Query Parameters**:
+  - `page`: Número de página (por defecto: 1)
+  - `limit`: Cantidad de elementos por página (por defecto: 10)
+  - `eventoid`: ID del evento (obligatorio para usuarios normales)
+- **Roles permitidos**: 1 (SuperAdmin), 2 (Admin), 3 (Propietario), 8 (Usuario Normal)
 - **Respuesta Exitosa**:
   ```json
   {
-    "total": 25,
-    "page": 1,
-    "limit": 10,
-    "results": [
-      {
-        "id": 1,
-        "puntuacion": 5,
-        "comentario": "Muy bueno",
-        "usuario": {
-          "id": 10,
-          "nombre": "Juan"
-        },
-        "evento": {
-          "id": 2,
-          "nombre": "Fiesta",
-          "descripcion": "Gran evento"
-        },
-        "createdAt": "2025-04-25T12:00:00.000Z"
-      }
-    ]
+    "mensaje": "Calificaciones obtenidas correctamente",
+    "datos": {
+      "total": 8,
+      "calificaciones": [
+        {
+          "id": 27,
+          "usuarioid": 48,
+          "eventoid": 19,
+          "puntuacion": 5,
+          "estado": true,
+          "createdAt": "2025-05-04T01:41:22.000Z",
+          "usuario": {
+            "nombre": "yonnier prueba 1"
+          },
+          "evento": {
+            "nombre": "Concierto ",
+            "lugar": {
+              "nombre": "disco Arena Rose"
+            }
+          }
+        }
+      ],
+      "paginas": 1,
+      "paginaActual": 1
+    }
   }
   ```
 - **Notas**:
   - Admins (roles 1,2) ven todas las calificaciones.
-  - Propietarios (rol 3) ven solo calificaciones de sus eventos.
+  - Propietarios (rol 3) ven calificaciones de sus lugares.
   - Usuarios normales (rol 8) ven solo sus propias calificaciones.
-  - Los includes en los modelos fueron optimizados para traer solo los atributos necesarios.
+
+### Listar Calificaciones por Lugar (Solo propietarios)
+```http
+GET /api/calificaciones/lugar/:lugarid?page={page}&limit={limit}
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Query Parameters**:
+  - `page`: Número de página (por defecto: 1)
+  - `limit`: Cantidad de elementos por página (por defecto: 10)
+- **Roles permitidos**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Calificaciones obtenidas correctamente",
+    "datos": {
+      "total": 8,
+      "calificaciones": [
+        {
+          "id": 27,
+          "usuarioid": 48,
+          "eventoid": 19,
+          "puntuacion": 5,
+          "estado": true,
+          "createdAt": "2025-05-04T01:41:22.000Z",
+          "usuario": {
+            "nombre": "yonnier prueba 1"
+          },
+          "evento": {
+            "nombre": "Concierto ",
+            "lugar": {
+              "nombre": "disco Arena Rose"
+            }
+          }
+        }
+      ],
+      "paginas": 1,
+      "paginaActual": 1
+    }
+  }
+  ```
+- **Notas**:
+  - Solo los propietarios pueden acceder a este endpoint.
+  - El endpoint verifica que el lugar pertenece al propietario.
+  - Devuelve todas las calificaciones de los eventos del lugar especificado.
 
 ### Eliminar Calificación (Roles 1,2,8)
 ```http

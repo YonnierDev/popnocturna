@@ -36,10 +36,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 io.on('connection', socket => {
   console.log('Nuevo cliente conectado:', socket.id);
   // permitir que el cliente se una a su sala personal
-  socket.on('join', ({ userId }) => {
-    const room = `usuario-${userId}`;
+  socket.on('join', ({ usuarioid }) => {
+    const room = `usuario-${usuarioid}`;
     socket.join(room);
     console.log(`Socket ${socket.id} entró en sala ${room}`);
+  });
+
+  // Manejar sala de administradores
+  socket.on('join-admin-room', ({ rol }) => {
+    if (rol === '1' || rol === '2') {
+      socket.join('admin-room');
+      console.log(`Socket ${socket.id} entró en sala admin-room`);
+    }
+  });
+
+  // Manejar sala de usuarios
+  socket.on('join-usuario-room', ({ rol }) => {
+    if (rol === '8') {
+      socket.join('usuario-room');
+      console.log(`Socket ${socket.id} entró en sala usuario-room`);
+    }
   });
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);

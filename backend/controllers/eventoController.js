@@ -115,6 +115,24 @@ class EventoController {
         return res.status(403).json({ mensaje: "No tienes permiso para crear eventos" });
       }
 
+      // Obtener io para enviar notificaciones
+      const io = req.app.get('io');
+
+      // Notificar a administradores (roles 1 y 2)
+      io.to('admin-room').emit('nuevo-evento-admin', {
+        propietario: req.usuario.correo,
+        evento: nuevoEvento,
+        timestamp: new Date().toISOString(),
+        mensaje: `Nuevo evento creado por ${req.usuario.correo}`
+      });
+
+      // Notificar a usuarios (rol 8)
+      io.to('usuario-room').emit('nuevo-evento-usuario', {
+        evento: nuevoEvento,
+        timestamp: new Date().toISOString(),
+        mensaje: `Nuevo evento disponible: ${nuevoEvento.nombre}`
+      });
+
       res.status(201).json({
         mensaje: "Evento creado correctamente",
         datos: nuevoEvento
