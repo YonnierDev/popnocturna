@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Socket.IO - PopNocturna</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f6f8fa;
+        }
+        .user-form {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        input {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            width: 100%;
+        }
+        .join-btn {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: background 0.2s;
+        }
+        .join-btn:hover {
+            background: #0056b3;
+        }
+        #user-info {
+            font-size: 1rem;
+        }
+        .notification {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .calificacion {
+            background-color: #e3f6fc;
+        }
+        .evento {
+            background-color: #fff3f0;
+        }
+        .lugar {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prueba de Socket.IO - PopNocturna</h1>
+    
+    <div id="notifications">
+        <h2>Notificaciones</h2>
+        <div id="notifications-container"></div>
+    </div>
+
+    <div>
+        <h2>Estado de la Conexión</h2>
+        <p id="connection-status">Desconectado</p>
+    </div>
+
+    <div class="user-form">
+    <h2>Conexión a Notificaciones en Tiempo Real</h2>
+    <div class="form-group">
+        <label for="token">Token JWT:</label>
+        <input type="text" id="token" placeholder="Pega aquí tu token JWT" style="width: 100%;" />
+    </div>
+    <button class="join-btn" onclick="connectAndJoin()">Conectar y Escuchar Notificaciones</button>
+    <div id="user-info" style="margin-top: 10px; color: #007bff;"></div>
+</div>
+
+    <script>
+        let socket = null;
+
+        // Decodificar JWT (solo payload, sin validar firma)
+        function parseJwt (token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function connectAndJoin() {
+            const token = document.getElementById('token').value.trim();
+            if (!token) {
+                alert('Por favor, ingresa tu token JWT.');
+                return;
+            }
+            if(socket && socket.connected) {
+                socket.disconnect();
+            }
+            // Mostrar info de usuario
+            const payload = parseJwt(token);
+            if(payload) {
+                document.getElementById('user-info').innerHTML =
+                    `<b>Usuario:</b> ${payload.nombre || payload.username || payload.email || payload.id || 'N/A'} <br>
+                    <b>ID:</b> ${payload.id || payload.usuarioid || 'N/A'} <br>
+                    <b>Rol:</b> ${payload.rol || 'N/A'}`;
+            } else {
+                document.getElementById('user-info').innerHTML = '<span style="color:red">Token inválido</span>';
+            }
+
+            socket = io('http://localhost:7000', {
+                withCredentials: true,
+                auth: { token }
+            });
+
+            socket.on('connect', () => {
+                document.getElementById('connection-status').textContent = 'Conectado';
+                console.log('Conectado al servidor');
+                // Unirse a salas según rol automáticamente
+                if (payload) {
+                    if (payload.rol === 1 || payload.rol === 2) {
+                        socket.emit('join-admin-room', { rol: payload.rol.toString() });
+                    }
+                    if (payload.rol === 3) {
+                        socket.emit('join', { usuarioid: payload.id });
+                    }
+                }
+            });
+            socket.on('disconnect', () => {
+                document.getElementById('connection-status').textContent = 'Desconectado';
+                console.log('Desconectado del servidor');
+            });
+
+            // Notificaciones para admins
+            socket.on('nuevo-lugar-admin', (data) => {
+                console.log('Notificación admin (nuevo-lugar-admin):', data);
+                addNotification('nuevo-lugar-admin', data);
+            });
+            // Notificaciones personales para propietario
+            socket.on('nuevo-lugar-propietario', (data) => {
+                console.log('Notificación propietario (nuevo-lugar-propietario):', data);
+                addNotification('nuevo-lugar-propietario', data);
+            });
+            socket.on('lugar-aprobado', (data) => {
+                console.log('Notificación propietario (lugar-aprobado):', data);
+                addNotification('lugar-aprobado', data);
+            });
+            // Notificaciones generales del sistema (si las necesitas)
+            socket.on('nueva_calificacion', (data) => {
+                addNotification('nueva_calificacion', data);
+            });
+            socket.on('nuevo_evento', (data) => {
+                addNotification('nuevo_evento', data);
+            });
+            socket.on('nuevo_lugar', (data) => {
+                addNotification('nuevo_lugar', data);
+            });
+            socket.on('calificacion_actualizada', (data) => {
+                addNotification('calificacion_actualizada', data);
+            });
+            socket.on('evento_actualizado', (data) => {
+                addNotification('evento_actualizado', data);
+            });
+            socket.on('lugar_actualizado', (data) => {
+                addNotification('lugar_actualizado', data);
+            });
+        }
+
+        // Mostrar notificaciones
+        function addNotification(type, data) {
+            const container = document.getElementById('notifications-container');
+            const div = document.createElement('div');
+            div.className = `notification ${type}`;
+            div.innerHTML = `
+                <h3 style="color:#007bff;">${type}</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            container.insertBefore(div, container.firstChild);
+        }
+    </script>
+</body>
+</html>

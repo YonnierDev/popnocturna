@@ -23,9 +23,17 @@ class PropietarioLugarController {
   async aprobarLugarPropietario(req, res) {
     try {
       const { id } = req.params;
-      const lugarAprobado =
-        await PropietarioLugarService.aprobarLugarPropietario(id);
-      res.json(lugarAprobado);
+      const lugarAprobado = await PropietarioLugarService.aprobarLugarPropietario(id);
+    // Notificar solo al propietario
+    const io = req.app.get('io');
+    if (lugarAprobado && lugarAprobado.usuarioid) {
+      io.to(`usuario-${lugarAprobado.usuarioid}`).emit('lugar-aprobado', {
+        lugar: lugarAprobado,
+        timestamp: new Date().toISOString(),
+        mensaje: '¡Tu lugar ha sido aprobado por un administrador!'
+      });
+    }
+    res.json(lugarAprobado);
     } catch (error) {
       console.error("Error al aprobar el lugar:", error);
       res.status(500).json({ error: "Error al aprobar el lugar" });
@@ -111,7 +119,7 @@ class PropietarioLugarController {
       io.to(propietarioSocket).emit('nuevo-lugar-propietario', {
         lugar: nuevoLugar,
         timestamp: new Date().toISOString(),
-        mensaje: 'Tu lugar ha sido creado y está en revisión'
+        mensaje: 'Tu lugar está en revisión'
       });
     } catch (error) {
       console.error("Error al crear lugar:", error);

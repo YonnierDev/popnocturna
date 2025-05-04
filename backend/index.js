@@ -33,28 +33,43 @@ app.set('io', io);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Socket.IO: manejar nuevas conexiones
+const jwt = require('jsonwebtoken');
 io.on('connection', socket => {
   console.log('Nuevo cliente conectado:', socket.id);
-  // permitir que el cliente se una a su sala personal
+  // Intentar obtener token JWT de handshake
+  const token = socket.handshake.auth && socket.handshake.auth.token;
+  let payload = null;
+  if (token) {
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET || 'miclavesegura');
+      // Unir a sala de admin si es admin/superadmin
+      if (payload.rol === 1 || payload.rol === 2) {
+        socket.join('admin-room');
+        console.log(`Socket ${socket.id} (admin/superadmin) entró en sala admin-room`);
+      }
+      // Unir a sala personal si es propietario
+      if (payload.rol === 3) {
+        socket.join(`usuario-${payload.id}`);
+        console.log(`Socket ${socket.id} (propietario) entró en sala usuario-${payload.id}`);
+      }
+      // Puedes agregar más roles si lo necesitas
+    } catch (err) {
+      console.log('Error al verificar token JWT en conexión Socket.IO:', err.message);
+    }
+  } else {
+    console.log('No se recibió token JWT en conexión Socket.IO');
+  }
+
+  // Mantener compatibilidad con eventos manuales
   socket.on('join', ({ usuarioid }) => {
     const room = `usuario-${usuarioid}`;
     socket.join(room);
     console.log(`Socket ${socket.id} entró en sala ${room}`);
   });
-
-  // Manejar sala de administradores
   socket.on('join-admin-room', ({ rol }) => {
     if (rol === '1' || rol === '2') {
       socket.join('admin-room');
       console.log(`Socket ${socket.id} entró en sala admin-room`);
-    }
-  });
-
-  // Manejar sala de usuarios
-  socket.on('join-usuario-room', ({ rol }) => {
-    if (rol === '8') {
-      socket.join('usuario-room');
-      console.log(`Socket ${socket.id} entró en sala usuario-room`);
     }
   });
   socket.on('disconnect', () => {
