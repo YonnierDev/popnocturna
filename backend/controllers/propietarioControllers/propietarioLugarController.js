@@ -23,20 +23,48 @@ class PropietarioLugarController {
   async aprobarLugarPropietario(req, res) {
     try {
       const { id } = req.params;
-      const lugarAprobado = await PropietarioLugarService.aprobarLugarPropietario(id);
-    // Notificar solo al propietario
-    const io = req.app.get('io');
-    if (lugarAprobado && lugarAprobado.usuarioid) {
-      io.to(`usuario-${lugarAprobado.usuarioid}`).emit('lugar-aprobado', {
-        lugar: lugarAprobado,
-        timestamp: new Date().toISOString(),
-        mensaje: '¡Tu lugar ha sido aprobado por un administrador!'
-      });
-    }
-    res.json(lugarAprobado);
+      const { estado, aprobacion } = req.body;
+      const result = await PropietarioLugarService.aprobarLugarPropietario(id, estado, aprobacion);
+      const io = req.app.get('io');
+      if (result.aprobado) {
+        // Notificar aprobado
+        const userId = result.lugar.usuarioid || (result.lugar.usuario && result.lugar.usuario.id);
+        if (userId) {
+          io.to(`usuario-${userId}`).emit('lugar-aprobado', {
+            lugar: result.lugar,
+            timestamp: new Date().toISOString(),
+            mensaje: '¡Tu lugar ha sido aprobado por un administrador!'
+          });
+        }
+        res.json({ mensaje: 'Lugar aprobado correctamente', lugar: result.lugar });
+      } else {
+        // Notificar rechazo
+        const userId = result.lugar.usuarioid || (result.lugar.usuario && result.lugar.usuario.id);
+        if (userId) {
+          io.to(`usuario-${userId}`).emit('lugar-rechazado', {
+            lugar: result.lugar,
+            timestamp: new Date().toISOString(),
+            mensaje: 'Tu lugar no fue aprobado y ya no está activo'
+          });
+        }
+        res.json({ mensaje: 'Lugar no aprobado', lugar: result.lugar });
+      }
     } catch (error) {
       console.error("Error al aprobar el lugar:", error);
-      res.status(500).json({ error: "Error al aprobar el lugar" });
+      // Notificar rechazo al propietario si existe el lugar
+      try {
+        const lugar = await Lugar.findByPk(req.params.id);
+        const io = req.app.get('io');
+        const userId = lugar.usuarioid || (lugar.usuario && lugar.usuario.id);
+        if (userId) {
+          io.to(`usuario-${userId}`).emit('lugar-rechazado', {
+            lugar,
+            timestamp: new Date().toISOString(),
+            mensaje: `Tu lugar no pudo ser aprobado: ${error.message}`
+          });
+        }
+      } catch (e) {}
+      res.status(400).json({ error: error.message });
     }
   }
 
@@ -84,19 +112,17 @@ class PropietarioLugarController {
       imagenUrl = uploadResponse.secure_url;
       console.log("Imagen subida:", imagenUrl);
 
-      const dataLugar = {
+      const nuevoLugar = await PropietarioLugarService.crearLugarPropietario({
         usuarioid,
         categoriaid,
-        nombre,
+        nombre: nombre.toLowerCase(),
         descripcion,
         ubicacion,
-        estado: true,
         imagen: imagenUrl,
-        aprobacion: false,
-      };
+        estado: false,
+        aprobacion: false
+      });
 
-      const nuevoLugar =
-        await PropietarioLugarService.crearLugarPropietario(dataLugar);
       console.log("Lugar creado:", nuevoLugar);
 
       res.status(201).json({
@@ -106,13 +132,20 @@ class PropietarioLugarController {
       // Emitir socket al crear nuevo lugar
       const io = req.app.get('io');
       
-      // Notificar a administradores
-      io.to('admin-room').emit('nuevo-lugar-admin', {
-        propietario: req.usuario.correo,
-        lugar: nuevoLugar,
+      // LOG: Sockets en admin-room antes de emitir
+      const socketsAdminRoom = Array.from(io.sockets.adapter.rooms.get('admin-room') || []);
+      console.log('[NOTIFY ADMIN] Sockets actualmente en admin-room:', socketsAdminRoom);
+      const adminPayload = {
+        propietarioCorreo: req.usuario.correo,
+        propietarioNombre: req.usuario.nombre || '',
+        lugarNombre: nuevoLugar.nombre,
+        lugarId: nuevoLugar.id,
         timestamp: new Date().toISOString(),
-        mensaje: `Nuevo lugar creado por ${req.usuario.correo}`
-      });
+        mensaje: `El usuario ${req.usuario.correo}${req.usuario.nombre ? ' (' + req.usuario.nombre + ')' : ''} creó el lugar "${nuevoLugar.nombre}" que requiere aprobación.`
+      };
+      console.log('[NOTIFY ADMIN] Payload enviado a admin-room:', adminPayload);
+      io.to('admin-room').emit('nuevo-lugar-admin', adminPayload);
+      console.log('[NOTIFY ADMIN] Evento emitido a admin-room.');
 
       // Notificar al propietario específicamente
       const propietarioSocket = `usuario-${req.usuario.id}`;
@@ -200,8 +233,6 @@ class PropietarioLugarController {
       });
     }
   }
-  
-  
 }
 
 module.exports = new PropietarioLugarController();

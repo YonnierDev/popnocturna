@@ -10,68 +10,152 @@
   <ul id="messages"></ul>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const usuarioid = parseInt(prompt('Ingresa tu usuarioid para sala personal'), 10);
-    const rol = prompt('Ingresa tu rol (1=superadmin, 2=admin, 3=propietario, 8=usuario)');
-    const socket = io();
+    // Solicita el token JWT al usuario
+    let token = null;
+    function solicitarToken() {
+      token = prompt('Ingresa tu token JWT');
+      if (!token) {
+        alert('Debes ingresar un token JWT para recibir notificaciones.');
+        solicitarToken();
+      }
+    }
+    solicitarToken();
+    // Decodifica el JWT solo para mostrar info (no para validar)
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+    let payload = parseJwt(token);
+    let usuarioid = null;
+    let rol = null;
+    let userInfoDiv = null;
+    if (payload) {
+      usuarioid = payload.id;
+      rol = payload.rol;
+      userInfoDiv = document.createElement('div');
+      userInfoDiv.style.background = '#e7f4ff';
+      userInfoDiv.style.padding = '1em';
+      userInfoDiv.style.marginBottom = '1em';
+      userInfoDiv.id = 'user-info';
+      userInfoDiv.innerHTML = `Usuario: <b>${payload.correo || ''}</b> | Rol: <b>${payload.rol || ''}</b> | ID: <b>${payload.id || ''}</b> <button id='change-token'>Cambiar token</button>`;
+      document.body.insertBefore(userInfoDiv, document.body.firstChild);
+    }
+    // Función para reconectar con nuevo token
+    function reiniciarConexion(token) {
+      // Elimina listeners previos y desconecta el socket
+      if (window.socket) {
+        window.socket.off();
+        window.socket.disconnect();
+      }
+      window.socket = io({
+        auth: { token }
+      });
+      const socket = window.socket;
+      payload = parseJwt(token);
+      usuarioid = payload ? payload.id : null;
+      rol = payload ? payload.rol : null;
+      if (document.getElementById('user-info')) {
+        document.getElementById('user-info').remove();
+      }
+      if (payload) {
+        userInfoDiv = document.createElement('div');
+        userInfoDiv.style.background = '#e7f4ff';
+        userInfoDiv.style.padding = '1em';
+        userInfoDiv.style.marginBottom = '1em';
+        userInfoDiv.id = 'user-info';
+        userInfoDiv.innerHTML = `Usuario: <b>${payload.correo || ''}</b> | Rol: <b>${payload.rol || ''}</b> | ID: <b>${payload.id || ''}</b> <button id='change-token'>Cambiar token</button>`;
+        document.body.insertBefore(userInfoDiv, document.body.firstChild);
+      }
+      conectarSocket();
+    }
+    // Conecta usando el token JWT
+    function conectarSocket() {
+      if (!token) return;
+      const socket = io({
+        auth: { token }
+      });
+      window.socket = socket;
+      const list = document.getElementById('messages');
+      function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}
+      socket.on('connect', () => {
+        console.log(`✅ Conectado: ${socket.id}`);
+        // Unirse automáticamente a la sala correspondiente según el rol
+        // La suscripción a admin-room es automática desde el backend si el JWT es válido
+        if ((rol === 1 || rol === '1' || rol === 2 || rol === '2') && !window._adminRoomSubscribed) {
+          add('🔔 Suscrito a notificaciones de administrador (admin-room)');
+          window._adminRoomSubscribed = true;
+        }
+
+        if (rol === 3 || rol === '3') {
+          socket.emit('join', { usuarioid });
+          if (!window._propRoomSubscribed) {
+            add(`🔔 Suscrito a notificaciones personales (usuario-${usuarioid})`);
+            window._propRoomSubscribed = true;
+          }
+        }
+        if (rol === 8 || rol === '8') {
+          socket.emit('join-usuario-room', { rol });
+          if (!window._userRoomSubscribed) {
+            add('🔔 Suscrito a notificaciones de usuario (usuario-room)');
+            window._userRoomSubscribed = true;
+          }
+        }
+      });
+      // Notificación para administradores
+      socket.on('nuevo-lugar-admin', data => {
+        console.log('EVENT nuevo-lugar-admin:', data);
+        // Mostrar correo y nombre del propietario y nombre del lugar
+        add(`📍 ${data.mensaje}\nPropietario: ${data.propietarioCorreo}${data.propietarioNombre ? ' (' + data.propietarioNombre + ')' : ''}\nLugar: ${data.lugarNombre} (ID: ${data.lugarId})\n${data.timestamp}`);
+      });
+      // Notificación específica para propietarios
+      socket.on('nuevo-lugar-propietario', data => {
+        console.log('EVENT nuevo-lugar-propietario:', data);
+        add(`✅ ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
+      });
+      // Notificación de lugar aprobado (propietario)
+      socket.on('lugar-aprobado', data => {
+        console.log('EVENT lugar-aprobado:', data);
+        add(`🎉 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
+      });
+      // Notificación de lugar rechazado (propietario)
+      socket.on('lugar-rechazado', data => {
+        console.log('🔴 Notificación de rechazo:', data);
+        add(`🚫 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
+      });
+      socket.on('connect_error', (err) => {
+        add(`❌ Error de conexión: ${err.message}`);
+      });
+    }
+    conectarSocket();
+    // Botón para cambiar token
+    document.addEventListener('click', function(e){
+      if (e.target && e.target.id === 'change-token') {
+        // Limpia los mensajes de suscripción previos
+        window._adminRoomSubscribed = false;
+        window._propRoomSubscribed = false;
+        window._userRoomSubscribed = false;
+        // Elimina listeners previos y desconecta el socket
+        if (window.socket) {
+          window.socket.off();
+          window.socket.disconnect();
+        }
+        solicitarToken();
+        reiniciarConexion(token);
+      }
+    });
+    // --- Fin de frontend robusto para pruebas de notificaciones ---
     const list = document.getElementById('messages');
     function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}
-    socket.on('connect', () => {
-      console.log(`✅ Conectado: ${socket.id}`);
-      socket.emit('join', { usuarioid });
-      
-      // Unirse a sala de administradores si es rol 1 o 2
-      if (rol === '1' || rol === '2') {
-        socket.emit('join-admin-room', { rol });
-      }
-      
-      // Unirse a sala de usuarios si es rol 8
-      if (rol === '8') {
-        socket.emit('join-usuario-room', { rol });
-      }
-    });
-    // Notificación para administradores
-    socket.on('nuevo-lugar-admin', data => {
-      console.log('EVENT nuevo-lugar-admin:', data);
-      add(`📍 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
-    });
+    // Los listeners de eventos SOLO deben agregarse aquí, dentro de conectarSocket, y nunca fuera ni duplicados.
 
-    // Notificación específica para propietarios
-    socket.on('nuevo-lugar-propietario', data => {
-      console.log('EVENT nuevo-lugar-propietario:', data);
-      add(`✅ ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
-    });
-    socket.on('lugar-actualizado', data => {
-      console.log('EVENT lugar-actualizado:', data);
-      add(`📬 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
-    });
-    socket.on('lugar-publicado', data => {
-      console.log('EVENT lugar-publicado:', data);
-      add(`✅ Lugar publicado: ${data.lugar.nombre} (${data.timestamp})`);
-    });
-    socket.on('lugar-rechazado', data => {
-      console.log('EVENT lugar-rechazado:', data);
-      add(`❌ Lugar rechazado: ${data.lugar.nombre} (${data.timestamp})`);
-    });
-    socket.on('reporte-comentario', data => {
-      console.log('EVENT reporte-comentario:', data);
-      add(`🚩 Reporte de comentario por ${data.reportador}: id=${data.comentarioId}, motivo='${data.motivo}', contenido='${data.contenido}' (${data.timestamp})`);
-    });
-
-    // Notificaciones de eventos para administradores
-    socket.on('nuevo-evento-admin', data => {
-      console.log('EVENT nuevo-evento-admin:', data);
-      add(`🌟 ${data.mensaje} - Evento: ${data.evento.nombre} (${data.timestamp})`);
-    });
-
-    // Notificaciones de eventos para usuarios
-    socket.on('nuevo-evento-usuario', data => {
-      console.log('EVENT nuevo-evento-usuario:', data);
-      add(`🎉 ${data.mensaje} - Fecha: ${data.evento.fecha_hora} (${data.timestamp})`);
-    });
-    socket.on('disconnect', () => {
-      console.log('🔴 Desconectado');
-      add('🔴 Desconectado');
-    });
   </script>
 </body>
 </html>

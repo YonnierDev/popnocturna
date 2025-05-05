@@ -27,15 +27,48 @@ class PropietarioLugarService {
     }
   }
 
-  async aprobarLugarPropietario(id) {
+  async aprobarLugarPropietario(id, estado, aprobacion) {
     try {
       const lugar = await Lugar.findByPk(id);
       if (!lugar) {
         throw new Error("Lugar no encontrado");
       }
-      lugar.aprobacion = true;
-      await lugar.save();
-      return lugar;
+      // Ambos parámetros deben ser iguales
+      if (estado !== aprobacion) {
+        throw new Error("Ambos parámetros (estado y aprobación) deben ser iguales (true/true o false/false)");
+      }
+      // Si ambos parámetros son false (rechazo), permite siempre desactivar
+      if (estado === false && aprobacion === false) {
+        const lugarConUsuario = await Lugar.findByPk(id, {
+          include: [{
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id']
+          }]
+        });
+        lugarConUsuario.estado = false;
+        lugarConUsuario.aprobacion = false;
+        await lugarConUsuario.save();
+        return { aprobado: false, lugar: lugarConUsuario };
+      }
+      // Si ya fue aprobado, no permitir aprobar de nuevo
+      if (lugar.estado !== false || lugar.aprobacion !== false) {
+        throw new Error("El lugar ya fue aprobado o activado previamente");
+      }
+      if (estado === true && aprobacion === true) {
+        const lugarConUsuario = await Lugar.findByPk(id, {
+          include: [{
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id']
+          }]
+        });
+        lugarConUsuario.estado = true;
+        lugarConUsuario.aprobacion = true;
+        await lugarConUsuario.save();
+        return { aprobado: true, lugar: lugarConUsuario };
+      }
+      throw new Error("Parámetros inválidos para aprobar/rechazar lugar");
     } catch (error) {
       console.error("Error al aprobar el lugar:", error);
       throw error;

@@ -42,13 +42,13 @@ io.on('connection', socket => {
   if (token) {
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET || 'miclavesegura');
-      // Unir a sala de admin si es admin/superadmin
-      if (payload.rol === 1 || payload.rol === 2) {
+      // Unir a sala de admin si es admin/superadmin (acepta string o número)
+      if (payload.rol == 1 || payload.rol == 2) {
         socket.join('admin-room');
         console.log(`Socket ${socket.id} (admin/superadmin) entró en sala admin-room`);
       }
-      // Unir a sala personal si es propietario
-      if (payload.rol === 3) {
+      // Unir a sala personal si es propietario (acepta string o número)
+      if (payload.rol == 3) {
         socket.join(`usuario-${payload.id}`);
         console.log(`Socket ${socket.id} (propietario) entró en sala usuario-${payload.id}`);
       }

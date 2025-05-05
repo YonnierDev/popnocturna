@@ -21,8 +21,9 @@ El sistema de notificaciones utiliza **Socket.IO** para enviar mensajes en tiemp
 | `nuevo-lugar-admin`       | Admin/Super Admin    | "Nuevo lugar creado por <correo>"                   | Un propietario crea un lugar             |
 | `nuevo-lugar-propietario` | Propietario          | "Tu lugar está en revisión"                         | El propietario crea un lugar             |
 | `lugar-aprobado`          | Propietario          | "¡Tu lugar ha sido aprobado por un administrador!"  | Un admin aprueba el lugar                |
+| `lugar-rechazado`         | Propietario          | "Tu lugar no fue aprobado y ya no está activo"      | Un admin rechaza el lugar                |
 
-**Nota:** Puedes agregar más eventos siguiendo este patrón para rechazos, actualizaciones, eliminaciones, etc.
+**Nota:** Puedes agregar más eventos siguiendo este patrón para actualizaciones, eliminaciones, etc.
 
 ---
 
@@ -61,6 +62,7 @@ const socket = io('http://localhost:7000', {
 socket.on('nuevo-lugar-admin', (data) => { /* ... */ });
 socket.on('nuevo-lugar-propietario', (data) => { /* ... */ });
 socket.on('lugar-aprobado', (data) => { /* ... */ });
+socket.on('lugar-rechazado', (data) => { /* ... */ });
 ```
 
 ---
@@ -144,6 +146,8 @@ El sistema de notificaciones utiliza Socket.IO para implementar comunicaciones e
 
 #### Eventos que generan notificaciones:
 - **Nuevo lugar**: Cuando un propietario crea un nuevo lugar
+- **Lugar aprobado**: Cuando un administrador aprueba un lugar (estado=true, aprobacion=true)
+- **Lugar rechazado**: Cuando un administrador rechaza un lugar (estado=false, aprobacion=false)
 - **Lugar actualizado**: Cuando un propietario actualiza un lugar
 - **Lugar eliminado**: Cuando un propietario elimina un lugar
 
@@ -160,11 +164,35 @@ El sistema de notificaciones utiliza Socket.IO para implementar comunicaciones e
     "id": 123,
     "nombre": "disco Arena Rose",
     "direccion": "Calle 123",
+    "estado": true,
+    "aprobacion": true,
     "categoria": {
       "id": 1,
       "nombre": "Discoteca"
     }
-  }
+  },
+  "timestamp": "2025-05-04T19:44:06.362Z",
+  "mensaje": "¡Tu lugar ha sido aprobado por un administrador!"
+}
+```
+
+#### Ejemplo de notificación de rechazo:
+```json
+{
+  "tipo": "lugar",
+  "lugar": {
+    "id": 123,
+    "nombre": "disco Arena Rose",
+    "direccion": "Calle 123",
+    "estado": false,
+    "aprobacion": false,
+    "categoria": {
+      "id": 1,
+      "nombre": "Discoteca"
+    }
+  },
+  "timestamp": "2025-05-04T19:50:06.362Z",
+  "mensaje": "Tu lugar no fue aprobado y ya no está activo"
 }
 ```
 
@@ -179,6 +207,23 @@ El sistema de notificaciones utiliza Socket.IO para implementar comunicaciones e
 - **Propietarios (rol 3)**: Reciben notificaciones de comentarios en sus eventos
 - **Admins (roles 1,2)**: Reciben notificaciones de reportes y comentarios
 - **Usuarios (rol 8)**: Reciben notificaciones cuando comentan eventos
+
+## Manejo Robusto de IDs de Usuario
+
+Para garantizar que las notificaciones lleguen correctamente a los usuarios, se implementó un acceso flexible al ID del usuario que funciona con diferentes estructuras de datos:
+
+```javascript
+// En el controlador
+const userId = result.lugar.usuarioid || (result.lugar.usuario && result.lugar.usuario.id);
+if (userId) {
+  io.to(`usuario-${userId}`).emit('lugar-aprobado', { /* datos */ });
+}
+```
+
+Esta implementación:
+- Intenta primero acceder a `usuarioid` directamente
+- Si no está disponible, intenta acceder a través de la relación `usuario.id`
+- Garantiza que las notificaciones funcionen independientemente de la estructura
 
 ## Implementación del Frontend
 
