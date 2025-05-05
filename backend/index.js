@@ -24,9 +24,9 @@ app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes"));
 app.use("/api", require("./routes/calificacionRoutes"));
-// Configurar Socket.IO
+
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*', methods: ['GET','POST','PATCH','DELETE'] } });
+const io = new Server(server, { cors: { origin: '*', methods: ['GET','POST','PATCH', 'OPTIONS','DELETE'] } });
 app.set('io', io);
 
 // Servir archivos estáticos (para socket-test.html)
@@ -36,23 +36,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 const jwt = require('jsonwebtoken');
 io.on('connection', socket => {
   console.log('Nuevo cliente conectado:', socket.id);
+  
+  // Emitir un mensaje de prueba
+  socket.emit('notificacion', { mensaje: '¡Bienvenido a Popayán Nocturna!' });
+
   // Intentar obtener token JWT de handshake
   const token = socket.handshake.auth && socket.handshake.auth.token;
   let payload = null;
   if (token) {
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET || 'miclavesegura');
-      // Unir a sala de admin si es admin/superadmin (acepta string o número)
       if (payload.rol == 1 || payload.rol == 2) {
         socket.join('admin-room');
         console.log(`Socket ${socket.id} (admin/superadmin) entró en sala admin-room`);
       }
-      // Unir a sala personal si es propietario (acepta string o número)
       if (payload.rol == 3) {
         socket.join(`usuario-${payload.id}`);
         console.log(`Socket ${socket.id} (propietario) entró en sala usuario-${payload.id}`);
       }
-      // Puedes agregar más roles si lo necesitas
     } catch (err) {
       console.log('Error al verificar token JWT en conexión Socket.IO:', err.message);
     }
@@ -60,18 +61,6 @@ io.on('connection', socket => {
     console.log('No se recibió token JWT en conexión Socket.IO');
   }
 
-  // Mantener compatibilidad con eventos manuales
-  socket.on('join', ({ usuarioid }) => {
-    const room = `usuario-${usuarioid}`;
-    socket.join(room);
-    console.log(`Socket ${socket.id} entró en sala ${room}`);
-  });
-  socket.on('join-admin-room', ({ rol }) => {
-    if (rol === '1' || rol === '2') {
-      socket.join('admin-room');
-      console.log(`Socket ${socket.id} entró en sala admin-room`);
-    }
-  });
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);
   });
