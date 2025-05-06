@@ -23,11 +23,11 @@ module.exports = {
       "usuarios",
       [
         {
-          nombre: "Administrador",
-          apellido: "Pro",
-          correo: "administrador@gmail.com",
-          fecha_nacimiento: "2023-03-29",
-          contrasena: await bcrypt.hash("Admin123", 10),
+          nombre: "Super",
+          apellido: "Admin",
+          correo: "superadmin@gmail.com",
+          fecha_nacimiento: "1990-01-01",
+          contrasena: await bcrypt.hash("Super-123", 10),
           genero: "Masculino",
           estado: true,
           rolid: 1,
@@ -35,26 +35,38 @@ module.exports = {
           updatedAt: new Date(),
         },
         {
-          nombre: "Propietario",
-          apellido: "Medio",
-          correo: "propietario@gmail.com",
-          fecha_nacimiento: "2023-03-29",
-          contrasena: await bcrypt.hash("Prop1234", 10),
-          genero: "M",
+          nombre: "Admin",
+          apellido: "Sistema",
+          correo: "admin@gmail.com",
+          fecha_nacimiento: "1990-01-01",
+          contrasena: await bcrypt.hash("Admin-123", 10),
+          genero: "Masculino",
           estado: true,
           rolid: 2,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          nombre: "Usuario",
-          apellido: "Básico",
-          correo: "usuario@gmail.com",
-          fecha_nacimiento: "2023-03-29",
-          contrasena: await bcrypt.hash("User1234", 10),
-          genero: "M",
+          nombre: "Propietario",
+          apellido: "Negocio",
+          correo: "propietario@gmail.com",
+          fecha_nacimiento: "1990-01-01",
+          contrasena: await bcrypt.hash("Prop-123", 10),
+          genero: "Masculino",
           estado: true,
           rolid: 3,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          nombre: "Usuario",
+          apellido: "Final",
+          correo: "usuario@gmail.com",
+          fecha_nacimiento: "1990-01-01",
+          contrasena: await bcrypt.hash("User-123", 10),
+          genero: "Masculino",
+          estado: true,
+          rolid: 4,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -64,7 +76,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("Usuarios", null, {});
+    await queryInterface.bulkDelete("usuarios", null, {});
     /**
      * Add commands to revert seed here.
      *

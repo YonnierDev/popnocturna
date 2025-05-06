@@ -14,27 +14,35 @@ module.exports = {
      * ], {});
     */
     await queryInterface.bulkInsert('rols', [
-       {
-         nombre: 'Administrador',
-         createdAt: new Date(),
-         updatedAt: new Date(),
-       },
-       {
-        nombre: 'Propietario',
+      {
+        nombre: 'Super Administrador',
+        estado: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
-        //Pasar ID 3 para que el rol del usuario se creee por defecto con rol (Usuario)
-        nombre: 'Usuario',
+        nombre: 'Administrador',
+        estado: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-      ], {});
+      {
+        nombre: 'Propietario',
+        estado: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        nombre: 'Usuario',
+        estado: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    ], {});
   },
 
   async down (queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('Rols', null, {});
+    await queryInterface.bulkDelete('rols', null, {});
     /**
      * Add commands to revert seed here.
      *
