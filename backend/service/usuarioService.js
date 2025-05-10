@@ -183,9 +183,7 @@ class UsuarioService {
   }
 
   async actualizarContrasenaPorId(id, nuevaContrasena) {
-    console.log("actualizando contraseña por id", id, nuevaContrasena);
     const usuario = await this.buscarPorId(id);
-    console.log("USUARIO",usuario);
     if (!usuario) throw new Error("Usuario no encontrado");
     await Usuario.update({ contrasena: nuevaContrasena }, { where: { id } });
     return await this.buscarPorId(id);
