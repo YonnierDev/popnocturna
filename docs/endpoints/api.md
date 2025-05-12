@@ -1,4 +1,3 @@
-
 # Documentación de Endpoints - API PopNocturna
 
 ## Autenticación
@@ -220,16 +219,46 @@ DELETE /api/comentario/:id
 
 ### Reportar Comentario (Rol 3)
 ```http
-POST /api/comentario/:id/reportar
+POST /api/propietario/comentario/:comentarioid/reporte
 ```
 - **Headers**: `Authorization: Bearer {token}`
 - **Rol Requerido**: 3 (Propietario)
 - **Body**:
   ```json
   {
-    "motivo": "Contenido inapropiado"
+    "motivo_reporte": "Contenido inapropiado"
   }
   ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Solicitud registrada exitosamente",
+    "datos": {
+      "mensaje": "Solicitud enviada a administración",
+      "comentario": {
+        "id": 42,
+        "contenido": "Contenido del comentario",
+        "estado": true,
+        "aprobacion": "pendiente",
+        "motivo_reporte": "Contenido inapropiado",
+        "fecha_reporte": "2024-03-21T15:30:00.000Z",
+        "usuario": {
+          "id": 1,
+          "nombre": "Nombre Usuario"
+        },
+        "evento": {
+          "id": 1,
+          "nombre": "Nombre Evento"
+        }
+      }
+    }
+  }
+  ```
+- **Códigos de Error**:
+  - `400`: Si el comentario ya está reportado o falta el motivo
+  - `403`: Si el usuario no es propietario
+  - `404`: Si el comentario no existe
+  - `500`: Error interno del servidor
 
 ### Obtener Comentarios por Evento (Redirección por Rol)
 ```http

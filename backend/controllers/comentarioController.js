@@ -139,47 +139,6 @@ class ComentarioController {
         }
     }
 
-    // Reportar un comentario
-    async reportar(req, res) {
-        try {
-            const { id: usuarioid, rol } = req.usuario;
-            const { id } = req.params;
-            const { motivo } = req.body;
-
-            // Solo propietarios pueden reportar
-            if (rol !== 3) {
-                return res.status(403).json({ mensaje: "Solo los propietarios pueden reportar comentarios" });
-            }
-
-            // Verificar que el comentario existe y obtener su estado
-            const comentario = await ComentarioService.obtenerPorId(id);
-            if (!comentario) {
-                return res.status(404).json({ mensaje: "Comentario no encontrado" });
-            }
-
-            // Verificar que el comentario no esté ya reportado
-            if (comentario.aprobacion === 'pendiente') {
-                return res.status(400).json({ mensaje: "Este comentario ya ha sido reportado y está pendiente de revisión" });
-            }
-
-            const actualizado = await ComentarioService.reportar(id, motivo, usuarioid);
-            
-            // Aquí se podría agregar la lógica para notificar a los administradores
-            // a través del servicio de notificaciones
-
-            res.json({
-                mensaje: "Comentario reportado exitosamente",
-                comentario: actualizado
-            });
-        } catch (error) {
-            console.error('Error al reportar comentario:', error);
-            res.status(500).json({ 
-                mensaje: "Error al reportar el comentario",
-                error: error.message 
-            });
-        }
-    }
-
     // Aprobar o rechazar un comentario reportado
     async actualizarEstado(req, res) {
         try {

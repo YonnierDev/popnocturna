@@ -6,31 +6,67 @@ class SolicitudOcultarComentarioController {
   // Propietario solicita ocultar un comentario
   async solicitarOcultar(req, res) {
     try {
+      console.log('=== Inicio de solicitarOcultar en controlador ===');
+      console.log('Datos recibidos:', {
+        comentarioid: req.params.comentarioid,
+        motivo: req.body.motivo_reporte,
+        usuario: req.usuario
+      });
+
       const { comentarioid } = req.params;
       const { motivo_reporte } = req.body;
+      const { id: usuarioid, rol } = req.usuario;
 
-      if (!motivo_reporte) {
-        return res.status(400).json({
-          error: "El motivo del reporte es requerido",
+      // Validar que el usuario sea propietario
+      if (rol !== 3) {
+        console.log('Error: Usuario no es propietario');
+        return res.status(403).json({
+          error: "Solo los propietarios pueden reportar comentarios"
         });
       }
 
-      // Llamada al servicio pasando solo los parámetros necesarios
-      const resultado =
-        await SolicitudOcultarComentarioService.solicitarOcultar(
-          comentarioid,
-          motivo_reporte,
-          req.usuario.id // Se pasa solo el ID del usuario
-        );
+      // Validar que se proporcione el motivo
+      if (!motivo_reporte) {
+        console.log('Error: Motivo no proporcionado');
+        return res.status(400).json({
+          error: "El motivo del reporte es requerido"
+        });
+      }
+
+      // Verificar que el comentario existe y obtener su estado
+      const comentario = await SolicitudOcultarComentarioService.obtenerComentario(comentarioid);
+      if (!comentario) {
+        console.log('Error: Comentario no encontrado');
+        return res.status(404).json({
+          error: "Comentario no encontrado"
+        });
+      }
+
+      // Verificar que el comentario no esté ya reportado
+      if (comentario.aprobacion === 'pendiente') {
+        console.log('Error: Comentario ya reportado');
+        return res.status(400).json({
+          error: "Este comentario ya ha sido reportado y está pendiente de revisión"
+        });
+      }
+
+      // Llamada al servicio pasando los parámetros necesarios
+      const resultado = await SolicitudOcultarComentarioService.solicitarOcultar(
+        comentarioid,
+        motivo_reporte,
+        usuarioid
+      );
+
+      console.log('Solicitud procesada exitosamente:', resultado);
 
       res.status(200).json({
         mensaje: "Solicitud registrada exitosamente",
-        datos: resultado,
+        datos: resultado
       });
     } catch (error) {
-      console.error("Error en solicitudOcultar:", error.message); // Mostrar mensaje real
+      console.error("Error en solicitarOcultar:", error.message);
       res.status(500).json({
-        error: error.message,
+        error: error.message
       });
     }
   }

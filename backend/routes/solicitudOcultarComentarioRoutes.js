@@ -6,7 +6,7 @@ const validarRol = require("../middlewares/validarRol");
 
 // Rutas para propietarios (rol 3)
 router.post(
-    '/propietario/solicitar/:comentarioid', 
+    '/propietario/comentario/:comentarioid/reporte', 
     [autentiMiddleware, validarRol(3)], 
     SolicitudOcultarComentarioController.solicitarOcultar
 );

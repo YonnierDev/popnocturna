@@ -37,13 +37,6 @@ router.delete('/comentario/:id',
   comentarioController.eliminar
 );
 
-// Ruta para reportar un comentario (solo propietario)
-router.post('/comentario/:id/reportar',
-  autentiMiddleware,
-  verificarRol([3]),
-  comentarioController.reportar
-);
-
 // Ruta para listar comentarios reportados (solo admin y superadmin)
 router.get('/comentario/reportados',
   autentiMiddleware,

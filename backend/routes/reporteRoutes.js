@@ -12,13 +12,6 @@ router.put('/reporte/comentario/:id/estado',
     reporteController.actualizarEstadoReporteComentario
 );
 
-// Ruta para propietarios (rol 3) y usuarios normales (rol 8)
-router.post('/comentario/:id/reportar',
-    autentiMiddleware,
-    verificarRol([3, 8]),
-    reporteController.reportarComentario
-);
-
 // Rutas para lugares pendientes (roles 1 y 2)
 router.get('/lugares/pendientes',
     autentiMiddleware,

@@ -1,48 +1,86 @@
 const { Comentario, Usuario, Evento, Lugar } = require('../../models');
 
 class SolicitudOcultarComentarioService {
-  // Propietario solicita ocultar
-  async solicitarOcultar(comentarioid, motivo_reporte) {
+  // Obtener un comentario por ID
+  async obtenerComentario(comentarioid) {
     try {
-      // Validación inicial de los parámetros
-      if (!comentarioid || !motivo_reporte) {
-          throw new Error('Datos incompletos para la solicitud');
-      }
-  
-      // Buscar el comentario junto con las relaciones Usuario y Evento
+      console.log('=== Inicio de obtenerComentario ===');
+      console.log('Buscando comentario con ID:', comentarioid);
+
       const comentario = await Comentario.findOne({
-          where: { id: comentarioid },
-          include: [
-              { model: Usuario, as: 'usuario' }, 
-              { model: Evento, as: 'evento' } 
-          ]
+        where: { id: comentarioid },
+        include: [
+          { model: Usuario, as: 'usuario' },
+          { model: Evento, as: 'evento' }
+        ]
       });
-  
-      if (!comentario) {
-          throw new Error('Comentario no encontrado');
-      }
-  
-      if (!comentario.usuario) {
-          throw new Error('Usuario no asociado al comentario');
-      }
-  
-      // Actualizar el comentario con el estado de solicitud de ocultación
-      await Comentario.update(
-          { 
-              motivo_reporte,
-              fecha_solicitud: new Date()
-          },
-          { where: { id: comentarioid } }
-      );
-  
-      return { 
-          mensaje: 'Solicitud enviada a administración', 
-          comentario_id: comentarioid 
-      };
-  
+
+      console.log('Comentario encontrado:', comentario ? 'Sí' : 'No');
+      return comentario;
     } catch (error) {
-      console.error('Error al crear solicitud:', error.message);  
-      throw new Error(`Error al crear solicitud: ${error.message}`);
+      console.error('Error en obtenerComentario:', error);
+      throw error;
+    }
+  }
+
+  // Propietario solicita ocultar
+  async solicitarOcultar(comentarioid, motivo_reporte, usuarioid) {
+    try {
+      console.log('=== Inicio de solicitarOcultar en servicio ===');
+      console.log('Datos recibidos:', { comentarioid, motivo_reporte, usuarioid });
+
+      // Validación inicial de los parámetros
+      if (!comentarioid || !motivo_reporte || !usuarioid) {
+        console.log('Error: Datos incompletos');
+        throw new Error('Datos incompletos para la solicitud');
+      }
+
+      // Buscar el comentario junto con las relaciones Usuario y Evento
+      const comentario = await this.obtenerComentario(comentarioid);
+      if (!comentario) {
+        console.log('Error: Comentario no encontrado');
+        throw new Error('Comentario no encontrado');
+      }
+
+      if (!comentario.usuario) {
+        console.log('Error: Usuario no asociado al comentario');
+        throw new Error('Usuario no asociado al comentario');
+      }
+
+      // Verificar que el comentario no esté ya reportado
+      if (comentario.aprobacion === 'pendiente') {
+        console.log('Error: Comentario ya reportado');
+        throw new Error('Este comentario ya ha sido reportado y está pendiente de revisión');
+      }
+
+      // Actualizar el comentario con el estado de solicitud de ocultación
+      const [actualizado] = await Comentario.update(
+        {
+          motivo_reporte,
+          aprobacion: 'pendiente',
+          reportado_por: usuarioid,
+          fecha_reporte: new Date()
+        },
+        { where: { id: comentarioid } }
+      );
+
+      if (!actualizado) {
+        console.log('Error: No se pudo actualizar el comentario');
+        throw new Error('Error al actualizar el comentario');
+      }
+
+      // Obtener el comentario actualizado
+      const comentarioActualizado = await this.obtenerComentario(comentarioid);
+      console.log('Comentario actualizado exitosamente');
+
+      return {
+        mensaje: 'Solicitud enviada a administración',
+        comentario: comentarioActualizado
+      };
+
+    } catch (error) {
+      console.error('Error en solicitarOcultar:', error.message);
+      throw error;
     }
   }
 

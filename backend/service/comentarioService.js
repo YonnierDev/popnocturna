@@ -186,41 +186,6 @@ class ComentarioService {
     }
   }
 
-  async reportar(id, motivo, usuarioid) {
-    try {
-      console.log('=== Inicio de reportar comentario ===');
-      console.log('Datos recibidos:', { id, motivo, usuarioid });
-
-      const comentario = await this.obtenerPorId(id);
-      if (!comentario) {
-        throw new Error('Comentario no encontrado');
-      }
-
-      if (comentario.aprobacion === 'pendiente') {
-        throw new Error('Este comentario ya ha sido reportado');
-      }
-
-      const actualizado = await Comentario.update(
-        {
-          aprobacion: 'pendiente',
-          motivo_reporte: motivo,
-          reportado_por: usuarioid,
-          fecha_reporte: new Date()
-        },
-        { where: { id } }
-      );
-
-      if (!actualizado[0]) {
-        throw new Error('Error al actualizar el comentario');
-      }
-
-      return await this.obtenerPorId(id);
-    } catch (error) {
-      console.error('Error en reportar:', error);
-      throw error;
-    }
-  }
-
   async obtenerComentarioPorId(id) {
     return await Comentario.findByPk(id, {
       include: [
