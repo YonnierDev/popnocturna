@@ -1,0 +1,50 @@
+SENA – Tecnólogo en Análisis y Desarrollo de Software
+Nombre del proyecto: Popayan Nocturna
+Equipo: Yonnier Leon, Marlon Collazos, Camilo Flores, Cristian Garces, Jhoan Hernandez
+Autor: Yonnier Stiven León
+Fecha: 13/05/2025
+________________________________________
+1. Introducción
+Este informe describe el proceso de reorganización y ajustes realizados durante el Sprint 0 del proyecto en curso. En medio de un entorno de aprendizaje práctico enfocado en metodologías ágiles, se evidenció la necesidad de replantear la gestión del equipo y del proyecto para lograr entregas más organizadas, colaborativas y realistas. El objetivo principal de esta reorganización es establecer un rumbo claro y funcional para los siguientes sprints, fortaleciendo la planificación, ejecución y documentación.
+________________________________________
+2. Contexto y situación inicial
+Durante las primeras semanas de desarrollo se comenzó utilizando Trello como herramienta de gestión, pero sin una estructura que permitiera seguimiento eficiente. El equipo se encontraba desorganizado en la asignación de tareas, con varios miembros sin claridad en sus responsabilidades. La mayoría del peso del backend y la organización Scrum recaía sobre un solo integrante (Yonnier Leon). No existía control sobre los merges en el repositorio, generando conflictos y retrasos. Los casos de uso estaban incompletos o desactualizados, y la arquitectura del sistema no estaba completamente definida ni documentada.
+________________________________________
+3. Cambios realizados
+A partir de una reflexión colectiva y la necesidad de evitar bloqueos, se aplicaron los siguientes cambios clave:
+•	Migración de Trello a Jira, estructurando por épicas e historias de usuario.
+•	Definición de roles dentro del equipo: el autor asumió el rol de Scrum Master.
+•	Se implementó control de merges: sólo se realizan mediante revisión y autorización del Scrum Master.
+•	Actualización de casos de uso.
+•	Diseño y documentación de la arquitectura del sistema.
+•	Inicio de un proceso de estimación colaborativa de tareas.
+________________________________________
+4. Tareas actuales y organización
+Actualmente se está trabajando en la organización completa del tablero Jira, actualización de casos de uso, diseño de la arquitectura, establecimiento de flujos de trabajo, normas de commit, control de versiones y política de revisión de código. Además, se está preparando un plan de estimación realista para las funcionalidades del siguiente sprint.
+________________________________________
+5. Lecciones aprendidas
+Hacer las cosas mal no es un pecado. El verdadero error es no aprender de ello ni pedir ayuda cuando se necesita. El trabajo en equipo es clave, y la sobrecarga de un solo rol es insostenible. Estimar sin planificar es lanzarse al vacío. Documentar y compartir decisiones mejora la colaboración. No hay Scrum sin comunicación ni control de entregables.
+________________________________________
+6. Compromisos para los próximos sprints
+•	Terminar el documento actualizado de casos de uso y requisitos.
+•	Finalizar la arquitectura y compartirla con todo el equipo.
+•	Estimar de forma colaborativa las tareas futuras.
+•	Consolidar el uso de Jira como fuente de verdad.
+•	Fomentar cultura de revisión de código y retroalimentación continua.
+•	Preparar informes parciales por sprint para mantener trazabilidad del proyecto.
+________________________________________
+7. Conclusión
+Este informe representa el compromiso del equipo con la mejora continua. A pesar de los tropiezos iniciales, se está retomando el rumbo con un enfoque más profesional, humano y colaborativo. El objetivo no es solo cumplir con una entrega académica, sino simular con responsabilidad un entorno real de desarrollo ágil.
+________________________________________
+8. Anexos
+Repositorios del Proyecto:
+1.	Repositorio Backend:
+El código fuente correspondiente al backend del proyecto Popayan Nocturna está disponible en el siguiente repositorio de GitHub:
+https://github.com/YonnierDev/popnocturna
+Actualmente, el repositorio contiene las bases para la gestión de usuarios y la estructura de la base de datos. Se están agregando funcionalidades como el manejo de autenticación y la API REST.
+2.	Repositorio Frontend:
+El código fuente correspondiente al frontend del proyecto Popayan Nocturna está disponible en el siguiente repositorio de GitHub:
+https://github.com/YonnierDev/frontendpopa
+En este repositorio se encuentran las interfaces de usuario para la visualización de las recomendaciones turísticas, basadas en el diseño de la aplicación.
+Imagen 1: Tablero de Jira actualizado. Recuperado de: https://drive.google.com/file/d/1-m569Zu8hXCfC214s7VcA_9I_4SS93cS/view?usp=sharing
+•	Documento Caso de usos: https://drive.google.com/file/d/1-m569Zu8hXCfC214s7VcA_9I_4SS93cS/view?usp=sharing
