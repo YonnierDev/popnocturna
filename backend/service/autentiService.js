@@ -107,7 +107,7 @@ class AutentiService {
           <h2>Bienvenido a Popayán Nocturna</h2>
           <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código:</p>
           <h3 style="font-size: 24px; color: #2196F3; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px; margin: 20px 0;">${codigo}</h3>
-          <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
+          <p>Este código expirará en 15 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
           <p>Gracias por registrarte en Popayán Nocturna.</p>
         `
       };
@@ -130,7 +130,7 @@ class AutentiService {
 
     const contrasenaHash = await bcrypt.hash(contrasena, 10);
     const codigo = this.generarCodigo();
-    const expiracion = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    const expiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     await TemporalService.guardarCodigo(correo, codigo, expiracion);
 
@@ -144,7 +144,14 @@ class AutentiService {
     // Enviar correo de verificación
     await this.enviarCorreoVerificacion(correo, codigo);
 
-    return { usuario, codigo };
+    return { 
+      mensaje: "Usuario registrado exitosamente. Por favor, verifica tu correo electrónico.",
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        correo: usuario.correo
+      }
+    };
   }
 
   static async validarCodigoCorreo(correo, codigo) {
