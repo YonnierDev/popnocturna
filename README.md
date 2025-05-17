@@ -37,7 +37,7 @@ Backend del sistema **Popayán Nocturna**, una plataforma para la gestión de lu
 
 ## 🧠 Funcionalidades principales
 
-✅ Autenticación con validación de correo  
+✅ Autenticación con validación de correo (código de verificación válido por 15 minutos)  
 ✅ Gestión de usuarios y roles (super admin, admin, propietario, usuario)  
 ✅ Subida de imágenes con Cloudinary  
 ✅ Validaciones con `express-validator`  

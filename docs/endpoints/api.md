@@ -2,6 +2,38 @@
 
 ## Autenticación
 
+### Registro de Usuario
+```http
+POST /api/auth/registrar
+```
+- **Body**:
+  ```json
+  {
+    "nombre": "Nombre Usuario",
+    "apellido": "Apellido Usuario",
+    "correo": "usuario@ejemplo.com",
+    "contrasena": "Contraseña123!",
+    "fecha_nacimiento": "1990-01-01",
+    "genero": "Masculino"
+  }
+  ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Usuario registrado exitosamente. Por favor, verifica tu correo electrónico.",
+    "usuario": {
+      "id": 1,
+      "nombre": "Nombre Usuario",
+      "correo": "usuario@ejemplo.com"
+    }
+  }
+  ```
+- **Notas**:
+  - Se envía un código de verificación al correo electrónico proporcionado
+  - El código expira en 15 minutos
+  - El usuario debe verificar su correo antes de poder iniciar sesión
+  - Por seguridad, el código de verificación solo se envía al correo electrónico
+
 ### Login
 ```http
 POST /api/auth/login
