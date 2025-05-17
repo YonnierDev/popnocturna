@@ -8,5 +8,6 @@ router.post('/recuperar-contrasena', AutentiController.enviarRecuperacionCorreo)
 router.get('/recuperar-contrasena/:token', AutentiController.verificarToken);
 router.post('/actualizar-contrasena', AutentiController.actualizarContrasena);
 router.post('/validar-codigo', AutentiController.validarCodigo);
+router.post('/reenviar-codigo', AutentiController.reenviarCodigo);
 
 module.exports = router;

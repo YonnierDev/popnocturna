@@ -26,7 +26,7 @@
 ```
 
 ### Registro
-- **POST** `/auth/registro`
+- **POST** `/api/registrar`
 - **Descripción**: Registro de nuevos usuarios con verificación por correo
 - **Body**:
 ```json
@@ -35,26 +35,45 @@
   "apellido": "string",
   "correo": "string",
   "contrasena": "string",
-  "fecha_nacimiento": "string (YYYY-MM-DD)",
-  "genero": "string (Masculino|Femenino|Otro)"
+  "fecha_nacimiento": "YYYY-MM-DD",
+  "genero": "Masculino | Femenino | Otro"
 }
 ```
 - **Respuesta**:
 ```json
 {
   "mensaje": "Registro iniciado. Por favor, verifica tu correo electrónico.",
-  "correo": "string"
+  "correo": "usuario@ejemplo.com"
 }
 ```
 - **Notas**:
   - Se envía código de verificación al correo
-  - Código válido por 5 minutos
-  - Datos guardados temporalmente hasta verificación
-  - Usuario no creado hasta validar correo
+  - Código expira en 5 minutos
+  - No permite registro duplicado durante validación
+
+### Reenvío de Código
+- **POST** `/api/reenviar-codigo`
+- **Descripción**: Solicita un nuevo código de verificación
+- **Body**:
+```json
+{
+  "correo": "string"
+}
+```
+- **Respuesta**:
+```json
+{
+  "mensaje": "Nuevo código de verificación enviado",
+  "correo": "usuario@ejemplo.com"
+}
+```
+- **Notas**:
+  - Solo disponible si el código anterior expiró
+  - No disponible para correos ya validados
 
 ### Validación de Código
-- **POST** `/auth/validar-codigo`
-- **Descripción**: Validar código de verificación y completar registro
+- **POST** `/api/validar-codigo`
+- **Descripción**: Valida el código de verificación y completa el registro
 - **Body**:
 ```json
 {
@@ -359,3 +378,100 @@ socket.on('nuevo-lugar', data => {
    - Marcar como leídas
    - Actualizar contador en tiempo real
    - Filtrar por tipo y estado 
+
+## 🔄 Flujos de Registro
+
+1. **Registro Inicial**
+   - Usuario envía datos de registro
+   - Sistema valida campos
+   - Se envía código de verificación
+   - Datos se guardan temporalmente
+
+2. **Validación de Correo**
+   - Usuario recibe código por correo
+   - Código expira en 5 minutos
+   - Se puede solicitar nuevo código después de expiración
+
+3. **Completar Registro**
+   - Usuario ingresa código recibido
+   - Sistema valida código
+   - Se crea usuario en base de datos
+   - Se genera token JWT
+
+4. **Inicio de Sesión**
+   - Usuario puede iniciar sesión
+   - Sistema valida credenciales
+   - Se genera nuevo token JWT
+
+## 🔄 Flujos de Recuperación
+
+1. **Recuperación de Contraseña**
+   - Usuario solicita recuperación de contraseña
+   - Sistema valida correo
+   - Se envía correo de recuperación
+
+2. **Verificación de Token**
+   - Usuario recibe token de recuperación
+   - Sistema valida token
+   - Se permite actualizar contraseña
+
+3. **Actualización de Contraseña**
+   - Usuario actualiza contraseña
+   - Sistema valida actualización
+   - Se actualiza contraseña en base de datos
+
+## 🔄 Flujos de Notificaciones
+
+1. **Notificaciones de Reportes**
+   - Sistema notifica comentarios reportados
+   - Sistema actualiza contador de reportes pendientes
+
+2. **Notificaciones de Lugares**
+   - Sistema notifica lugares pendientes de aprobación
+   - Sistema actualiza contador de lugares pendientes
+
+3. **Notificaciones de Eventos**
+   - Sistema notifica eventos nuevos o actualizados
+   - Sistema actualiza lista de eventos
+
+## 🔄 Flujos de Recompensas
+
+1. **Recompensas Disponibles**
+   - Sistema muestra recompensas disponibles
+   - Sistema actualiza lista de recompensas
+
+2. **Canje de Recompensas**
+   - Usuario selecciona recompensa
+   - Sistema valida canje
+   - Sistema actualiza stock de recompensas
+   - Sistema notifica canje exitoso
+
+## 🔄 Flujos de Dashboard
+
+1. **Estadísticas Generales**
+   - Sistema muestra estadísticas generales
+   - Sistema actualiza gráficos y métricas
+
+2. **Estadísticas por Evento**
+   - Sistema muestra estadísticas de un evento
+   - Sistema actualiza gráficos y métricas del evento
+
+## 🔄 Flujos de Códigos de Estado
+
+1. **Códigos de Estado**
+   - Sistema muestra códigos de estado HTTP
+   - Sistema actualiza mensajes de estado
+
+2. **Códigos de Error**
+   - Sistema muestra códigos de error
+   - Sistema actualiza mensajes de error
+
+## 🔄 Flujos de Notas para Frontend
+
+1. **Notas para Frontend**
+   - Sistema muestra notas para desarrolladores frontend
+   - Sistema actualiza documentación y guías de desarrollo
+
+2. **Notas para Usuarios**
+   - Sistema muestra notas para usuarios finales
+   - Sistema actualiza guías de uso y consejos 

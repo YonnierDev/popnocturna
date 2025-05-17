@@ -1,147 +1,150 @@
 # 🌃 Popayán Nocturna - Backend
 
-Backend del sistema **Popayán Nocturna**, una plataforma para la gestión de lugares turísticos y experiencias nocturnas en la ciudad de Popayán. Este sistema permite a los usuarios registrarse, reservar lugares, ganar recompensas y recibir notificaciones, todo administrado mediante roles y un panel de control completo.
+## Descripción
+Sistema backend para la plataforma Popayán Nocturna, desarrollado con Node.js y Express.
 
----
+## Tecnologías
+- Node.js
+- Express
+- Sequelize ORM
+- JWT
+- bcrypt
+- Nodemailer
+- Cloudinary
+- Multer
+- dotenv
+- express-validator
+- Clever Cloud
+- Vercel
 
-## 🚀 Tecnologías
-
-- **Node.js** + **Express** – API RESTful
-- **Sequelize ORM** – Conexión a MySQL
-- **JWT** – Autenticación segura
-- **bcrypt** – Encriptación de contraseñas
-- **Nodemailer** – Envío de correos (verificación y recuperación)
-- **Cloudinary** – Gestión de imágenes
-- **Multer** – Carga de archivos
-- **dotenv** – Variables de entorno
-- **express-validator** – Validaciones robustas
-- **Clever Cloud** – Hosting de base de datos MySQL
-- **Vercel** – Despliegue del backend
-
----
-
-## 📁 Estructura del Proyecto
-
-```bash
-📦backend-popayan-nocturna
-├── 📂controllers       # Lógica de negocio por entidad
-├── 📂middlewares       # Validaciones, JWT, roles y multer
-├── 📂models            # Modelos de Sequelize
-├── 📂routes            # Definición de endpoints
-├── 📂service           # Lógica desacoplada y reusable
-├── 📂config            # Conexión DB, cloudinary, Multer
-├── 📄.env              # Variables de entorno
-├── 📄index.js          # Inicio del servidor
+## Estructura del Proyecto
+```
+backend/
+├── controllers/
+├── middlewares/
+├── models/
+├── routes/
+├── services/
+└── config/
 ```
 
----
+## Funcionalidades Principales
 
-## 🧠 Funcionalidades principales
+### Autenticación y Registro
+- Registro de usuarios con verificación por correo
+- Código de verificación con expiración de 5 minutos
+- Reenvío de código después de expiración
+- Validación de correo electrónico
+- Inicio de sesión con JWT
+- Recuperación de contraseña
+- Gestión de roles y permisos
 
-✅ Autenticación con validación de correo (código de verificación válido por 5 minutos)  
-✅ Gestión de usuarios y roles (super admin, admin, propietario, usuario)  
-✅ Subida de imágenes con Cloudinary  
-✅ Validaciones con `express-validator`  
-✅ API REST modular  
-✅ Control de acceso por middleware  
-✅ Reservas, comentarios, lugares, categorías y recompensas  
-✅ Envío de notificaciones por correo  
-✅ Soporte para múltiples dashboards (admin y propietario)
+### Flujo de Registro y Verificación
 
----
+1. **Registro Inicial**
+   - Usuario envía datos de registro
+   - Sistema valida campos y formato
+   - Se envía código de verificación
+   - Datos se guardan temporalmente
+   - Código expira en 5 minutos
 
-## 🛠️ Instalación local
+2. **Durante la Validación**
+   - No se permite registrar el mismo correo
+   - No se permite reenviar código hasta que expire
+   - Se muestra tiempo restante para reenvío
+   - Los datos temporales se mantienen
 
-1. **Clona el repositorio**
+3. **Reenvío de Código**
+   - Solo disponible después de 5 minutos
+   - Elimina código anterior
+   - Mantiene datos temporales
+   - Actualiza fecha de expiración
+   - Envía nuevo código
 
-```bash
-git clone https://github.com/tuUsuario/backend-popayan-nocturna.git
-cd popnocturna/backend
+4. **Validación de Código**
+   - Verifica código y expiración
+   - Crea usuario en base de datos
+   - Elimina datos temporales
+   - Genera token JWT
+   - Permite inicio de sesión
+
+5. **Post Validación**
+   - No se permite reenvío de código
+   - No se permite nuevo registro
+   - Se puede iniciar sesión
+   - Se requiere token para operaciones
+
+### Gestión de Usuarios
+- Perfiles de usuario
+- Actualización de datos
+- Cambio de contraseña
+- Gestión de estados
+
+### Gestión de Contenido
+- Carga y gestión de imágenes
+- Validaciones de archivos
+- Almacenamiento en Cloudinary
+
+### API Modular
+- Endpoints organizados por funcionalidad
+- Validaciones de datos
+- Manejo de errores
+- Documentación de API
+
+### Seguridad
+- Autenticación JWT
+- Encriptación de contraseñas
+- Validación de tokens
+- Control de acceso basado en roles
+- Limpieza automática de datos temporales
+- Protección contra registros duplicados
+
+### Notificaciones
+- Envío de correos electrónicos
+- Verificación de correo
+- Recuperación de contraseña
+- Notificaciones del sistema
+
+## Instalación
+
+1. Clonar el repositorio
+2. Instalar dependencias: `npm install`
+3. Configurar variables de entorno
+4. Ejecutar migraciones: `npm run migrate`
+5. Iniciar servidor: `npm start`
+
+## Variables de Entorno
+```
+DB_HOST=
+DB_USER=
+DB_PASS=
+DB_NAME=
+JWT_SECRET=
+EMAIL_USER=
+EMAIL_PASS=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 ```
 
-2. **Instala dependencias**
+## Scripts
+- `npm start`: Inicia el servidor
+- `npm run dev`: Inicia el servidor en modo desarrollo
+- `npm run migrate`: Ejecuta las migraciones
+- `npm test`: Ejecuta las pruebas
 
-```bash
-npm install
-```
+## Documentación
+La documentación completa de la API se encuentra en la carpeta `docs/`.
 
-3. **Configura tu entorno**
+## Contribución
+1. Fork el repositorio
+2. Crear rama feature: `git checkout -b feature/nueva-funcionalidad`
+3. Commit cambios: `git commit -am 'Agregar nueva funcionalidad'`
+4. Push a la rama: `git push origin feature/nueva-funcionalidad`
+5. Crear Pull Request
 
-Crea un archivo `.env` basado en `.env.example` con tus credenciales:
-
-```env
-PORT=3000
-DB_HOST=tu_host_clevercloud
-DB_NAME=popayan
-DB_USER=usuario
-DB_PASS=contraseña
-JWT_SECRET=tu_clave_secreta
-EMAIL_USER=correo@gmail.com
-EMAIL_PASS=contraseña
-CLOUDINARY_NAME=nombre
-CLOUDINARY_KEY=clave
-CLOUDINARY_SECRET=secreto
-```
-
-4. **Inicia el servidor**
-
-```bash
-npm run dev
-```
-
----
-
-## 🧪 Scripts útiles
-
-```bash
-npm start - Backend
-
-```
-
----
-
-
-## 🔒 Seguridad
-
-- Hashing de contraseñas con `bcrypt`
-- Tokens JWT firmados y validados en cada request
-- Roles con permisos controlados por middleware
-- Validaciones de datos exhaustivas en entrada
-
----
-
-## 📦 Despliegue
-
-- **API desplegada en Vercel**
-- **Base de datos MySQL en Clever Cloud**
-- **Frontend desplegado en Vercel**
-- Configuración automática de variables de entorno en Vercel
-
----
-
-## 👥 Colaboradores
-
-- Yonnier (Backend & Scrum Master)
-- Marlon (Frontend)
-- Camilo (Backend)
-- Jhoan (Backend)
-- Cristian (Fronted)
-
----
-
-## 📄 Licencia
-
-Este proyecto es open-source. Siéntete libre de colaborar, usar y mejorar el código.
-
----
-
-## ❤️ Contribuir
-
-¡Nos encanta recibir contribuciones! Abre un issue o haz un PR con tus mejoras o sugerencias.
-
----
-
-> Proyecto desarrollado en el SENA – 2025. Inspirado en la magia nocturna de Popayán 🌙
+## Licencia
+Este proyecto está bajo la Licencia MIT.
 
 # Sistema de Calificaciones - PopNocturna
 

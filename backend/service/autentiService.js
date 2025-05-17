@@ -128,6 +128,15 @@ class AutentiService {
       throw new Error("Correo ya está en uso");
     }
 
+    // Verificar si ya existe un código temporal
+    const codigoExistente = await TemporalService.obtenerCodigo(correo);
+    if (codigoExistente) {
+      const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
+      if (tiempoRestante > 0) {
+        throw new Error(`Ya existe un código de verificación activo. Por favor, espera ${Math.ceil(tiempoRestante / 60000)} minutos o verifica tu correo.`);
+      }
+    }
+
     const contrasenaHash = await bcrypt.hash(contrasena, 10);
     const codigo = this.generarCodigo();
     
@@ -174,6 +183,75 @@ class AutentiService {
     }
   }
 
+  static async reenviarCodigo(correo) {
+    // Verificar si el usuario ya existe
+    const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
+    if (usuarioExistente) {
+      throw new Error("Este correo ya está registrado");
+    }
+
+    // Verificar si existe un código temporal
+    const codigoExistente = await TemporalService.obtenerCodigo(correo);
+    if (!codigoExistente) {
+      throw new Error("No hay un registro pendiente para este correo");
+    }
+
+    // Verificar si el código anterior ha expirado
+    const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
+    if (tiempoRestante > 0) {
+      throw new Error(`Debes esperar ${Math.ceil(tiempoRestante / 60000)} minutos antes de solicitar un nuevo código`);
+    }
+
+    // Obtener los datos temporales antes de eliminar el código
+    const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
+    if (!datosTemporales) {
+      // Si no hay datos temporales, eliminamos el código y lanzamos error
+      await TemporalService.eliminarCodigo(correo);
+      throw new Error("Datos de registro no encontrados");
+    }
+
+    // Eliminar el código anterior
+    await TemporalService.eliminarCodigo(correo);
+
+    // Generar nuevo código
+    const codigo = this.generarCodigo();
+    const ahora = new Date();
+    const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000); // 5 minutos
+    expiracion.setHours(expiracion.getHours() - 5); // Ajustar a zona horaria de Bogotá (UTC-5)
+
+    try {
+      // Enviar nuevo correo
+      await this.enviarCorreoVerificacion(correo, codigo);
+      
+      // Guardar nuevo código y actualizar datos temporales
+      await TemporalService.guardarCodigo(correo, codigo, expiracion);
+      await TemporalService.guardarDatosTemporales(correo, {
+        ...datosTemporales,
+        fecha_expiracion: expiracion
+      });
+
+      // Programar limpieza
+      setTimeout(async () => {
+        try {
+          await TemporalService.eliminarCodigo(correo);
+          console.log(`Código expirado eliminado para: ${correo}`);
+        } catch (error) {
+          console.error('Error al eliminar código expirado:', error);
+        }
+      }, 5 * 60 * 1000);
+
+      return {
+        mensaje: "Nuevo código de verificación enviado",
+        correo: correo
+      };
+    } catch (error) {
+      // Si hay error al enviar el correo, limpiamos los datos temporales
+      await TemporalService.eliminarCodigo(correo);
+      console.error('Error al reenviar código:', error);
+      throw new Error("Error al enviar el nuevo código de verificación");
+    }
+  }
+
   static async validarCodigoCorreo(correo, codigo) {
     const codigoGuardado = await TemporalService.obtenerCodigo(correo);
     if (!codigoGuardado) {
@@ -186,49 +264,59 @@ class AutentiService {
     expiracion.setHours(expiracion.getHours() + 5); // Ajustar a UTC para comparación
 
     if (String(codigoGuardado.codigo) !== String(codigo) || ahora > expiracion) {
+      // Si el código es inválido o expirado, eliminamos el registro temporal
+      await TemporalService.eliminarCodigo(correo);
       throw new Error("Código inválido o expirado");
     }
 
     // Obtener datos temporales del usuario
     const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
     if (!datosTemporales) {
+      // Si no hay datos temporales, eliminamos el código
+      await TemporalService.eliminarCodigo(correo);
       throw new Error("Datos de registro no encontrados");
     }
 
-    // Crear el usuario en la base de datos
-    const usuario = await UsuarioService.crearUsuario({
-      ...datosTemporales,
-      estado: true
-    });
+    try {
+      // Crear el usuario en la base de datos
+      const usuario = await UsuarioService.crearUsuario({
+        ...datosTemporales,
+        estado: true
+      });
 
-    // Limpiar datos temporales
-    await TemporalService.eliminarCodigo(correo);
-    
-    // Generar token JWT
-    const payload = { 
-      id: usuario.id, 
-      correo: usuario.correo, 
-      rol: usuario.rolid 
-    };
-    
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET || "secreto",
-      { expiresIn: "2h" }
-    );
+      // Limpiar datos temporales
+      await TemporalService.eliminarCodigo(correo);
+      
+      // Generar token JWT
+      const payload = { 
+        id: usuario.id, 
+        correo: usuario.correo, 
+        rol: usuario.rolid 
+      };
+      
+      const token = jwt.sign(
+        payload,
+        process.env.JWT_SECRET || "secreto",
+        { expiresIn: "2h" }
+      );
 
-    return {
-      mensaje: "Usuario validado correctamente",
-      usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        correo: usuario.correo,
-        rol: usuario.rolid,
-        estado: usuario.estado
-      },
-      token
-    };
+      return {
+        mensaje: "Usuario validado correctamente",
+        usuario: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          apellido: usuario.apellido,
+          correo: usuario.correo,
+          rol: usuario.rolid,
+          estado: usuario.estado
+        },
+        token
+      };
+    } catch (error) {
+      // Si hay error al crear el usuario, limpiamos los datos temporales
+      await TemporalService.eliminarCodigo(correo);
+      throw new Error("Error al crear el usuario: " + error.message);
+    }
   }
 
   static async login({ correo, contrasena }) {

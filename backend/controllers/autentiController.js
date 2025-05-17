@@ -107,7 +107,26 @@ class AutentiController {
       res.status(400).json({ mensaje: error.message });
     }
   }
-  
+
+  static async reenviarCodigo(req, res) {
+    try {
+      const { correo } = req.body;
+      
+      if (!correo) {
+        return res.status(400).json({
+          mensaje: "El correo es requerido"
+        });
+      }
+
+      const resultado = await AutentiService.reenviarCodigo(correo);
+      res.json(resultado);
+    } catch (error) {
+      console.error('Error al reenviar código:', error);
+      res.status(400).json({
+        mensaje: error.message
+      });
+    }
+  }
 }
 
 module.exports = AutentiController;

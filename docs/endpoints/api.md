@@ -4,17 +4,17 @@
 
 ### Registro de Usuario
 ```http
-POST /api/auth/registrar
+POST /api/registrar
 ```
 - **Body**:
   ```json
   {
-    "nombre": "Nombre Usuario",
-    "apellido": "Apellido Usuario",
-    "correo": "usuario@ejemplo.com",
-    "contrasena": "Contraseña123!",
-    "fecha_nacimiento": "1990-01-01",
-    "genero": "Masculino"
+    "nombre": "string",
+    "apellido": "string",
+    "correo": "string",
+    "contrasena": "string",
+    "fecha_nacimiento": "YYYY-MM-DD",
+    "genero": "Masculino | Femenino | Otro"
   }
   ```
 - **Respuesta Exitosa**:
@@ -25,21 +25,45 @@ POST /api/auth/registrar
   }
   ```
 - **Notas**:
-  - Se envía un código de verificación al correo electrónico proporcionado
-  - El código expira en 5 minutos
-  - Los datos del usuario se guardan temporalmente hasta la verificación
-  - El usuario no se crea en la base de datos hasta validar el correo
-  - Por seguridad, el código de verificación solo se envía al correo electrónico
+  - El código de verificación expira en 5 minutos
+  - No se puede registrar el mismo correo mientras hay un código activo
+  - Se debe validar el correo antes de poder iniciar sesión
+  - Si se intenta registrar un correo ya validado, se recibirá un error
+  - Los datos se guardan temporalmente hasta la validación
 
-### Validación de Código
+### Reenvío de Código de Verificación
 ```http
-POST /api/auth/validar-codigo
+POST /api/reenviar-codigo
 ```
 - **Body**:
   ```json
   {
-    "correo": "usuario@ejemplo.com",
-    "codigo": "123456"
+    "correo": "string"
+  }
+  ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Nuevo código de verificación enviado",
+    "correo": "usuario@ejemplo.com"
+  }
+  ```
+- **Notas**:
+  - Solo se puede reenviar si el código anterior ha expirado (5 minutos)
+  - No se puede reenviar si el correo ya está validado
+  - Se elimina el código anterior antes de generar uno nuevo
+  - Se mantienen los datos temporales del registro
+  - Se actualiza la fecha de expiración
+
+### Validación de Código
+```http
+POST /api/validar-codigo
+```
+- **Body**:
+  ```json
+  {
+    "correo": "string",
+    "codigo": "string"
   }
   ```
 - **Respuesta Exitosa**:
@@ -47,56 +71,139 @@ POST /api/auth/validar-codigo
   {
     "mensaje": "Usuario validado correctamente",
     "usuario": {
-      "id": 1,
-      "nombre": "Nombre Usuario",
-      "apellido": "Apellido Usuario",
-      "correo": "usuario@ejemplo.com",
-      "rol": 8,
-      "estado": true
+      "id": "number",
+      "nombre": "string",
+      "apellido": "string",
+      "correo": "string",
+      "rol": "number",
+      "estado": "boolean"
     },
-    "token": "jwt_token_here"
+    "token": "string"
   }
   ```
 - **Notas**:
   - El código debe ser ingresado dentro de los 5 minutos de expiración
+  - Si el código es inválido o expirado, se elimina el registro temporal
   - Después de validar, se crea el usuario en la base de datos
   - Se eliminan los datos temporales
   - Se genera un token JWT para iniciar sesión
 
 ### Login
 ```http
-POST /api/auth/login
+POST /api/login
 ```
 - **Body**:
   ```json
   {
-    "correo": "usuario@ejemplo.com",
-    "contrasena": "contraseña123"
+    "correo": "string",
+    "contrasena": "string"
   }
   ```
 - **Respuesta Exitosa**:
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token": "string",
     "usuario": {
-      "id": 1,
-      "nombre": "Nombre Usuario",
-      "correo": "usuario@ejemplo.com",
-      "rol": 8
+      "id": "number",
+      "nombre": "string",
+      "apellido": "string",
+      "correo": "string",
+      "rol": "number",
+      "estado": "boolean"
     }
   }
   ```
+- **Notas**:
+  - Solo se puede hacer login después de validar el correo
+  - El token expira en 2 horas
+  - Se requiere el token para acceder a rutas protegidas
 
-### Recuperar Contraseña
-```http
-POST /api/auth/recuperar-contrasena
-```
-- **Body**:
-  ```json
-  {
-    "correo": "usuario@ejemplo.com"
-  }
-  ```
+## Flujo de Registro y Verificación
+
+1. **Registro Inicial**
+   - Usuario envía datos de registro
+   - Sistema valida campos y formato
+   - Se envía código de verificación
+   - Datos se guardan temporalmente
+   - Código expira en 5 minutos
+
+2. **Durante la Validación**
+   - No se permite registrar el mismo correo
+   - No se permite reenviar código hasta que expire
+   - Se muestra tiempo restante para reenvío
+   - Los datos temporales se mantienen
+
+3. **Reenvío de Código**
+   - Solo disponible después de 5 minutos
+   - Elimina código anterior
+   - Mantiene datos temporales
+   - Actualiza fecha de expiración
+   - Envía nuevo código
+
+4. **Validación de Código**
+   - Verifica código y expiración
+   - Crea usuario en base de datos
+   - Elimina datos temporales
+   - Genera token JWT
+   - Permite inicio de sesión
+
+5. **Post Validación**
+   - No se permite reenvío de código
+   - No se permite nuevo registro
+   - Se puede iniciar sesión
+   - Se requiere token para operaciones
+
+## Códigos de Error Comunes
+
+- `400 Bad Request`:
+  - "Todos los campos son obligatorios"
+  - "Correo no válido"
+  - "Contraseña insegura"
+  - "Género no válido"
+  - "Edad mínima de registro: 18 años"
+  - "Código inválido o expirado"
+  - "Datos de registro no encontrados"
+
+- `401 Unauthorized`:
+  - "Token inválido o expirado"
+  - "No autorizado"
+
+- `403 Forbidden`:
+  - "No tiene permisos para realizar esta acción"
+
+- `404 Not Found`:
+  - "Usuario no encontrado"
+  - "Código no encontrado"
+
+- `500 Internal Server Error`:
+  - "Error al enviar el correo de verificación"
+  - "Error al crear el usuario"
+
+## Notas de Seguridad
+
+1. **Contraseñas**:
+   - Mínimo 8 caracteres
+   - Máximo 20 caracteres
+   - Al menos una mayúscula
+   - Al menos una minúscula
+   - Al menos un número
+   - Al menos un símbolo
+
+2. **Tokens**:
+   - Expiración de 2 horas
+   - Incluye ID, correo y rol
+   - Se requiere para rutas protegidas
+
+3. **Validaciones**:
+   - Correo único
+   - Edad mínima 18 años
+   - Género válido
+   - Formato de fecha correcto
+
+4. **Limpieza Automática**:
+   - Códigos expirados se eliminan
+   - Datos temporales se limpian
+   - Registros inválidos se eliminan
 
 ## Usuarios
 
