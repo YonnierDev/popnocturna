@@ -20,19 +20,48 @@ POST /api/auth/registrar
 - **Respuesta Exitosa**:
   ```json
   {
-    "mensaje": "Usuario registrado exitosamente. Por favor, verifica tu correo electrónico.",
-    "usuario": {
-      "id": 1,
-      "nombre": "Nombre Usuario",
-      "correo": "usuario@ejemplo.com"
-    }
+    "mensaje": "Registro iniciado. Por favor, verifica tu correo electrónico.",
+    "correo": "usuario@ejemplo.com"
   }
   ```
 - **Notas**:
   - Se envía un código de verificación al correo electrónico proporcionado
-  - El código expira en 15 minutos
-  - El usuario debe verificar su correo antes de poder iniciar sesión
+  - El código expira en 5 minutos
+  - Los datos del usuario se guardan temporalmente hasta la verificación
+  - El usuario no se crea en la base de datos hasta validar el correo
   - Por seguridad, el código de verificación solo se envía al correo electrónico
+
+### Validación de Código
+```http
+POST /api/auth/validar-codigo
+```
+- **Body**:
+  ```json
+  {
+    "correo": "usuario@ejemplo.com",
+    "codigo": "123456"
+  }
+  ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Usuario validado correctamente",
+    "usuario": {
+      "id": 1,
+      "nombre": "Nombre Usuario",
+      "apellido": "Apellido Usuario",
+      "correo": "usuario@ejemplo.com",
+      "rol": 8,
+      "estado": true
+    },
+    "token": "jwt_token_here"
+  }
+  ```
+- **Notas**:
+  - El código debe ser ingresado dentro de los 5 minutos de expiración
+  - Después de validar, se crea el usuario en la base de datos
+  - Se eliminan los datos temporales
+  - Se genera un token JWT para iniciar sesión
 
 ### Login
 ```http

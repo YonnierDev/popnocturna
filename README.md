@@ -32,12 +32,13 @@ Backend del sistema **Popayán Nocturna**, una plataforma para la gestión de lu
 ├── 📂config            # Conexión DB, cloudinary, Multer
 ├── 📄.env              # Variables de entorno
 ├── 📄index.js          # Inicio del servidor
+```
 
 ---
 
 ## 🧠 Funcionalidades principales
 
-✅ Autenticación con validación de correo (código de verificación válido por 15 minutos)  
+✅ Autenticación con validación de correo (código de verificación válido por 5 minutos)  
 ✅ Gestión de usuarios y roles (super admin, admin, propietario, usuario)  
 ✅ Subida de imágenes con Cloudinary  
 ✅ Validaciones con `express-validator`  

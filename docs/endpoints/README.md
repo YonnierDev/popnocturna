@@ -27,26 +27,54 @@
 
 ### Registro
 - **POST** `/auth/registro`
-- **Descripción**: Registro de nuevos usuarios
+- **Descripción**: Registro de nuevos usuarios con verificación por correo
 - **Body**:
 ```json
 {
   "nombre": "string",
+  "apellido": "string",
   "correo": "string",
   "contrasena": "string",
-  "rolid": "number"
+  "fecha_nacimiento": "string (YYYY-MM-DD)",
+  "genero": "string (Masculino|Femenino|Otro)"
 }
 ```
 - **Respuesta**:
 ```json
 {
-  "mensaje": "Usuario registrado exitosamente",
+  "mensaje": "Registro iniciado. Por favor, verifica tu correo electrónico.",
+  "correo": "string"
+}
+```
+- **Notas**:
+  - Se envía código de verificación al correo
+  - Código válido por 5 minutos
+  - Datos guardados temporalmente hasta verificación
+  - Usuario no creado hasta validar correo
+
+### Validación de Código
+- **POST** `/auth/validar-codigo`
+- **Descripción**: Validar código de verificación y completar registro
+- **Body**:
+```json
+{
+  "correo": "string",
+  "codigo": "string"
+}
+```
+- **Respuesta**:
+```json
+{
+  "mensaje": "Usuario validado correctamente",
   "usuario": {
     "id": "number",
     "nombre": "string",
+    "apellido": "string",
     "correo": "string",
-    "rolid": "number"
-  }
+    "rol": "number",
+    "estado": "boolean"
+  },
+  "token": "string"
 }
 ```
 

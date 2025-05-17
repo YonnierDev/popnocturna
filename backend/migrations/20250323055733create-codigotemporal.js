@@ -18,6 +18,10 @@ module.exports = {
       expiracion: {
         type: Sequelize.DATE
       },
+      datos_temporales: {
+        type: Sequelize.TEXT,
+        allowNull: true
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

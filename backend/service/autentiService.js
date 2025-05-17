@@ -107,7 +107,7 @@ class AutentiService {
           <h2>Bienvenido a Popayán Nocturna</h2>
           <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código:</p>
           <h3 style="font-size: 24px; color: #2196F3; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px; margin: 20px 0;">${codigo}</h3>
-          <p>Este código expirará en 15 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
+          <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
           <p>Gracias por registrarte en Popayán Nocturna.</p>
         `
       };
@@ -130,42 +130,105 @@ class AutentiService {
 
     const contrasenaHash = await bcrypt.hash(contrasena, 10);
     const codigo = this.generarCodigo();
-    const expiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+    
+    // Configurar fecha de expiración en zona horaria de Bogotá
+    const ahora = new Date();
+    const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000); // 5 minutos
+    expiracion.setHours(expiracion.getHours() - 5); // Ajustar a zona horaria de Bogotá (UTC-5)
 
-    await TemporalService.guardarCodigo(correo, codigo, expiracion);
+    // Guardar temporalmente el código y los datos del usuario
+    try {
+      // Primero intentamos enviar el correo
+      await this.enviarCorreoVerificacion(correo, codigo);
+      
+      // Si el correo se envía correctamente, guardamos los datos temporales
+      await TemporalService.guardarCodigo(correo, codigo, expiracion);
+      
+      // Guardamos los datos del usuario en el campo datos_temporales
+      await TemporalService.guardarDatosTemporales(correo, {
+        ...datos,
+        contrasena: contrasenaHash,
+        estado: false,
+        rolid: 8,
+        fecha_creacion: ahora,
+        fecha_expiracion: expiracion
+      });
 
-    const usuario = await UsuarioService.crearUsuario({
-      ...datos,
-      contrasena: contrasenaHash,
-      estado: false,
-      rolid: 8,
-    });
+      // Programar limpieza después de 5 minutos
+      setTimeout(async () => {
+        try {
+          await TemporalService.eliminarCodigo(correo);
+          console.log(`Código expirado eliminado para: ${correo}`);
+        } catch (error) {
+          console.error('Error al eliminar código expirado:', error);
+        }
+      }, 5 * 60 * 1000);
 
-    // Enviar correo de verificación
-    await this.enviarCorreoVerificacion(correo, codigo);
-
-    return { 
-      mensaje: "Usuario registrado exitosamente. Por favor, verifica tu correo electrónico.",
-      usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        correo: usuario.correo
-      }
-    };
+      return { 
+        mensaje: "Registro iniciado. Por favor, verifica tu correo electrónico.",
+        correo: correo
+      };
+    } catch (error) {
+      console.error('Error en el proceso de registro:', error);
+      throw new Error("Error al enviar el correo de verificación. Por favor, intente nuevamente.");
+    }
   }
 
   static async validarCodigoCorreo(correo, codigo) {
     const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-    if (
-      !codigoGuardado ||
-      String(codigoGuardado.codigo) !== String(codigo) ||
-      Date.now() > new Date(codigoGuardado.expiracion).getTime()
-    ) {
+    if (!codigoGuardado) {
+      throw new Error("Código no encontrado o expirado");
+    }
+
+    // Verificar expiración considerando zona horaria de Bogotá
+    const ahora = new Date();
+    const expiracion = new Date(codigoGuardado.expiracion);
+    expiracion.setHours(expiracion.getHours() + 5); // Ajustar a UTC para comparación
+
+    if (String(codigoGuardado.codigo) !== String(codigo) || ahora > expiracion) {
       throw new Error("Código inválido o expirado");
     }
 
-    await UsuarioService.activarUsuario(correo);
+    // Obtener datos temporales del usuario
+    const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
+    if (!datosTemporales) {
+      throw new Error("Datos de registro no encontrados");
+    }
+
+    // Crear el usuario en la base de datos
+    const usuario = await UsuarioService.crearUsuario({
+      ...datosTemporales,
+      estado: true
+    });
+
+    // Limpiar datos temporales
     await TemporalService.eliminarCodigo(correo);
+    
+    // Generar token JWT
+    const payload = { 
+      id: usuario.id, 
+      correo: usuario.correo, 
+      rol: usuario.rolid 
+    };
+    
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET || "secreto",
+      { expiresIn: "2h" }
+    );
+
+    return {
+      mensaje: "Usuario validado correctamente",
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        correo: usuario.correo,
+        rol: usuario.rolid,
+        estado: usuario.estado
+      },
+      token
+    };
   }
 
   static async login({ correo, contrasena }) {

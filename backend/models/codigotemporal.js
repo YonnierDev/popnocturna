@@ -20,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       codigo: DataTypes.STRING,
       correo: DataTypes.STRING,
       expiracion: DataTypes.DATE,
+      datos_temporales: DataTypes.TEXT
     },
     {
       sequelize,
