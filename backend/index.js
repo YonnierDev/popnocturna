@@ -7,9 +7,24 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
+
+// Configuración de CORS más específica
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://popnocturna.vercel.app',
+  'https://frontendpopa.vercel.app'
+];
+
 app.use(
   cors({
-    origin: "*",
+    origin: function(origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -26,7 +41,13 @@ app.use("/api", require("./routes/eventoRoutes"));
 app.use("/api", require("./routes/calificacionRoutes"));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*', methods: ['GET','POST','PATCH', 'OPTIONS','DELETE'] } });
+const io = new Server(server, { 
+  cors: { 
+    origin: allowedOrigins,
+    methods: ['GET','POST','PATCH', 'OPTIONS','DELETE'],
+    credentials: true
+  } 
+});
 app.set('io', io);
 
 // Servir archivos estáticos (para socket-test.html)
