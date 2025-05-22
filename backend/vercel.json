@@ -17,6 +17,10 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "DATABASE_URL": "mysql://root:RUMTYuCcnbhsFBNmWrrTqETiGJIgsjUQ@turntable.proxy.rlwy.net:45692/railway"
+    "DB_USERNAME": "root",
+    "DB_PASSWORD": "RUMTYuCcnbhsFBNmWrrTqETiGJIgsjUQ",
+    "DB_NAME": "railway",
+    "DB_PORT": "45692",
+    "DB_HOST": "turntable.proxy.rlwy.net"
   }
 } 

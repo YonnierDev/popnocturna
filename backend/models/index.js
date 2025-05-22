@@ -2,62 +2,52 @@
 
 const fs = require("fs");
 const path = require("path");
-const Sequelize = require("sequelize");
+const { Sequelize } = require("sequelize");
 const process = require("process");
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";
+require("dotenv").config();
 
 let sequelize;
 
-if (process.env.DATABASE_URL) {
-  // Para producción (Railway)
-  console.log("🔧 Usando configuración de producción con DATABASE_URL");
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'mysql',
-    logging: false,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      },
-      connectTimeout: 60000
-    },
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    },
-    retry: {
-      max: 3,
-      match: [
-        /Deadlock/i,
-        /SequelizeConnectionError/,
-        /SequelizeConnectionRefusedError/,
-        /SequelizeHostNotFoundError/,
-        /SequelizeHostNotReachableError/,
-        /SequelizeInvalidConnectionError/,
-        /SequelizeConnectionTimedOutError/,
-        /TimeoutError/
-      ]
-    }
-  });
-} else {
-  // Para desarrollo local
-  console.log("🔧 Usando configuración local");
-  const config = require(__dirname + "/../config/config.json")[env];
+if (process.env.NODE_ENV === "production") {
+  console.log("🔧 Usando configuración de producción con variables individuales 🔧");
   sequelize = new Sequelize(
-    config.database,
-    config.username,
-    config.password,
+    process.env.DB_NAME,
+    process.env.DB_USERNAME,
+    process.env.DB_PASSWORD,
     {
-      ...config,
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      dialect: "mysql",
+      dialectModule: require("mysql2"),
+      logging: false,
       dialectOptions: {
         ssl: {
           require: true,
-          rejectUnauthorized: false
-        }
-      }
+          rejectUnauthorized: false,
+        },
+      },
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+    }
+  );
+} else {
+  console.log("🔧 Usando configuración local 🔧");
+  sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USERNAME,
+    process.env.DB_PASSWORD,
+    {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      dialect: "mysql",
+      dialectModule: require("mysql2"),
+      logging: false,
     }
   );
 }
