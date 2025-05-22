@@ -11,8 +11,10 @@ let sequelize;
 
 if (process.env.DATABASE_URL) {
   // Para producción (Railway)
+  console.log("🔧 Usando configuración de producción con DATABASE_URL");
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'mysql',
+    logging: false,
     dialectOptions: {
       ssl: {
         require: true,
@@ -22,6 +24,7 @@ if (process.env.DATABASE_URL) {
   });
 } else {
   // Para desarrollo local
+  console.log("🔧 Usando configuración local");
   const config = require(__dirname + "/../config/config.json")[env];
   sequelize = new Sequelize(
     config.database,
@@ -36,8 +39,22 @@ const db = {};
 // 🔍 Verificar conexión a la base de datos
 sequelize
   .authenticate()
-  .then(() => console.log("✅ Conexión a MySQL exitosa"))
-  .catch((error) => console.error("❌ Error de conexión a MySQL:", error));
+  .then(() => {
+    console.log("✅ Conexión a MySQL exitosa");
+    console.log("📊 Configuración actual:", {
+      database: sequelize.config.database,
+      host: sequelize.config.host,
+      port: sequelize.config.port
+    });
+  })
+  .catch((error) => {
+    console.error("❌ Error de conexión a MySQL:", error);
+    console.error("🔍 Detalles del error:", {
+      message: error.message,
+      code: error.code,
+      errno: error.errno
+    });
+  });
 
 fs.readdirSync(__dirname)
   .filter((file) => {
