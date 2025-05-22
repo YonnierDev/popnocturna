@@ -8,6 +8,11 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
+// Ruta de prueba
+app.get('/', (req, res) => {
+  res.json({ message: 'API de Popayán Nocturna funcionando correctamente' });
+});
+
 // Configuración de CORS más específica
 const allowedOrigins = [
   'http://localhost:3000',
@@ -106,7 +111,28 @@ app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
 app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 
+// Manejo de errores
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    error: 'Error interno del servidor',
+    message: err.message
+  });
+});
+
+// Ruta para manejar 404
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Ruta no encontrada',
+    path: req.path
+  });
+});
+
 const PORT = process.env.PORT || 7000;
-server.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+  console.log('Entorno:', process.env.NODE_ENV);
+  console.log('Database URL:', process.env.DATABASE_URL ? 'Configurada' : 'No configurada');
+});
 
 module.exports = app;
