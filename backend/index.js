@@ -10,7 +10,12 @@ app.use(express.json());
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-  res.json({ message: 'API de Popayán Nocturna funcionando correctamente' });
+  res.json({ 
+    message: 'API de Popayán Nocturna funcionando correctamente',
+    environment: process.env.NODE_ENV,
+    database: process.env.DATABASE_URL ? 'Conectada' : 'No conectada',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Configuración de CORS más específica
@@ -51,52 +56,64 @@ app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes"));
 app.use("/api", require("./routes/calificacionRoutes"));
 
-const server = http.createServer(app);
-const io = new Server(server, { 
-  cors: { 
-    origin: allowedOrigins,
-    methods: ['GET','POST','PATCH', 'OPTIONS','DELETE'],
-    credentials: true
-  } 
-});
-app.set('io', io);
+const PORT = process.env.PORT || 7000;
 
-// Servir archivos estáticos (para socket-test.html)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Socket.IO: manejar nuevas conexiones
-const jwt = require('jsonwebtoken');
-io.on('connection', socket => {
-  console.log('Nuevo cliente conectado:', socket.id);
+// Solo inicializar el servidor HTTP si no estamos en Vercel
+if (process.env.NODE_ENV !== 'production') {
+  const server = http.createServer(app);
   
-  // Emitir un mensaje de prueba
-  socket.emit('notificacion', { mensaje: '¡Bienvenido a Popayán Nocturna!' });
+  // Solo inicializar Socket.IO si no estamos en un entorno serverless
+  if (process.env.ENABLE_SOCKET === 'true') {
+    const io = new Server(server, { 
+      cors: { 
+        origin: allowedOrigins,
+        methods: ['GET','POST','PATCH', 'OPTIONS','DELETE'],
+        credentials: true
+      } 
+    });
+    app.set('io', io);
 
-  // Intentar obtener token JWT de handshake
-  const token = socket.handshake.auth && socket.handshake.auth.token;
-  let payload = null;
-  if (token) {
-    try {
-      payload = jwt.verify(token, process.env.JWT_SECRET || 'miclavesegura');
-      if (payload.rol == 1 || payload.rol == 2) {
-        socket.join('admin-room');
-        console.log(`Socket ${socket.id} (admin/superadmin) entró en sala admin-room`);
+    // Socket.IO: manejar nuevas conexiones
+    const jwt = require('jsonwebtoken');
+    io.on('connection', socket => {
+      console.log('Nuevo cliente conectado:', socket.id);
+      
+      // Emitir un mensaje de prueba
+      socket.emit('notificacion', { mensaje: '¡Bienvenido a Popayán Nocturna!' });
+
+      // Intentar obtener token JWT de handshake
+      const token = socket.handshake.auth && socket.handshake.auth.token;
+      let payload = null;
+      if (token) {
+        try {
+          payload = jwt.verify(token, process.env.JWT_SECRET || 'miclavesegura');
+          if (payload.rol == 1 || payload.rol == 2) {
+            socket.join('admin-room');
+            console.log(`Socket ${socket.id} (admin/superadmin) entró en sala admin-room`);
+          }
+          if (payload.rol == 3) {
+            socket.join(`usuario-${payload.id}`);
+            console.log(`Socket ${socket.id} (propietario) entró en sala usuario-${payload.id}`);
+          }
+        } catch (err) {
+          console.log('Error al verificar token JWT en conexión Socket.IO:', err.message);
+        }
+      } else {
+        console.log('No se recibió token JWT en conexión Socket.IO');
       }
-      if (payload.rol == 3) {
-        socket.join(`usuario-${payload.id}`);
-        console.log(`Socket ${socket.id} (propietario) entró en sala usuario-${payload.id}`);
-      }
-    } catch (err) {
-      console.log('Error al verificar token JWT en conexión Socket.IO:', err.message);
-    }
-  } else {
-    console.log('No se recibió token JWT en conexión Socket.IO');
+
+      socket.on('disconnect', () => {
+        console.log('Cliente desconectado:', socket.id);
+      });
+    });
   }
 
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado:', socket.id);
+  server.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
+    console.log('Entorno:', process.env.NODE_ENV);
+    console.log('Database URL:', process.env.DATABASE_URL ? 'Configurada' : 'No configurada');
   });
-});
+}
 
 app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/comentarioRoutes"));
@@ -126,13 +143,6 @@ app.use((req, res) => {
     error: 'Ruta no encontrada',
     path: req.path
   });
-});
-
-const PORT = process.env.PORT || 7000;
-server.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-  console.log('Entorno:', process.env.NODE_ENV);
-  console.log('Database URL:', process.env.DATABASE_URL ? 'Configurada' : 'No configurada');
 });
 
 module.exports = app;

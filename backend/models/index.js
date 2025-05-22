@@ -19,7 +19,8 @@ if (process.env.DATABASE_URL) {
       ssl: {
         require: true,
         rejectUnauthorized: false
-      }
+      },
+      connectTimeout: 60000
     },
     pool: {
       max: 5,
@@ -28,7 +29,17 @@ if (process.env.DATABASE_URL) {
       idle: 10000
     },
     retry: {
-      max: 3
+      max: 3,
+      match: [
+        /Deadlock/i,
+        /SequelizeConnectionError/,
+        /SequelizeConnectionRefusedError/,
+        /SequelizeHostNotFoundError/,
+        /SequelizeHostNotReachableError/,
+        /SequelizeInvalidConnectionError/,
+        /SequelizeConnectionTimedOutError/,
+        /TimeoutError/
+      ]
     }
   });
 } else {
@@ -62,7 +73,8 @@ sequelize
       database: sequelize.config.database,
       host: sequelize.config.host,
       port: sequelize.config.port,
-      dialect: sequelize.config.dialect
+      dialect: sequelize.config.dialect,
+      ssl: sequelize.config.dialectOptions?.ssl ? "Habilitado" : "Deshabilitado"
     });
   })
   .catch((error) => {
@@ -71,7 +83,8 @@ sequelize
       message: error.message,
       code: error.code,
       errno: error.errno,
-      sqlState: error.sqlState
+      sqlState: error.sqlState,
+      stack: error.stack
     });
   });
 
