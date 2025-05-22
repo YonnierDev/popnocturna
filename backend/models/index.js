@@ -6,19 +6,32 @@ const Sequelize = require("sequelize");
 const process = require("process");
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";
-const config = require(__dirname + "/../config/config.json")[env];
 
-const mysql = require("mysql2");
-
-const db = {}
 let sequelize;
 
-sequelize = new Sequelize(
-  config.database,
-  config.username,
-  config.password,
-  config
-);
+if (process.env.DATABASE_URL) {
+  // Para producción (Railway)
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'mysql',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    }
+  });
+} else {
+  // Para desarrollo local
+  const config = require(__dirname + "/../config/config.json")[env];
+  sequelize = new Sequelize(
+    config.database,
+    config.username,
+    config.password,
+    config
+  );
+}
+
+const db = {};
 
 // 🔍 Verificar conexión a la base de datos
 sequelize
