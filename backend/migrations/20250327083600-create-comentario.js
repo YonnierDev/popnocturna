@@ -41,6 +41,11 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         defaultValue: true
       },
+      aprobacion: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
+      },
       motivo_reporte: {
         type: Sequelize.STRING,
         allowNull: true

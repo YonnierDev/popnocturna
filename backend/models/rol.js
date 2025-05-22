@@ -15,9 +15,13 @@ module.exports = (sequelize, DataTypes) => {
     {
       nombre: {
         type: DataTypes.STRING,
+        unique: true,
+        allowNull: false
       },
       estado: {
         type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
       },
     },
     {

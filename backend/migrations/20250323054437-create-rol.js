@@ -11,7 +11,13 @@ module.exports = {
       },
       nombre: {
         type: Sequelize.STRING,
-        unique: true
+        unique: true,
+        allowNull: false
+      },
+      estado: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
       },
       createdAt: {
         allowNull: false,
