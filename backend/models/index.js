@@ -20,6 +20,15 @@ if (process.env.DATABASE_URL) {
         require: true,
         rejectUnauthorized: false
       }
+    },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+    retry: {
+      max: 3
     }
   });
 } else {
@@ -30,7 +39,15 @@ if (process.env.DATABASE_URL) {
     config.database,
     config.username,
     config.password,
-    config
+    {
+      ...config,
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      }
+    }
   );
 }
 
@@ -44,7 +61,8 @@ sequelize
     console.log("📊 Configuración actual:", {
       database: sequelize.config.database,
       host: sequelize.config.host,
-      port: sequelize.config.port
+      port: sequelize.config.port,
+      dialect: sequelize.config.dialect
     });
   })
   .catch((error) => {
@@ -52,7 +70,8 @@ sequelize
     console.error("🔍 Detalles del error:", {
       message: error.message,
       code: error.code,
-      errno: error.errno
+      errno: error.errno,
+      sqlState: error.sqlState
     });
   });
 
