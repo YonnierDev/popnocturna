@@ -5,14 +5,21 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const db = require("./models");
+const { sequelize } = require('./models');
+const usuarioRoutes = require('./routes/usuarioRoutes');
+const perfilRouter = require('./routes/perfilRouter');
 
 const app = express();
 const server = http.createServer(app);
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Configuración de CORS para Express
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000"],
+  origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
 
@@ -26,9 +33,9 @@ app.get("/", (req, res) => {
 });
 
 // Rutas
-app.use("/api", require("./routes/perfilRouter"));
+app.use("/api", usuarioRoutes);
+app.use("/api", perfilRouter);
 app.use("/api", require("./routes/rolRouter"));
-app.use("/api", require("./routes/usuarioRoutes"));
 app.use("/api", require("./routes/categoriaRoutes"));
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 app.use("/api", require("./routes/lugarRoutes"));
@@ -49,8 +56,8 @@ app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
 // Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-    methods: ["GET", "POST"],
+    origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true
   }
 });
@@ -77,9 +84,15 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 7000;
 
 // Iniciar servidor
-server.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log("✅ Conexión a MySQL establecida");
+server.listen(PORT, async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('🔧 Iniciando servidor...');
+    console.log('✅ Conexión a la base de datos establecida correctamente.');
+    console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+  } catch (error) {
+    console.error('❌ Error al conectar con la base de datos:', error);
+  }
 });
 
 module.exports = app;
