@@ -23,6 +23,14 @@ app.use(cors({
   credentials: true
 }));
 
+// Servir archivos estáticos desde la carpeta public
+app.use('/static', express.static(path.join(__dirname, 'public')));
+
+// Ruta específica para socket.html
+app.get('/socket', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'socket.html'));
+});
+
 // Ruta de prueba
 app.get("/", (req, res) => {
   res.json({

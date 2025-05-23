@@ -601,3 +601,169 @@ DELETE /api/reserva/:id
 4. **Validaciones Adicionales**
    - Además del rol, algunos endpoints tienen validaciones específicas
    - Por ejemplo, usuarios solo pueden modificar sus propios recursos 
+
+## Endpoints del Propietario (Rol 3)
+
+### Gestión de Lugares
+
+#### Listar Lugares del Propietario
+```http
+GET /api/propietario/lugares
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Lugares obtenidos exitosamente",
+    "lugares": [
+      {
+        "id": 1,
+        "nombre": "Nombre Lugar",
+        "direccion": "Dirección",
+        "categoria": {
+          "id": 1,
+          "nombre": "Categoría"
+        }
+      }
+    ]
+  }
+  ```
+
+#### Crear Lugar
+```http
+POST /api/propietario/lugar
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Body**:
+  ```json
+  {
+    "nombre": "string",
+    "direccion": "string",
+    "categoriaid": "number",
+    "imagen": "file"
+  }
+  ```
+
+#### Buscar Lugar por Nombre
+```http
+GET /api/propietario/lugar/:nombre
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+
+#### Ver Comentarios y Calificaciones
+```http
+GET /api/propietario/lugar/:lugarid/comentarios-calificaciones
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Datos obtenidos exitosamente",
+    "comentarios": [...],
+    "calificaciones": [...]
+  }
+  ```
+
+### Gestión de Categorías
+
+#### Listar Categorías
+```http
+GET /api/propietario/categorias
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Categorías obtenidas exitosamente",
+    "categorias": [
+      {
+        "id": 1,
+        "nombre": "Categoría"
+      }
+    ]
+  }
+  ```
+
+### Gestión de Eventos y Reservas
+
+#### Listar Lugares con Eventos
+```http
+GET /api/propietario/lugares-eventos
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+
+#### Ver Reservas por Evento y Lugar
+```http
+GET /api/propietario/reservas-evento-lugar
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+
+#### Ver Reservas Pendientes
+```http
+GET /api/propietario/reservas/pendientes
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Reservas pendientes obtenidas exitosamente",
+    "reservas": [
+      {
+        "id": 1,
+        "numero_reserva": "string",
+        "estado": "pendiente",
+        "evento": {
+          "nombre": "string",
+          "fecha": "date"
+        }
+      }
+    ]
+  }
+  ```
+
+### Gestión de Comentarios
+
+#### Reportar Comentario
+```http
+POST /api/propietario/comentario/:comentarioid/reporte
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Body**:
+  ```json
+  {
+    "motivo_reporte": "string"
+  }
+  ```
+
+### Gestión de Calificaciones
+
+#### Ver Calificaciones por Lugar
+```http
+GET /api/calificaciones/lugar/:lugarid
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Calificaciones obtenidas exitosamente",
+    "calificaciones": [
+      {
+        "id": 1,
+        "puntuacion": "number",
+        "usuario": {
+          "nombre": "string"
+        }
+      }
+    ]
+  }
+  ``` 

@@ -125,40 +125,47 @@ class PropietarioLugarController {
 
       console.log("Lugar creado:", nuevoLugar);
 
-      res.status(201).json({
+      // Intentar emitir socket si está disponible
+      try {
+        const io = req.app.get('io');
+        if (io) {
+          // LOG: Sockets en admin-room antes de emitir
+          const socketsAdminRoom = Array.from(io.sockets.adapter.rooms.get('admin-room') || []);
+          console.log('[NOTIFY ADMIN] Sockets actualmente en admin-room:', socketsAdminRoom);
+          
+          const adminPayload = {
+            propietarioCorreo: req.usuario.correo,
+            propietarioNombre: req.usuario.nombre || '',
+            lugarNombre: nuevoLugar.nombre,
+            lugarId: nuevoLugar.id,
+            timestamp: new Date().toISOString(),
+            mensaje: `El usuario ${req.usuario.correo}${req.usuario.nombre ? ' (' + req.usuario.nombre + ')' : ''} creó el lugar "${nuevoLugar.nombre}" que requiere aprobación.`
+          };
+          
+          io.to('admin-room').emit('nuevo-lugar-admin', adminPayload);
+          
+          // Notificar al propietario específicamente
+          const propietarioSocket = `usuario-${req.usuario.id}`;
+          io.to(propietarioSocket).emit('nuevo-lugar-propietario', {
+            lugar: nuevoLugar,
+            timestamp: new Date().toISOString(),
+            mensaje: 'Tu lugar está en revisión'
+          });
+        }
+      } catch (socketError) {
+        console.log('Socket no disponible:', socketError.message);
+      }
+
+      return res.status(201).json({
         mensaje: "Lugar creado con éxito",
         lugar: nuevoLugar,
       });
-      // Emitir socket al crear nuevo lugar
-      const io = req.app.get('io');
-      
-      // LOG: Sockets en admin-room antes de emitir
-      const socketsAdminRoom = Array.from(io.sockets.adapter.rooms.get('admin-room') || []);
-      console.log('[NOTIFY ADMIN] Sockets actualmente en admin-room:', socketsAdminRoom);
-      const adminPayload = {
-        propietarioCorreo: req.usuario.correo,
-        propietarioNombre: req.usuario.nombre || '',
-        lugarNombre: nuevoLugar.nombre,
-        lugarId: nuevoLugar.id,
-        timestamp: new Date().toISOString(),
-        mensaje: `El usuario ${req.usuario.correo}${req.usuario.nombre ? ' (' + req.usuario.nombre + ')' : ''} creó el lugar "${nuevoLugar.nombre}" que requiere aprobación.`
-      };
-      console.log('[NOTIFY ADMIN] Payload enviado a admin-room:', adminPayload);
-      io.to('admin-room').emit('nuevo-lugar-admin', adminPayload);
-      console.log('[NOTIFY ADMIN] Evento emitido a admin-room.');
-
-      // Notificar al propietario específicamente
-      const propietarioSocket = `usuario-${req.usuario.id}`;
-      io.to(propietarioSocket).emit('nuevo-lugar-propietario', {
-        lugar: nuevoLugar,
-        timestamp: new Date().toISOString(),
-        mensaje: 'Tu lugar está en revisión'
-      });
     } catch (error) {
       console.error("Error al crear lugar:", error);
-      res
-        .status(500)
-        .json({ mensaje: "Error al crear lugar", error: error.message });
+      return res.status(500).json({ 
+        mensaje: "Error al crear lugar", 
+        error: error.message 
+      });
     }
   }
 

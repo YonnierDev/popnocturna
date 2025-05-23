@@ -14,8 +14,8 @@ Sistema backend para la plataforma Popayán Nocturna, desarrollado con Node.js y
 - Multer
 - dotenv
 - express-validator
-- Clever Cloud
-- Vercel
+- Railway (Base de datos)
+- Vercel (Hosting)
 
 ## Estructura del Proyecto
 ```
@@ -115,16 +115,16 @@ backend/
 
 ## Variables de Entorno
 ```
-DB_HOST=
-DB_USER=
-DB_PASS=
-DB_NAME=
-JWT_SECRET=
-EMAIL_USER=
-EMAIL_PASS=
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
+DB_HOST=railway.proxy.rlwy.net
+DB_USER=root
+DB_PASS=tu_contraseña_railway
+DB_NAME=railway
+JWT_SECRET=tu_jwt_secret
+EMAIL_USER=tu_email
+EMAIL_PASS=tu_password_email
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
 ```
 
 ## Scripts
@@ -394,3 +394,40 @@ El sistema implementa logs detallados para:
 - 400: "Ya existe una solicitud de reporte en revisión"
 - 400: "Este comentario ya fue revisado anteriormente"
 - 500: "Error al procesar la solicitud"
+
+## Endpoints del Propietario (Rol 3)
+
+### Gestión de Lugares
+- `GET /api/propietario/lugares` - Listar lugares del propietario
+- `POST /api/propietario/lugar` - Crear nuevo lugar
+- `GET /api/propietario/lugar/:nombre` - Buscar lugar por nombre
+- `GET /api/propietario/lugar/:lugarid/comentarios-calificaciones` - Ver comentarios y calificaciones de un lugar
+
+### Gestión de Categorías
+- `GET /api/propietario/categorias` - Listar categorías disponibles
+
+### Gestión de Eventos y Reservas
+- `GET /api/propietario/lugares-eventos` - Listar lugares con sus eventos
+- `GET /api/propietario/reservas-evento-lugar` - Ver reservas por evento y lugar
+- `GET /api/propietario/reservas/pendientes` - Ver reservas pendientes
+- `GET /api/reservasdetalle` - Ver detalles de reservas
+
+### Gestión de Comentarios
+- `POST /api/propietario/comentario/:comentarioid/reporte` - Reportar comentario
+
+### Gestión de Calificaciones
+- `GET /api/calificaciones/lugar/:lugarid` - Ver calificaciones de un lugar
+
+## Despliegue
+
+### Railway (Base de Datos)
+1. Crear cuenta en Railway
+2. Crear nuevo proyecto MySQL
+3. Obtener credenciales de conexión
+4. Configurar variables de entorno
+
+### Vercel (Backend)
+1. Crear cuenta en Vercel
+2. Conectar repositorio
+3. Configurar variables de entorno
+4. Desplegar

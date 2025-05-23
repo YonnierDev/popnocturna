@@ -16,16 +16,17 @@ router.get('/comentarios/evento/:eventoid',
   comentarioController.obtenerPorEvento
 );
 
-// Ruta para crear un nuevo comentario (solo usuarios con rol 8)
+// Ruta para crear un nuevo comentario (solo usuarios con rol 4)
 router.post('/comentario', 
   autentiMiddleware,
-  verificarRol([8]),
+  verificarRol([4]),
   comentarioController.crear
 );
 
 // Ruta para actualizar un comentario (solo el usuario dueño del comentario o admin)
 router.put('/comentario/:id', 
-  autentiMiddleware, verificarRol([1,2 ,8]),
+  autentiMiddleware, 
+  verificarRol([1, 2, 4]),
   comentarioController.actualizar
 );
 
@@ -33,7 +34,7 @@ router.put('/comentario/:id',
 // usuarios pueden eliminar sus propios comentarios)
 router.delete('/comentario/:id', 
   autentiMiddleware,
-  verificarRol([1, 2, 8]),
+  verificarRol([1, 2, 4]),
   comentarioController.eliminar
 );
 

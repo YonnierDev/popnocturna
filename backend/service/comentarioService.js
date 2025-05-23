@@ -9,7 +9,7 @@ class ComentarioService {
         return this.listarComentariosAdmin();
       case 3:
         return this.listarComentariosPropietario(usuarioId);
-      case 8:
+      case 4:
         return this.listarComentariosUsuario(usuarioId);
       default:
         throw new Error("Rol no permitido para listar comentarios");

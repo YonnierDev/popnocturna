@@ -14,13 +14,13 @@ class CategoriaUsuarioRolService {
       where: {
         estado: true,
       },
-      attributes: ["tipo", "imagen", "descripcion"],
+      attributes: ["id", "tipo", "imagen", "descripcion"],
       include: [
         {
           model: Lugar,
           as: "lugares",
           required: true,
-          attributes: ["nombre", "imagen", "descripcion", "ubicacion"],
+          attributes: [],
           where: { usuarioid, estado: true },
         },
       ],

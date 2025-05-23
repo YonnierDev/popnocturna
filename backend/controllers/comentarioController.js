@@ -266,7 +266,7 @@ class ComentarioController {
             } else if (rol === 3) {
                 // Propietarios ven solo comentarios de sus eventos
                 comentarios = await ComentarioService.listarComentariosPropietario(usuarioid);
-            } else if (rol === 8) {
+            } else if (rol === 4) {
                 // Usuarios ven solo sus propios comentarios
                 comentarios = await ComentarioService.listarComentariosUsuario(usuarioid);
             } else {
@@ -274,7 +274,7 @@ class ComentarioController {
             }
 
             res.json({
-                mensaje: "Comentarios obtenidos exitosamente",
+                mensaje: "Comentarios que pertenecen al propietario obtenidos exitosamente",
                 comentarios
             });
         } catch (error) {
