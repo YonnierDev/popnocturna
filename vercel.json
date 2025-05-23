@@ -11,9 +11,5 @@
       "src": "/(.*)",
       "dest": "backend/index.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "DATABASE_URL": "mysql://root:RUMTYuCcnbhsFBNmWrrTqETiGJIgsjUQ@turntable.proxy.rlwy.net:45692/railway"
-  }
+  ]
 } 
