@@ -38,8 +38,8 @@ class EventoController {
         const { id: usuarioid } = req.usuario;
         eventos = await eventoService.listarEventosPorPropietario(usuarioid, opciones);
       } 
-      // Si es usuario normal (rol 8), ver solo eventos activos
-      else if (rolid === 8) {
+      // Si es usuario normal (rol 4), ver solo eventos activos
+      else if (rolid === 4) {
         console.log('Acceso como usuario normal');
         const { id: usuarioid } = req.usuario;
         eventos = await eventoService.listarEventosPorUsuario(usuarioid, opciones);
@@ -79,7 +79,7 @@ class EventoController {
         const { id: usuarioid } = req.usuario;
         if (rolid === 3) {
           evento = await eventoService.verEventoPropietario(id, usuarioid);
-        } else if (rolid === 8) {
+        } else if (rolid === 4) {
           evento = await eventoService.verEventoUsuario(id, usuarioid);
         } else {
           return res.status(403).json({ mensaje: "No tienes permiso para ver este evento" });
@@ -126,7 +126,7 @@ class EventoController {
         mensaje: `Nuevo evento creado por ${req.usuario.correo}`
       });
 
-      // Notificar a usuarios (rol 8)
+      // Notificar a usuarios (rol 4)
       io.to('usuario-room').emit('nuevo-evento-usuario', {
         evento: nuevoEvento,
         timestamp: new Date().toISOString(),
@@ -227,7 +227,7 @@ class EventoController {
         comentarios = await eventoService.verComentariosAdmin(eventoId);
       } else if (rolid === 3) {
         comentarios = await eventoService.verComentariosPropietario(eventoId, usuarioid);
-      } else if (rolid === 8) {
+      } else if (rolid === 4) {
         comentarios = await eventoService.verComentariosUsuario(eventoId, usuarioid);
       } else {
         return res.status(403).json({ mensaje: "No tienes permiso para ver comentarios" });

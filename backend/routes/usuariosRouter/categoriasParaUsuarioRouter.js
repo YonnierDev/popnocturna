@@ -10,6 +10,6 @@ router.get('/usuarios/lista-categorias', CategoriaParaUsuarioController.categori
 router.get('/usuarios/lugares-categoria/:categoriaid', CategoriaParaUsuarioController.lugaresDeCadaCaregoria);
 
 //buscar eventos por nombre
-router.get('/eventos/buscar', autentiMiddleware, validarRol(8), usuarioBusquedaEventoController.buscarEventosPorNombre);
+router.get('/eventos/buscar', autentiMiddleware, validarRol(4), usuarioBusquedaEventoController.buscarEventosPorNombre);
 
 module.exports = router;

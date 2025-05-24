@@ -165,7 +165,7 @@ Sistema de gestión de calificaciones para eventos, implementando control de acc
 - No pueden eliminar calificaciones
 - No pueden cambiar el estado de las calificaciones
 
-### Usuarios Normales (rol 8)
+### Usuarios Normales (rol 4)
 - Pueden ver todas las calificaciones
 - Pueden crear calificaciones
 - Solo pueden actualizar sus propias calificaciones

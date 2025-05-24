@@ -7,7 +7,7 @@ const validarRol = require("../middlewares/validarRol");
 router.get(
   "/reservas",
   autentiMiddleare,
-  validarRol(1, 2, 3, 8),
+  validarRol(1, 2, 3, 4),
   ReservaController.listarReservas
 );
 router.get(
@@ -19,13 +19,13 @@ router.get(
 router.post(
   "/reserva",
   autentiMiddleare,
-  validarRol(8),
+  validarRol(4),
   ReservaController.crearReserva
 );
 router.put(
   "/reserva/:id",
   autentiMiddleare,
-  validarRol(8),
+  validarRol(4),
   ReservaController.actualizarReserva
 );
 router.delete(

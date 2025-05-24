@@ -331,7 +331,7 @@ GET /api/comentarios
 - **Redirección por Rol**:
   - **Roles 1,2 (Admin/SuperAdmin)**: Ve todos los comentarios
   - **Rol 3 (Propietario)**: Ve solo comentarios de sus eventos
-  - **Rol 8 (Usuario)**: Ve solo sus propios comentarios
+  - **Rol 4 (Usuario)**: Ve solo sus propios comentarios
 - **Respuesta Exitosa**:
   ```json
   {
@@ -347,12 +347,12 @@ GET /api/comentarios
   }
   ```
 
-### Crear Comentario (Rol 8)
+### Crear Comentario (Rol 4)
 ```http
 POST /api/comentario
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Rol Requerido**: 8 (Usuario)
+- **Rol Requerido**: 4 (Usuario)
 - **Body**:
   ```json
   {
@@ -361,12 +361,12 @@ POST /api/comentario
   }
   ```
 
-### Actualizar Comentario (Rol 8, solo propietario del comentario)
+### Actualizar Comentario (Rol 4, solo propietario del comentario)
 ```http
 PUT /api/comentario/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Rol Requerido**: 8 (Usuario)
+- **Rol Requerido**: 4 (Usuario)
 - **Validación Adicional**: Solo puede actualizar sus propios comentarios
 - **Body**:
   ```json
@@ -375,15 +375,15 @@ PUT /api/comentario/:id
   }
   ```
 
-### Eliminar Comentario (Roles 1,2,8)
+### Eliminar Comentario (Roles 1,2,4)
 ```http
 DELETE /api/comentario/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Roles Permitidos**: 1,2,8
+- **Roles Permitidos**: 1,2,4
 - **Validación Adicional**: 
   - Roles 1,2 pueden eliminar cualquier comentario
-  - Rol 8 solo puede eliminar sus propios comentarios
+  - Rol 4 solo puede eliminar sus propios comentarios
 
 ### Reportar Comentario (Rol 3)
 ```http
@@ -436,7 +436,7 @@ GET /api/comentarios/evento/:eventoid
 - **Redirección por Rol**:
   - **Roles 1,2**: Ve todos los comentarios del evento
   - **Rol 3**: Ve solo comentarios de sus eventos
-  - **Rol 8**: Ve todos los comentarios del evento
+  - **Rol 4**: Ve todos los comentarios del evento
 
 ### Obtener Comentarios Reportados (Roles 1,2)
 ```http
@@ -456,7 +456,7 @@ GET /api/calificaciones?page={page}&limit={limit}
   - `page`: Número de página (por defecto: 1)
   - `limit`: Cantidad de elementos por página (por defecto: 10)
   - `eventoid`: ID del evento (obligatorio para usuarios normales)
-- **Roles permitidos**: 1 (SuperAdmin), 2 (Admin), 3 (Propietario), 8 (Usuario Normal)
+- **Roles permitidos**: 1 (SuperAdmin), 2 (Admin), 3 (Propietario), 4 (Usuario Normal)
 - **Respuesta Exitosa**:
   ```json
   {
@@ -490,7 +490,7 @@ GET /api/calificaciones?page={page}&limit={limit}
 - **Notas**:
   - Admins (roles 1,2) ven todas las calificaciones.
   - Propietarios (rol 3) ven calificaciones de sus lugares.
-  - Usuarios normales (rol 8) ven solo sus propias calificaciones.
+  - Usuarios normales (rol 4) ven solo sus propias calificaciones.
 
 ### Listar Calificaciones por Lugar (Solo propietarios)
 ```http
@@ -536,19 +536,19 @@ GET /api/calificaciones/lugar/:lugarid?page={page}&limit={limit}
   - El endpoint verifica que el lugar pertenece al propietario.
   - Devuelve todas las calificaciones de los eventos del lugar especificado.
 
-### Eliminar Calificación (Roles 1,2,8)
+### Eliminar Calificación (Roles 1,2,4)
 ```http
 DELETE /api/calificacion/:id
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Roles Permitidos**: 1,2,8
+- **Roles Permitidos**: 1,2,4
 - **Validación Adicional**: 
   - Roles 1,2 pueden eliminar cualquier calificación
-  - Rol 8 solo puede eliminar sus propias calificaciones
+  - Rol 4 solo puede eliminar sus propias calificaciones
 
 ## Reservas
 
-### Listar Reservas (Roles 1,2,3,8)
+### Listar Reservas (Roles 1,2,3,4)
 ```http
 GET /api/reservas
 ```
@@ -556,7 +556,7 @@ GET /api/reservas
 - **Redirección por Rol**:
   - **Roles 1,2**: Ve todas las reservas
   - **Rol 3**: Ve reservas de sus eventos
-  - **Rol 8**: Ve solo sus reservas
+  - **Rol 4**: Ve solo sus reservas
 
 ### Buscar Reserva por Número (Roles 1,2,3)
 ```http
@@ -592,7 +592,7 @@ DELETE /api/reserva/:id
    - 1: SuperAdmin - Acceso total
    - 2: Admin - Acceso casi total, algunas restricciones
    - 3: Propietario - Acceso a sus recursos y funcionalidades específicas
-   - 8: Usuario - Acceso limitado a sus propios recursos
+   - 4: Usuario - Acceso limitado a sus propios recursos
 
 3. **Redirecciones por Rol**
    - Algunos endpoints muestran diferentes datos según el rol

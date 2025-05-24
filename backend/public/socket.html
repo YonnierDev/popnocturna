@@ -101,7 +101,7 @@
             window._propRoomSubscribed = true;
           }
         }
-        if (rol === 8 || rol === '8') {
+        if (rol === 4 || rol === '4') {
           socket.emit('join-usuario-room', { rol });
           if (!window._userRoomSubscribed) {
             add('🔔 Suscrito a notificaciones de usuario (usuario-room)');

@@ -20,7 +20,7 @@ class ReservaController {
         reservas = await ReservaService.listarReservas(opciones);
       } else if (rolid === 3) {
         reservas = await ReservaService.listarReservasPorPropietario(usuarioid, opciones);
-      } else if (rolid === 8) {
+      } else if (rolid === 4) {
         reservas = await ReservaService.listarReservasPorUsuario(usuarioid, opciones);
       } else {
         return res.status(403).json({ mensaje: "No tienes permiso para ver reservas" });

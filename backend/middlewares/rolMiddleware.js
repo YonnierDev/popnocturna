@@ -15,8 +15,8 @@ const verificarRol = (rolesPermitidos) => {
       req.filtroRol = { usuarioid: id }; // para lugares o eventos del propietario
     }
 
-    // Filtro para usuarios normales (rol 8)
-    if (rol === 8) {
+    // Filtro para usuarios normales (rol 4)
+    if (rol === 4) {
       req.filtroRol = { idUsuario: id }; // para reservas o datos personales
     }
 

@@ -9,7 +9,7 @@ class ComentarioController {
             console.log('Usuario autenticado:', req.usuario);
 
             const { id: usuarioid, rol } = req.usuario;
-            if (rol !== 8) {
+            if (rol !== 4) {
                 return res.status(403).json({ mensaje: "Solo los usuarios pueden comentar" });
             }
 
@@ -63,7 +63,7 @@ class ComentarioController {
             const { contenido } = req.body;
 
             // Solo usuarios con rol permitido pueden actualizar
-            if (![1, 2, 8].includes(rol)) {
+            if (![1, 2, 4].includes(rol)) {
                 return res.status(403).json({ mensaje: "Solo los administradores o usuarios pueden actualizar comentarios" });
             }
 
@@ -89,7 +89,7 @@ class ComentarioController {
             }
 
             // Si es admin/superadmin puede actualizar cualquier comentario, si es usuario solo el suyo
-            if ((rol === 8 && comentario.usuarioid !== usuarioid) || (rol !== 8 && ![1,2].includes(rol))) {
+            if ((rol === 4 && comentario.usuarioid !== usuarioid) || (rol !== 4 && ![1,2].includes(rol))) {
                 return res.status(403).json({ mensaje: "No tienes permiso para editar este comentario" });
             }
 
@@ -113,8 +113,8 @@ class ComentarioController {
             const { id: usuarioid, rol } = req.usuario;
             const { id } = req.params;
 
-            // Solo usuarios (rol 8) pueden eliminar sus propios comentarios
-            if (rol !== 8) {
+            // Solo usuarios (rol 4) pueden eliminar sus propios comentarios
+            if (rol !== 4) {
                 return res.status(403).json({ mensaje: "Solo los usuarios pueden eliminar sus comentarios" });
             }
 

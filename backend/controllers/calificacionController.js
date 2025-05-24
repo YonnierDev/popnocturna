@@ -60,7 +60,7 @@ class CalificacionController {
 
       let resultado;
 
-      // Roles: 1=SuperAdmin, 2=Admin, 3=Propietario, 8=Usuario Normal
+      // Roles: 1=SuperAdmin, 2=Admin, 3=Propietario, 4=Usuario Normal
       if (rolid === 1) {
         console.log('Acceso como Super Admin');
         resultado = await CalificacionService.listarCalificacionesAdmin({ page, limit });
@@ -70,7 +70,7 @@ class CalificacionController {
       } else if (rolid === 3) {
         console.log('Acceso como Propietario');
         resultado = await CalificacionService.listarCalificacionesPorPropietario(usuarioid, { page, limit });
-      } else if (rolid === 8) {
+      } else if (rolid === 4) {
         console.log('Acceso como Usuario Normal');
         // Validar que el query param eventoid esté presente
         if (!eventoid) {
@@ -120,7 +120,7 @@ class CalificacionController {
       } else if (rolid === 3) {
         console.log('Ver calificación como Propietario');
         calificacion = await CalificacionService.verCalificacionPropietario(id, usuarioid);
-      } else if (rolid === 8) {
+      } else if (rolid === 4) {
         console.log('Ver calificación como Usuario Normal');
         calificacion = await CalificacionService.verCalificacionUsuario(id, usuarioid);
       } else {
@@ -245,11 +245,11 @@ class CalificacionController {
 
       console.log('✅ Usuario autorizado para eliminar. Rol:', rolid);
 
-      // Solo permitir a roles 1, 2 y 8
+      // Solo permitir a roles 1, 2 y 4
       if (rolid === 1 || rolid === 2) {
         console.log('🔄 Eliminando como administrador');
         await CalificacionService.eliminarCalificacionAdmin(id);
-      } else if (rolid === 8) {
+      } else if (rolid === 4) {
         console.log('🔄 Eliminando como usuario normal');
         await CalificacionService.eliminarCalificacionUsuario(id, usuarioid);
       } else {
