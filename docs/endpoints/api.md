@@ -372,20 +372,30 @@ GET /api/comentarios
   - **Roles 1,2 (Admin/SuperAdmin)**: Ve todos los comentarios
   - **Rol 3 (Propietario)**: Ve solo comentarios de sus eventos
   - **Rol 4 (Usuario)**: Ve solo sus propios comentarios
-- **Respuesta Exitosa**:
+- **Respuestas por Rol**:
   ```json
+  // Para Roles 1,2 (Admin/SuperAdmin)
   {
-    "mensaje": "Comentarios obtenidos exitosamente",
-    "comentarios": [
-      {
-        "id": 1,
-        "contenido": "Comentario 1",
-        "fecha_hora": "2024-02-20T15:30:00.000Z",
-        "estado": true
-      }
-    ]
+    "mensaje": "Lista de comentarios obtenida exitosamente (Vista de Administración)",
+    "comentarios": [...]
+  }
+
+  // Para Rol 3 (Propietario)
+  {
+    "mensaje": "Comentarios de tus lugares obtenidos exitosamente (Vista de Propietario)",
+    "comentarios": [...]
+  }
+
+  // Para Rol 4 (Usuario)
+  {
+    "mensaje": "Tus comentarios obtenidos exitosamente (Vista de Usuario)",
+    "comentarios": [...]
   }
   ```
+- **Notas**:
+  - El mensaje de respuesta varía según el rol del usuario
+  - Los datos mostrados también varían según el rol
+  - Se requiere autenticación válida
 
 ### Crear Comentario (Rol 4)
 ```http

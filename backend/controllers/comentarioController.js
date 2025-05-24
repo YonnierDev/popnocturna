@@ -259,22 +259,26 @@ class ComentarioController {
         try {
             const { id: usuarioid, rol } = req.usuario;
             let comentarios;
+            let mensaje;
 
             if ([1, 2].includes(rol)) {
                 // Admin y SuperAdmin ven todos los comentarios
                 comentarios = await ComentarioService.listarComentariosAdmin();
+                mensaje = "Lista de comentarios obtenida exitosamente (Vista de Administración)";
             } else if (rol === 3) {
                 // Propietarios ven solo comentarios de sus eventos
                 comentarios = await ComentarioService.listarComentariosPropietario(usuarioid);
+                mensaje = "Comentarios de tus lugares obtenidos exitosamente (Vista de Propietario)";
             } else if (rol === 4) {
                 // Usuarios ven solo sus propios comentarios
                 comentarios = await ComentarioService.listarComentariosUsuario(usuarioid);
+                mensaje = "Tus comentarios obtenidos exitosamente (Vista de Usuario)";
             } else {
                 return res.status(403).json({ mensaje: "No tienes permiso para ver los comentarios" });
             }
 
             res.json({
-                mensaje: "Comentarios que pertenecen al propietario obtenidos exitosamente",
+                mensaje,
                 comentarios
             });
         } catch (error) {
