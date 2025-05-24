@@ -1,4 +1,13 @@
 const { Lugar, Usuario, Categoria, Evento } = require("../models");
+const { Op } = require("sequelize");
+
+class LugarError extends Error {
+  constructor(mensaje, tipo = 'VALIDACION') {
+    super(mensaje);
+    this.name = 'LugarError';
+    this.tipo = tipo;
+  }
+}
 
 class LugarService {
   async listarLugares() {
@@ -51,12 +60,9 @@ class LugarService {
 
   async crearLugar(dataLugar) {
     try {
-      console.log("Creando lugar:", dataLugar);
       const nuevoLugar = await Lugar.create(dataLugar);
-      console.log("Lugar creado:", nuevoLugar);
       return nuevoLugar;
     } catch (error) {
-      console.error("Error al crear lugar:", error);
       throw error;
     }
   }
@@ -65,14 +71,30 @@ class LugarService {
     try {
       const lugar = await Lugar.findByPk(id);
       if (!lugar) {
-        throw new Error("Lugar no encontrado");
+        throw new LugarError("Lugar no encontrado", 'NO_ENCONTRADO');
       }
 
+      // Solo validar si se está cambiando el nombre
+      if (dataLugar.nombre && dataLugar.nombre !== lugar.nombre) {
+        const lugarExistente = await Lugar.findOne({
+          where: {
+            nombre: dataLugar.nombre
+          }
+        });
+
+        if (lugarExistente) {
+          throw new LugarError("Ya existe un lugar con este nombre", 'DUPLICADO');
+        }
+      }
+
+      // Actualizar todos los campos sin restricciones
       const lugarActualizado = await lugar.update(dataLugar);
       return lugarActualizado;
     } catch (error) {
-      console.error("❌ Error al actualizar el lugar:", error);
-      throw error;
+      if (error instanceof LugarError) {
+        throw error;
+      }
+      throw new LugarError("Error al actualizar el lugar", 'INTERNO');
     }
   }
 

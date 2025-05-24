@@ -321,6 +321,46 @@ GET /api/lugares
 DELETE /api/lugar/:id
 ```
 
+### Actualizar Lugar
+```http
+PUT /api/lugar/:id
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+  ```json
+  {
+    "usuarioid": "number",
+    "categoriaid": "number",
+    "nombre": "string",
+    "descripcion": "string",
+    "ubicacion": "string",
+    "imagen": "file (opcional)"
+  }
+  ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Lugar actualizado con éxito",
+    "lugar": {
+      "id": 1,
+      "nombre": "Nombre Actualizado",
+      "descripcion": "Descripción actualizada",
+      "ubicacion": "Nueva ubicación",
+      "imagen": "url_imagen",
+      "estado": true
+    }
+  }
+  ```
+- **Códigos de Error**:
+  - `400`: Si el nombre ya está siendo utilizado por otro lugar
+  - `404`: Si el lugar no existe
+  - `500`: Error interno del servidor
+- **Notas**:
+  - El nombre del lugar debe ser único en el sistema
+  - Se puede mantener el mismo nombre si no se modifica
+  - La imagen es opcional, si no se envía se mantiene la actual
+  - Se pueden actualizar uno o varios campos a la vez
+
 ## Comentarios
 
 ### Obtener Comentarios (Redirección por Rol)

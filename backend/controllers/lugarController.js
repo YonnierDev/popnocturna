@@ -33,12 +33,10 @@ class LugarController {
 
   async crearLugar(req, res) {
     try {
-  
       const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
       let imagenUrl = null;
   
       if (!req.file) {
-        console.log("No se recibió imagen");
         return res.status(400).json({ mensaje: "La imagen es requerida" });
       }
     
@@ -71,7 +69,6 @@ class LugarController {
         lugar: nuevoLugar,
       });
     } catch (error) {
-      console.error("Error al crear lugar:", error);
       res.status(500).json({ mensaje: "Error al crear lugar", error: error.message });
     }
   }
@@ -83,7 +80,6 @@ class LugarController {
       let imagenUrl = null;
 
       if (req.file) {
-        // Subir la imagen a Cloudinary
         const uploadResponse = await cloudinaryService.subirImagen(
           req.file.buffer,
           `${lugarid}-${Date.now()}`
@@ -93,26 +89,69 @@ class LugarController {
           return res.status(500).json({ mensaje: "Error al subir la imagen" });
         }
 
-        imagenUrl = uploadResponse.secure_url;  // Guardamos la URL de la imagen subida
+        imagenUrl = uploadResponse.secure_url;
       }
-
-      console.log("URL de imagen subida a Cloudinary:", imagenUrl);  
 
       const lugarActualizado = await LugarService.actualizarLugar(lugarid, {
         usuarioid, categoriaid, nombre, descripcion, ubicacion,
-        imagen: imagenUrl || null,  // Si no hay imagen, no la actualizamos
+        imagen: imagenUrl || null,
       });
 
       res.json({
         mensaje: "Lugar actualizado con éxito",
-        usuario: {
+        lugar: {
           ...lugarActualizado.dataValues,
           imagen: imagenUrl || lugarActualizado.imagen
         },
       });
     } catch (error) {
-      console.error("❌ Error al actualizar el lugar:", error);
-      res.status(500).json({ mensaje: "Error al actualizar el lugar", error: error.message });
+      // Manejo de errores personalizados
+      if (error.name === 'LugarError') {
+        switch (error.tipo) {
+          case 'NO_ENCONTRADO':
+            return res.status(404).json({
+              mensaje: "Error al actualizar el lugar",
+              error: error.message
+            });
+          case 'DUPLICADO':
+            return res.status(409).json({
+              mensaje: "No se puede actualizar el lugar",
+              error: "El nombre ya está siendo utilizado por otro lugar",
+              tipo: "conflicto",
+              detalles: {
+                campo: "nombre",
+                valor: req.body.nombre,
+                sugerencia: "Por favor, elija un nombre diferente o mantenga el nombre actual"
+              }
+            });
+          case 'VALIDACION':
+            return res.status(400).json({
+              mensaje: "Error de validación",
+              error: error.message
+            });
+          default:
+            return res.status(500).json({
+              mensaje: "Error al actualizar el lugar",
+              error: "Error interno del servidor"
+            });
+        }
+      }
+
+      // Manejo de errores de Sequelize
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({
+          mensaje: "Error de validación",
+          error: "Ya existe un lugar con este nombre",
+          campo: error.errors[0].path,
+          valor: error.errors[0].value
+        });
+      }
+
+      // Error genérico
+      res.status(500).json({
+        mensaje: "Error al actualizar el lugar",
+        error: "Error interno del servidor"
+      });
     }
   }
 
