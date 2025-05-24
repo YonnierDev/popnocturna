@@ -66,7 +66,7 @@ app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
 const io = new Server(server, {
   cors: {
     origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
   }
 });
