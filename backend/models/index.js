@@ -27,8 +27,8 @@ sequelize = new Sequelize(
       },
     },
     pool: {
-      max: 20,
-      min: 5,
+      max: 30,
+      min: 1,
       acquire: 60000,
       idle: 60000,
     },
