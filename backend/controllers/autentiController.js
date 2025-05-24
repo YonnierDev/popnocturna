@@ -4,18 +4,45 @@ const AutentiService = require("../service/autentiService");
 class AutentiController {
   static async registrar(req, res) {
     try {
+      console.log('\n=== Inicio de registro de usuario ===');
+      console.log('Datos recibidos:', req.body);
+      
       const datos = req.body;
-  
+      
+      // Si no se proporciona rol, se asignará automáticamente el rol 4
+      if (!datos.rolid) {
+        console.log('No se proporcionó rol, se asignará rol 4 por defecto');
+      }
+
+      console.log('Intentando registrar usuario');
+      
       const resultado = await AutentiService.registrarUsuario(datos);
+      console.log('Usuario registrado exitosamente:', resultado);
+      
       res.status(201).json(resultado);
     } catch (error) {
-  
+      console.error('\n=== Error en registro de usuario ===');
+      console.error('Error completo:', error);
+      console.error('Stack trace:', error.stack);
+      
+      // Manejo específico para errores de llave foránea
+      if (error.message.includes('foreign key constraint fails')) {
+        console.error('Error de llave foránea detectado');
+        return res.status(400).json({
+          mensaje: "Error al crear el usuario",
+          error: "Rol no válido",
+          detalles: "El rol especificado no existe en la base de datos",
+          rolid: req.body.rolid
+        });
+      }
+
       const mensaje = error.message || "Error desconocido";
       const errores = error.errors || null;
   
       res.status(400).json({
         mensaje,
         errores,
+        detalles: "Error al procesar el registro"
       });
     }
   }

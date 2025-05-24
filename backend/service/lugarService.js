@@ -10,8 +10,11 @@ class LugarError extends Error {
 }
 
 class LugarService {
-  async listarLugares() {
+  async listarLugaresAdmin() {
     return await Lugar.findAll({
+      where: {
+        aprobacion: true
+      },
       include: [
         {
           model: Usuario,
@@ -32,11 +35,63 @@ class LugarService {
     });
   }
 
-  async buscarLugar(id, conRelaciones = false) {
-    const options = { where: { id } };
-  
-    if (conRelaciones) {
-      options.include = [
+  async listarLugaresPropietario(usuarioid) {
+    return await Lugar.findAll({
+      where: {
+        usuarioid,
+        estado: true,
+        aprobacion: true
+      },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"], 
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"], 
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["nombre", "descripcion"], 
+        },
+      ],
+    });
+  }
+
+  async listarLugaresUsuario() {
+    return await Lugar.findAll({
+      where: {
+        estado: true,
+        aprobacion: true
+      },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"], 
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"], 
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["nombre", "descripcion"], 
+        },
+      ],
+    });
+  }
+
+  async buscarLugarAdmin(id) {
+    return await Lugar.findOne({
+      where: { id },
+      include: [
         {
           model: Usuario,
           as: "usuario",
@@ -52,10 +107,63 @@ class LugarService {
           as: "eventos",
           attributes: ["nombre", "fecha_hora"],
         },
-      ];
-    }
-  
-    return await Lugar.findOne(options);
+      ],
+    });
+  }
+
+  async buscarLugarPropietario(id, usuarioid) {
+    return await Lugar.findOne({
+      where: { 
+        id,
+        usuarioid,
+        estado: true,
+        aprobacion: true
+      },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"],
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"],
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["nombre", "fecha_hora"],
+        },
+      ],
+    });
+  }
+
+  async buscarLugarUsuario(id) {
+    return await Lugar.findOne({
+      where: { 
+        id,
+        estado: true,
+        aprobacion: true
+      },
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre", "correo"],
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"],
+        },
+        {
+          model: Evento,
+          as: "eventos",
+          attributes: ["nombre", "fecha_hora"],
+        },
+      ],
+    });
   }
 
   async crearLugar(dataLugar) {

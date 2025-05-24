@@ -60,24 +60,45 @@ class AutentiService {
   
 
   static async validarCamposRegistro(datos) {
+    console.log('\n=== Validando campos de registro ===');
+    console.log('Datos a validar:', datos);
+
     const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = datos;
   
     if (!nombre || !apellido || !correo || !fecha_nacimiento || !contrasena || !genero) {
+      console.log('Error: Campos faltantes');
       throw new Error("Todos los campos son obligatorios");
+    }
+
+    // Asignar automáticamente el rol 4 (usuario regular) si no se proporciona
+    if (!datos.rolid) {
+      console.log('Asignando rol 4 por defecto');
+      datos.rolid = 4;
+    }
+
+    // Validar que el rol exista
+    console.log('Verificando rol:', datos.rolid);
+    const rolExistente = await UsuarioService.verificarRol(datos.rolid);
+    if (!rolExistente) {
+      console.log('Error: Rol no encontrado');
+      throw new Error(`El rol con ID ${datos.rolid} no existe`);
     }
   
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
+      console.log('Error: Correo inválido');
       throw new Error("Correo no válido");
     }
   
     const validacionContrasena = this.validarContrasena(contrasena);
     if (validacionContrasena !== true) {
+      console.log('Error: Contraseña inválida');
       throw new Error(validacionContrasena); 
     }
   
     const generosPermitidos = ["Masculino", "Femenino", "Otro"];
     if (!generosPermitidos.includes(genero)) {
+      console.log('Error: Género inválido');
       throw new Error("Género no válido");
     }
   
@@ -89,8 +110,11 @@ class AutentiService {
     const edadExacta = mes < 0 || (mes === 0 && dia < 0) ? edad - 1 : edad;
   
     if (edadExacta < 18) {
+      console.log('Error: Edad insuficiente');
       throw new Error("Edad mínima de registro: 18 años");
     }
+
+    console.log('Validación de campos exitosa');
   }
   
   
@@ -120,66 +144,77 @@ class AutentiService {
   }
 
   static async registrarUsuario(datos) {
-    await this.validarCamposRegistro(datos);
-    const { correo, contrasena } = datos;
+    console.log('\n=== Iniciando registro de usuario ===');
+    console.log('Datos recibidos:', datos);
 
-    const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
-    if (usuarioExistente) {
-      throw new Error("Correo ya está en uso");
-    }
-
-    // Verificar si ya existe un código temporal
-    const codigoExistente = await TemporalService.obtenerCodigo(correo);
-    if (codigoExistente) {
-      const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
-      if (tiempoRestante > 0) {
-        throw new Error(`Ya existe un código de verificación activo. Por favor, espera ${Math.ceil(tiempoRestante / 60000)} minutos o verifica tu correo.`);
-      }
-    }
-
-    const contrasenaHash = await bcrypt.hash(contrasena, 10);
-    const codigo = this.generarCodigo();
-    
-    // Configurar fecha de expiración en zona horaria de Bogotá
-    const ahora = new Date();
-    const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000); // 5 minutos
-    expiracion.setHours(expiracion.getHours() - 5); // Ajustar a zona horaria de Bogotá (UTC-5)
-
-    // Guardar temporalmente el código y los datos del usuario
     try {
-      // Primero intentamos enviar el correo
-      await this.enviarCorreoVerificacion(correo, codigo);
-      
-      // Si el correo se envía correctamente, guardamos los datos temporales
-      await TemporalService.guardarCodigo(correo, codigo, expiracion);
-      
-      // Guardamos los datos del usuario en el campo datos_temporales
-      await TemporalService.guardarDatosTemporales(correo, {
-        ...datos,
-        contrasena: contrasenaHash,
-        estado: false,
-        rolid: 8,
-        fecha_creacion: ahora,
-        fecha_expiracion: expiracion
-      });
-
-      // Programar limpieza después de 5 minutos
-      setTimeout(async () => {
-        try {
-          await TemporalService.eliminarCodigo(correo);
-          console.log(`Código expirado eliminado para: ${correo}`);
-        } catch (error) {
-          console.error('Error al eliminar código expirado:', error);
+      await this.validarCamposRegistro(datos);
+      const { correo, contrasena, rolid } = datos;
+  
+      console.log('Verificando si el correo ya existe');
+      const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
+      if (usuarioExistente) {
+        console.log('Error: Correo ya registrado');
+        throw new Error("Correo ya está en uso");
+      }
+  
+      console.log('Verificando código temporal existente');
+      const codigoExistente = await TemporalService.obtenerCodigo(correo);
+      if (codigoExistente) {
+        const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
+        if (tiempoRestante > 0) {
+          console.log('Error: Código temporal activo');
+          throw new Error(`Ya existe un código de verificación activo. Por favor, espera ${Math.ceil(tiempoRestante / 60000)} minutos o verifica tu correo.`);
         }
-      }, 5 * 60 * 1000);
-
-      return { 
-        mensaje: "Registro iniciado. Por favor, verifica tu correo electrónico.",
-        correo: correo
-      };
+      }
+  
+      console.log('Generando hash de contraseña');
+      const contrasenaHash = await bcrypt.hash(contrasena, 10);
+      const codigo = this.generarCodigo();
+      
+      console.log('Configurando fechas de expiración');
+      const ahora = new Date();
+      const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000); // 5 minutos
+      expiracion.setHours(expiracion.getHours() - 5);
+  
+      console.log('Intentando enviar correo de verificación');
+      try {
+        await this.enviarCorreoVerificacion(correo, codigo);
+        
+        console.log('Guardando datos temporales');
+        await TemporalService.guardarCodigo(correo, codigo, expiracion);
+        
+        await TemporalService.guardarDatosTemporales(correo, {
+          ...datos,
+          contrasena: contrasenaHash,
+          estado: false,
+          rolid: rolid,
+          fecha_creacion: ahora,
+          fecha_expiracion: expiracion
+        });
+  
+        console.log('Programando limpieza de código');
+        setTimeout(async () => {
+          try {
+            await TemporalService.eliminarCodigo(correo);
+            console.log(`Código expirado eliminado para: ${correo}`);
+          } catch (error) {
+            console.error('Error al eliminar código expirado:', error);
+          }
+        }, 5 * 60 * 1000);
+  
+        console.log('Registro completado exitosamente');
+        return { 
+          mensaje: "Registro iniciado. Por favor, verifica tu correo electrónico.",
+          correo: correo
+        };
+      } catch (error) {
+        console.error('Error en el proceso de registro:', error);
+        throw new Error("Error al enviar el correo de verificación. Por favor, intente nuevamente.");
+      }
     } catch (error) {
-      console.error('Error en el proceso de registro:', error);
-      throw new Error("Error al enviar el correo de verificación. Por favor, intente nuevamente.");
+      console.error('Error en registrarUsuario:', error);
+      throw error;
     }
   }
 
