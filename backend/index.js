@@ -71,6 +71,9 @@ const io = new Server(server, {
   }
 });
 
+// Hacer que io esté disponible globalmente
+app.set('io', io);
+
 // Manejo de conexiones Socket.IO
 io.on("connection", (socket) => {
   console.log("Cliente conectado:", socket.id);
