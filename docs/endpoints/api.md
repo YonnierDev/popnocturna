@@ -90,7 +90,7 @@ POST /api/validar-codigo
 
 ### Login
 ```http
-POST /api/login
+POST /auth/login
 ```
 - **Body**:
   ```json
@@ -106,17 +106,11 @@ POST /api/login
     "usuario": {
       "id": "number",
       "nombre": "string",
-      "apellido": "string",
       "correo": "string",
-      "rol": "number",
-      "estado": "boolean"
+      "rolid": "number"
     }
   }
   ```
-- **Notas**:
-  - Solo se puede hacer login después de validar el correo
-  - El token expira en 2 horas
-  - Se requiere el token para acceder a rutas protegidas
 
 ## Flujo de Registro y Verificación
 
@@ -223,6 +217,35 @@ GET /api/usuarios
         "rol": 8
       }
     ]
+  }
+  ```
+
+### Obtener Perfil
+```http
+GET /usuarios/perfil
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "id": "number",
+    "nombre": "string",
+    "correo": "string",
+    "rolid": "number",
+    "imagen": "string"
+  }
+  ```
+
+### Actualizar Perfil
+```http
+PUT /usuarios/perfil
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+  ```json
+  {
+    "nombre": "string",
+    "imagen": "File"
   }
   ```
 
@@ -747,6 +770,25 @@ GET /api/propietario/lugares-eventos
 ```
 - **Headers**: `Authorization: Bearer {token}`
 - **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Lugares con eventos obtenidos exitosamente",
+    "lugares": [
+      {
+        "id": "number",
+        "nombre": "string",
+        "eventos": [
+          {
+            "id": "number",
+            "nombre": "string",
+            "fecha": "string"
+          }
+        ]
+      }
+    ]
+  }
+  ```
 
 #### Ver Reservas por Evento y Lugar
 ```http
@@ -754,6 +796,25 @@ GET /api/propietario/reservas-evento-lugar
 ```
 - **Headers**: `Authorization: Bearer {token}`
 - **Rol Requerido**: 3 (Propietario)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Reservas obtenidas exitosamente",
+    "reservas": [
+      {
+        "id": "number",
+        "numero_reserva": "string",
+        "evento": {
+          "nombre": "string",
+          "fecha": "string"
+        },
+        "lugar": {
+          "nombre": "string"
+        }
+      }
+    ]
+  }
+  ```
 
 #### Ver Reservas Pendientes
 ```http
@@ -815,5 +876,74 @@ GET /api/calificaciones/lugar/:lugarid
         }
       }
     ]
+  }
+  ```
+
+## Eventos
+
+### Listar Eventos Públicos
+```http
+GET /public/eventos
+```
+- **Query Parameters**:
+  - `page`: número de página
+  - `limit`: elementos por página
+  - `categoria`: filtro por categoría
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "total": "number",
+    "pagina": "number",
+    "porPagina": "number",
+    "eventos": [
+      {
+        "id": "number",
+        "nombre": "string",
+        "descripcion": "string",
+        "fecha": "string",
+        "imagen": "string",
+        "categoria": {
+          "id": "number",
+          "nombre": "string"
+        }
+      }
+    ]
+  }
+  ```
+
+### Listar Eventos (Autenticado)
+```http
+GET /api/eventos
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Query Parameters**: Igual que eventos públicos
+
+## Notificaciones
+
+### Listar Notificaciones de Reportes
+```http
+GET /api/comentario/reportes/notificaciones
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2 (Admin/SuperAdmin)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "reportesPendientes": number,
+    "mensaje": "Tienes X reporte(s) pendiente(s) de revisión"
+  }
+  ```
+
+### Listar Notificaciones de Lugares
+```http
+GET /api/lugares/creacion/notificaciones
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Roles Permitidos**: 1,2 (Admin/SuperAdmin)
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "lugaresPendientes": number,
+    "mensaje": "Tienes X lugar(es) pendiente(s) de aprobación"
   }
   ``` 
