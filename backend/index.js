@@ -19,7 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // Configuración de CORS para Express
 app.use(cors({
   origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", 
+    "PATCH", "OPTIONS"],
   credentials: true
 }));
 
