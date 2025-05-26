@@ -49,6 +49,11 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
       },
+      portada: {
+        type: Sequelize.ARRAY(Sequelize.STRING),
+        allowNull: true,
+        defaultValue: [],
+      },
       estado: {
         type: Sequelize.BOOLEAN,
         defaultValue: true,

@@ -58,11 +58,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: false,
       },
+      portada: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+        defaultValue: [],
+      },
       estado: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
-
       usuarioid: {
         type: DataTypes.INTEGER,
         allowNull: true,

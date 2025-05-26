@@ -73,6 +73,8 @@ class PropietarioLugarController {
       const usuarioid = req.usuario.id;
       const { categoriaid, nombre, descripcion, ubicacion } = req.body;
       let imagenUrl = null;
+      let fotosUrls = [];
+      let cartaPdfUrl = null;
 
       // Verificar si el nombre ya existe para este propietario
       const lugarExistente = await Lugar.findOne({
@@ -91,26 +93,37 @@ class PropietarioLugarController {
         });
       }
 
-      if (!req.file) {
-        console.log("No se recibió imagen");
-        return res.status(400).json({ mensaje: "La imagen es requerida" });
+      // Procesar la imagen principal
+      if (req.files && req.files['imagen']) {
+        const uploadResponse = await cloudinaryService.subirImagen(
+          req.files['imagen'][0].buffer,
+          `lugar-${Date.now()}`
+        );
+        if (uploadResponse) {
+          imagenUrl = uploadResponse.secure_url;
+        }
       }
 
-      console.log("Imagen recibida:", req.file);
-
-      // Subir la imagen a Cloudinary
-      const uploadResponse = await cloudinaryService.subirImagen(
-        req.file.buffer,
-        `lugar-${Date.now()}`
-      );
-
-      if (!uploadResponse) {
-        console.log("Error al subir la imagen");
-        return res.status(500).json({ mensaje: "Error al subir la imagen" });
+      // Procesar las fotos adicionales
+      if (req.files && req.files['fotos_lugar']) {
+        const uploadPromises = req.files['fotos_lugar'].map(file => 
+          cloudinaryService.subirImagen(file.buffer, `lugar-${Date.now()}-${Math.random()}`)
+        );
+        
+        const uploadResults = await Promise.all(uploadPromises);
+        fotosUrls = uploadResults.map(result => result.secure_url);
       }
 
-      imagenUrl = uploadResponse.secure_url;
-      console.log("Imagen subida:", imagenUrl);
+      // Procesar el PDF si existe
+      if (req.files && req.files['carta_pdf']) {
+        const pdfUpload = await cloudinaryService.subirPDF(
+          req.files['carta_pdf'][0].buffer,
+          `carta-${Date.now()}`
+        );
+        if (pdfUpload) {
+          cartaPdfUrl = pdfUpload.secure_url;
+        }
+      }
 
       const nuevoLugar = await PropietarioLugarService.crearLugarPropietario({
         usuarioid,
@@ -119,20 +132,16 @@ class PropietarioLugarController {
         descripcion,
         ubicacion,
         imagen: imagenUrl,
+        fotos_lugar: fotosUrls.join(','),
+        carta_pdf: cartaPdfUrl,
         estado: false,
         aprobacion: false
       });
-
-      console.log("Lugar creado:", nuevoLugar);
 
       // Intentar emitir socket si está disponible
       try {
         const io = req.app.get('io');
         if (io) {
-          // LOG: Sockets en admin-room antes de emitir
-          const socketsAdminRoom = Array.from(io.sockets.adapter.rooms.get('admin-room') || []);
-          console.log('[NOTIFY ADMIN] Sockets actualmente en admin-room:', socketsAdminRoom);
-          
           const adminPayload = {
             propietarioCorreo: req.usuario.correo,
             propietarioNombre: req.usuario.nombre || '',
@@ -144,7 +153,6 @@ class PropietarioLugarController {
           
           io.to('admin-room').emit('nuevo-lugar-admin', adminPayload);
           
-          // Notificar al propietario específicamente
           const propietarioSocket = `usuario-${req.usuario.id}`;
           io.to(propietarioSocket).emit('nuevo-lugar-propietario', {
             lugar: nuevoLugar,

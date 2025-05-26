@@ -5,7 +5,6 @@ const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   class Lugar extends Model {
     static associate(models) {
-
       Lugar.belongsTo(models.Usuario, {
         foreignKey: "usuarioid",
         as: "usuario",
@@ -24,44 +23,58 @@ module.exports = (sequelize) => {
   }
 
   Lugar.init(
-    
     {
-      id: {                     
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      categoriaid: {
+      usuarioid: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      usuarioid: {
+      categoriaid: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
       nombre: {
         type: DataTypes.STRING,
         allowNull: false,
-        
       },
       descripcion: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false,
       },
       ubicacion: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      estado: {
-        type: DataTypes.BOOLEAN,
-      },
       imagen: {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      fotos_lugar: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: '',
+        get() {
+          const rawValue = this.getDataValue('fotos_lugar');
+          return rawValue ? rawValue.split(',') : [];
+        },
+        set(value) {
+          this.setDataValue('fotos_lugar', Array.isArray(value) ? value.join(',') : value);
+        }
+      },
+      carta_pdf: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      estado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
       aprobacion: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
         defaultValue: false,
       },
     },
@@ -69,6 +82,7 @@ module.exports = (sequelize) => {
       sequelize,
       modelName: "Lugar",
       tableName: "lugares",
+      timestamps: true,
     }
   );
 

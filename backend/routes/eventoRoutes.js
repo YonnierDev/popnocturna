@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const EventoController = require("../controllers/eventoController");
 const autentiMiddleware = require("../middlewares/autentiMiddleware");
+const { uploadImages } = require("../middlewares/multerMiddleware");
 
 // Endpoints públicos (sin autenticación)
 router.get("/public/eventos", EventoController.listarEventosPublicos);
@@ -22,12 +23,14 @@ router.get("/evento/:id",
 // Crear evento (admin y propietario)
 router.post("/evento", 
   autentiMiddleware,
+  uploadImages.array('portada', 3),
   EventoController.crearEvento
 );
 
 // Actualizar evento (admin y propietario)
 router.put("/evento/:id", 
   autentiMiddleware,
+  uploadImages.array('portada', 3),
   EventoController.actualizarEvento
 );
 

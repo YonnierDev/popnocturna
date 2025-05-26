@@ -105,6 +105,10 @@ class ReporteService {
                 where: {
                     aprobacion: false
                 },
+                attributes: [
+                    'id', 'nombre', 'descripcion', 'ubicacion', 
+                    'estado', 'aprobacion', 'createdAt'
+                ],
                 include: [
                     {
                         model: Usuario,

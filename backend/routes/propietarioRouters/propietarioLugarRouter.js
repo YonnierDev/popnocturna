@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const autentiMiddleware = require("../../middlewares/autentiMiddleware");
 const validarRol = require("../../middlewares/validarRol");
-const multerMiddleware = require("../../middlewares/multerMiddleware");
+const { uploadImages, uploadPDF } = require("../../middlewares/multerMiddleware");
 const PropietarioController = require("../../controllers/propietarioControllers/propietarioLugarController");
 
 router.get(
@@ -11,11 +11,19 @@ router.get(
   validarRol(3),
   PropietarioController.listarLugaresPropietario
 );
+
+// Configuración de Multer para múltiples campos
+const upload = uploadImages.fields([
+  { name: 'imagen', maxCount: 1 },
+  { name: 'fotos_lugar', maxCount: 5 },
+  { name: 'carta_pdf', maxCount: 1 }
+]);
+
 router.post(
   "/propietario/lugar",
   autentiMiddleware,
   validarRol(3),
-  multerMiddleware.single("imagen"),
+  upload,
   PropietarioController.crearLugarPropietario
 );
 

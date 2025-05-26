@@ -39,7 +39,12 @@ module.exports = {
       estado: {
         type: Sequelize.BOOLEAN
       },
-      imagen: {
+      fotos_lugar: {
+        type: Sequelize.ARRAY(Sequelize.STRING),
+        allowNull: true,
+        defaultValue: []
+      },
+      carta_pdf: {
         type: Sequelize.STRING,
         allowNull: true
       },

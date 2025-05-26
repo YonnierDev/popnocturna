@@ -9,28 +9,57 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Función para subir una imagen a Cloudinary
-const subirImagen = async (imagenBuffer, publicId) => {
-  try {
-    const uploadResponse = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { public_id: publicId, resource_type: "auto" },
-        (error, result) => {
-          if (error) {
-            console.log("Error al subir imagen a Cloudinary:", error);
-            reject(error);
+class CloudinaryService {
+  async subirImagen(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: "image",
+            folder: "lugares",
+            public_id: nombre,
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir imagen:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
           }
-          resolve(result); // Resolvemos con el resultado
-        }
-      ).end(imagenBuffer); // Enviamos el buffer de la imagen
-    });
-
-    console.log("Imagen subida correctamente a Cloudinary:", uploadResponse);
-    return uploadResponse; // Retorna la respuesta con la URL de la imagen subida
-  } catch (error) {
-    console.error("Error al subir imagen a Cloudinary:", error);
-    return null;
+        ).end(buffer);
+      });
+    } catch (error) {
+      console.error("Error en subirImagen:", error);
+      throw error;
+    }
   }
-};
 
-module.exports = { subirImagen };
+  async subirPDF(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: "raw",
+            folder: "documentos",
+            public_id: nombre,
+            format: "pdf"
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir PDF:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        ).end(buffer);
+      });
+    } catch (error) {
+      console.error("Error en subirPDF:", error);
+      throw error;
+    }
+  }
+}
+
+module.exports = new CloudinaryService();
