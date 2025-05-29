@@ -7,6 +7,7 @@ const AutentiController = require('../controllers/autentiController');
  * Estas rutas son accesibles sin token porque son parte del proceso de registro y autenticación
  */
 // Rutas de autenticación (públicas)
+router.post('/login', AutentiController.login);
 router.post('/registrar', AutentiController.registrar);
 router.post('/recuperar-contrasena', AutentiController.enviarRecuperacionCorreo);
 router.post('/validar-codigo', AutentiController.validarCodigo);
