@@ -14,25 +14,109 @@ class ReservaController {
         fechaHasta,
       };
 
-      let reservas;
+      let resultado;
+      let rolNombre;
 
-      if (rolid === 1 || rolid === 2) {
-        reservas = await ReservaService.listarReservas(opciones);
+      if (rolid === 1) {
+        rolNombre = "Super Administrador";
+        resultado = await ReservaService.listarReservas(opciones);
+      } else if (rolid === 2) {
+        rolNombre = "Administrador";
+        resultado = await ReservaService.listarReservas(opciones);
       } else if (rolid === 3) {
-        reservas = await ReservaService.listarReservasPorPropietario(usuarioid, opciones);
+        rolNombre = "Propietario";
+        resultado = await ReservaService.listarReservasPorPropietario(usuarioid, opciones);
+        // Mejorar la respuesta para propietarios incluyendo información detallada
+        resultado.rows = resultado.rows.map(reserva => {
+          const reservaJson = reserva.get({ plain: true });
+          return {
+            id: reservaJson.id,
+            numero_reserva: reservaJson.numero_reserva,
+            fecha_hora: reservaJson.fecha_hora,
+            aprobacion: reservaJson.aprobacion,
+            estado: reservaJson.estado,
+            evento: {
+              id: reservaJson.evento?.id,
+              nombre: reservaJson.evento?.nombre,
+              fecha_hora: reservaJson.evento?.fecha_hora,
+              lugar: {
+                id: reservaJson.evento?.lugar?.id,
+                nombre: reservaJson.evento?.lugar?.nombre,
+                direccion: reservaJson.evento?.lugar?.direccion
+              }
+            },
+            usuario: {
+              id: reservaJson.usuario?.id,
+              nombre: reservaJson.usuario?.nombre,
+              correo: reservaJson.usuario?.correo,
+              telefono: reservaJson.usuario?.telefono
+            }
+          };
+        });
       } else if (rolid === 4) {
-        reservas = await ReservaService.listarReservasPorUsuario(usuarioid, opciones);
+        rolNombre = "Usuario";
+        resultado = await ReservaService.listarReservasPorUsuario(usuarioid, opciones);
+        // Formatear la respuesta para usuarios
+        resultado.rows = resultado.rows.map(reserva => {
+          const reservaJson = reserva.get({ plain: true });
+          return {
+            id: reservaJson.id,
+            numero_reserva: reservaJson.numero_reserva,
+            fecha_hora: reservaJson.fecha_hora,
+            aprobacion: reservaJson.aprobacion,
+            estado: reservaJson.estado,
+            evento: {
+              id: reservaJson.evento?.id,
+              nombre: reservaJson.evento?.nombre,
+              fecha_hora: reservaJson.evento?.fecha_hora
+            }
+          };
+        });
       } else {
         return res.status(403).json({ mensaje: "No tienes permiso para ver reservas" });
       }
 
+      // Formatear la respuesta para admin y super admin
+      if (rolid === 1 || rolid === 2) {
+        resultado.rows = resultado.rows.map(reserva => {
+          const reservaJson = reserva.get({ plain: true });
+          return {
+            id: reservaJson.id,
+            numero_reserva: reservaJson.numero_reserva,
+            fecha_hora: reservaJson.fecha_hora,
+            aprobacion: reservaJson.aprobacion,
+            estado: reservaJson.estado,
+            evento: {
+              id: reservaJson.evento?.id,
+              nombre: reservaJson.evento?.nombre,
+              fecha_hora: reservaJson.evento?.fecha_hora
+            },
+            usuario: {
+              id: reservaJson.usuario?.id,
+              nombre: reservaJson.usuario?.nombre,
+              correo: reservaJson.usuario?.correo
+            }
+          };
+        });
+      }
+
       res.json({ 
-        mensaje: "Reservas obtenidas correctamente", 
-        datos: reservas 
+        mensaje: `Reservas obtenidas correctamente por ${rolNombre}`,
+        datos: resultado.rows,
+        metadata: {
+          total: resultado.count,
+          pagina: parseInt(page),
+          limite: parseInt(limit),
+          totalPaginas: Math.ceil(resultado.count / parseInt(limit)),
+          rol: rolNombre
+        }
       });
     } catch (error) {
       console.error("Error al listar reservas:", error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({ 
+        mensaje: "Error en el servicio",
+        error: error.message 
+      });
     }
   }
   
