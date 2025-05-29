@@ -54,7 +54,6 @@ app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/comentarioRoutes"));
 app.use("/api", require("./routes/reporteRoutes"));
 app.use("/api", require("./routes/autentiRouter"));
-app.use("/api", require("./routes/propietarioRoutes"));
 app.use("/api", require("./routes/propietarioRouters/categoriaUsuarioRolRouter"));
 app.use("/api", require("./routes/propietarioRouters/reservaUsuarioEventoLugarRouter"));
 app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRouter"));
