@@ -126,7 +126,24 @@ class UsuarioService {
   
 
   async buscarPorCorreo(correo) {
-    return await Usuario.findOne({ where: { correo } });
+    console.log('\n[buscarPorCorreo] Iniciando búsqueda de usuario');
+    console.log('[buscarPorCorreo] Correo a buscar:', correo);
+    
+    try {
+      const usuario = await Usuario.findOne({ where: { correo } });
+      console.log('[buscarPorCorreo] Resultado de la búsqueda:', usuario ? 'Usuario encontrado' : 'Usuario no encontrado');
+      if (usuario) {
+        console.log('[buscarPorCorreo] Detalles del usuario:', {
+          id: usuario.id,
+          correo: usuario.correo,
+          estado: usuario.estado
+        });
+      }
+      return usuario;
+    } catch (error) {
+      console.error('[buscarPorCorreo] Error en la búsqueda:', error);
+      throw error;
+    }
   }
 
   async crearUsuario(datos) {

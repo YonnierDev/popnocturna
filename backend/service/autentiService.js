@@ -144,45 +144,55 @@ class AutentiService {
   }
 
   static async registrarUsuario(datos) {
-    console.log('\n=== Iniciando registro de usuario ===');
-    console.log('Datos recibidos:', datos);
+    console.log('\n[registrarUsuario] === Iniciando registro de usuario ===');
+    console.log('[registrarUsuario] Datos recibidos:', {
+      ...datos,
+      contrasena: '[PROTEGIDO]' // No mostramos la contraseña en los logs
+    });
 
     try {
+      console.log('[registrarUsuario] Validando campos de registro');
       await this.validarCamposRegistro(datos);
       const { correo, contrasena, rolid } = datos;
   
-      console.log('Verificando si el correo ya existe');
+      console.log('[registrarUsuario] Verificando si el correo ya existe');
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
+      console.log('[registrarUsuario] Resultado de verificación de correo:', usuarioExistente ? 'Correo encontrado' : 'Correo no encontrado');
+      
       if (usuarioExistente) {
-        console.log('Error: Correo ya registrado');
+        console.log('[registrarUsuario] Error: Correo ya registrado');
         throw new Error("Correo ya está en uso");
       }
   
-      console.log('Verificando código temporal existente');
+      console.log('[registrarUsuario] Verificando código temporal existente');
       const codigoExistente = await TemporalService.obtenerCodigo(correo);
       if (codigoExistente) {
         const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
+        console.log('[registrarUsuario] Tiempo restante del código:', Math.ceil(tiempoRestante / 60000), 'minutos');
+        
         if (tiempoRestante > 0) {
-          console.log('Error: Código temporal activo');
+          console.log('[registrarUsuario] Error: Código temporal activo');
           throw new Error(`Ya existe un código de verificación activo. Por favor, espera ${Math.ceil(tiempoRestante / 60000)} minutos o verifica tu correo.`);
         }
       }
   
-      console.log('Generando hash de contraseña');
+      console.log('[registrarUsuario] Generando hash de contraseña');
       const contrasenaHash = await bcrypt.hash(contrasena, 10);
       const codigo = this.generarCodigo();
       
-      console.log('Configurando fechas de expiración');
+      console.log('[registrarUsuario] Configurando fechas de expiración');
       const ahora = new Date();
       const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000); // 5 minutos
       expiracion.setHours(expiracion.getHours() - 5);
   
-      console.log('Intentando enviar correo de verificación');
+      console.log('[registrarUsuario] Intentando enviar correo de verificación');
       try {
         await this.enviarCorreoVerificacion(correo, codigo);
+        console.log('[registrarUsuario] Correo de verificación enviado exitosamente');
         
-        console.log('Guardando datos temporales');
+        console.log('[registrarUsuario] Guardando datos temporales');
         await TemporalService.guardarCodigo(correo, codigo, expiracion);
+        console.log('[registrarUsuario] Código guardado exitosamente');
         
         await TemporalService.guardarDatosTemporales(correo, {
           ...datos,
@@ -192,28 +202,29 @@ class AutentiService {
           fecha_creacion: ahora,
           fecha_expiracion: expiracion
         });
+        console.log('[registrarUsuario] Datos temporales guardados exitosamente');
   
-        console.log('Programando limpieza de código');
+        console.log('[registrarUsuario] Programando limpieza de código');
         setTimeout(async () => {
           try {
             await TemporalService.eliminarCodigo(correo);
-            console.log(`Código expirado eliminado para: ${correo}`);
+            console.log(`[registrarUsuario] Código expirado eliminado para: ${correo}`);
           } catch (error) {
-            console.error('Error al eliminar código expirado:', error);
+            console.error('[registrarUsuario] Error al eliminar código expirado:', error);
           }
         }, 5 * 60 * 1000);
   
-        console.log('Registro completado exitosamente');
+        console.log('[registrarUsuario] Registro completado exitosamente');
         return { 
           mensaje: "Registro iniciado. Por favor, verifica tu correo electrónico.",
           correo: correo
         };
       } catch (error) {
-        console.error('Error en el proceso de registro:', error);
+        console.error('[registrarUsuario] Error en el proceso de registro:', error);
         throw new Error("Error al enviar el correo de verificación. Por favor, intente nuevamente.");
       }
     } catch (error) {
-      console.error('Error en registrarUsuario:', error);
+      console.error('[registrarUsuario] Error en registrarUsuario:', error);
       throw error;
     }
   }
