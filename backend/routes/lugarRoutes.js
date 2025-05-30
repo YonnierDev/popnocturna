@@ -4,10 +4,10 @@ const router = express.Router();
 const { uploadImages, uploadPDF } = require("../middlewares/multerMiddleware");
 const autentiMiddleware = require("../middlewares/autentiMiddleware");
 
-// Quitamos el middleware global
-// router.use(autentiMiddleware);
+// Ruta pública para listar lugares aprobados
+router.get('/public/lugares', LugarController.listarLugaresPublicos);
 
-// Aplicamos el middleware ruta por ruta
+// Rutas protegidas
 router.get('/lugares', autentiMiddleware, LugarController.listarLugares);
 router.get('/lugar/:id', autentiMiddleware, LugarController.buscarLugar);
 router.post('/lugar', 

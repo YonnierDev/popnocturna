@@ -62,31 +62,6 @@ class LugarService {
     });
   }
 
-  async listarLugaresUsuario() {
-    return await Lugar.findAll({
-      where: {
-        estado: true,
-        aprobacion: true
-      },
-      include: [
-        {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["nombre", "correo"], 
-        },
-        {
-          model: Categoria,
-          as: "categoria",
-          attributes: ["tipo"], 
-        },
-        {
-          model: Evento,
-          as: "eventos",
-          attributes: ["nombre", "descripcion"], 
-        },
-      ],
-    });
-  }
 
   async buscarLugarAdmin(id) {
     return await Lugar.findOne({
@@ -211,7 +186,31 @@ class LugarService {
   }
 
   async actualizarEstado(id, estado) {
-    return await Lugar.update({ estado }, { where: { id } });
+    try {
+      console.log('=== Inicio actualizarEstado ===');
+      console.log('ID del lugar:', id);
+      console.log('Estado a actualizar:', estado);
+
+      const lugarAntes = await Lugar.findByPk(id);
+      console.log('Lugar antes de actualizar:', lugarAntes ? lugarAntes.toJSON() : 'No encontrado');
+
+      const actualizados = await Lugar.update(
+        { 
+          aprobacion: estado,
+          estado: estado
+        }, 
+        { where: { id } }
+      );
+      console.log('Resultado de actualización:', actualizados);
+
+      const lugarDespues = await Lugar.findByPk(id);
+      console.log('Lugar después de actualizar:', lugarDespues ? lugarDespues.toJSON() : 'No encontrado');
+
+      return actualizados;
+    } catch (error) {
+      console.error('Error en actualizarEstado:', error);
+      throw error;
+    }
   }
 
   async verificarUsuario(usuarioid) {

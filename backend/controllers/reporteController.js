@@ -133,17 +133,49 @@ class ReporteController {
             const actualizado = await ReporteService.actualizarEstadoLugar(id, estado);
             console.log('Lugar tras actualizar:', actualizado.toJSON());
 
-            // Enviar respuesta
-            const mensaje = estado ? 'aprobado' : 'lugar no aprobado';
-            res.json({ mensaje, lugar: actualizado });
-            // Notificar siempre al propietario (rol 3)
+            // Obtener io para enviar notificaciones
             const io = req.app.get('io');
-            const room = `usuario-${actualizado.usuarioid}`;
-            console.log(`Emitiendo lugar-actualizado a sala ${room}:`, { mensaje, lugar: actualizado });
-            io.to(room).emit('lugar-actualizado', {
-                mensaje,
+
+            // Si el lugar fue aprobado, notificar a los usuarios
+            if (actualizado.aprobacion) {
+                console.log('Enviando notificaciones...');
+                
+                // Notificar al propietario del lugar (rol 3)
+                console.log('Enviando notificación al propietario:', actualizado.usuarioid);
+                io.to(`usuario-${actualizado.usuarioid}`).emit('lugar-aprobado', {
+                    lugar: actualizado,
+                    timestamp: new Date().toISOString(),
+                    mensaje: '¡Tu lugar ha sido aprobado!'
+                });
+
+                // Notificar a usuarios (rol 4)
+                console.log('Enviando notificación a usuarios (rol 4)');
+                io.to('usuario-room').emit('nuevo-lugar-usuario', {
+                    lugar: actualizado,
+                    timestamp: new Date().toISOString(),
+                    mensaje: `Nuevo lugar disponible: ${actualizado.nombre}`
+                });
+                
+                console.log('Notificaciones enviadas');
+            } else {
+                // Notificar rechazo al propietario
+                console.log('Enviando notificación de rechazo al propietario:', actualizado.usuarioid);
+                io.to(`usuario-${actualizado.usuarioid}`).emit('lugar-rechazado', {
+                    lugar: actualizado,
+                    timestamp: new Date().toISOString(),
+                    mensaje: 'Tu lugar no fue aprobado y ya no está activo'
+                });
+            }
+
+            // Enviar respuesta
+            const mensaje = estado ? 'aprobado' : 'rechazado';
+            res.json({ 
+                mensaje, 
                 lugar: actualizado,
-                timestamp: new Date().toISOString()
+                notificaciones: {
+                    propietario: 'Notificación enviada al propietario',
+                    usuarios: actualizado.aprobacion ? 'Notificación enviada a todos los usuarios' : 'No se requiere notificación a usuarios'
+                }
             });
         } catch (error) {
             console.error('Error en actualizarEstadoLugar:', error);

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const autentiMiddleware = require("../../middlewares/autentiMiddleware");
 const validarRol = require("../../middlewares/validarRol");
-const { uploadImages, uploadPDF } = require("../../middlewares/multerMiddleware");
+const { uploadImages, uploadPDF, handleMulterError } = require("../../middlewares/multerMiddleware");
 const PropietarioController = require("../../controllers/propietarioControllers/propietarioLugarController");
 
 router.get(
@@ -24,6 +24,7 @@ router.post(
   autentiMiddleware,
   validarRol(3),
   upload,
+  handleMulterError,
   PropietarioController.crearLugarPropietario
 );
 

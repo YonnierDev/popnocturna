@@ -26,28 +26,62 @@ class PropietarioLugarController {
       const { estado, aprobacion } = req.body;
       const result = await PropietarioLugarService.aprobarLugarPropietario(id, estado, aprobacion);
       const io = req.app.get('io');
+      
+      // Verificar que el usuario que aprueba es admin o superadmin
+      if (![1, 2].includes(req.usuario.rol)) {
+        return res.status(403).json({ 
+          mensaje: 'Solo los administradores pueden aprobar lugares'
+        });
+      }
+
       if (result.aprobado) {
-        // Notificar aprobado
+        console.log('Lugar aprobado, enviando notificaciones...');
+        
+        // Notificar al propietario del lugar (rol 3)
         const userId = result.lugar.usuarioid || (result.lugar.usuario && result.lugar.usuario.id);
         if (userId) {
+          console.log('Enviando notificación al propietario:', userId);
           io.to(`usuario-${userId}`).emit('lugar-aprobado', {
             lugar: result.lugar,
             timestamp: new Date().toISOString(),
             mensaje: '¡Tu lugar ha sido aprobado por un administrador!'
           });
         }
-        res.json({ mensaje: 'Lugar aprobado correctamente', lugar: result.lugar });
+
+        // Notificar a todos los usuarios (rol 4)
+        console.log('Enviando notificación a usuarios (rol 4)');
+        io.to('usuario-room').emit('nuevo-lugar-usuario', {
+          lugar: result.lugar,
+          timestamp: new Date().toISOString(),
+          mensaje: `Nuevo lugar disponible: ${result.lugar.nombre}`
+        });
+
+        res.json({ 
+          mensaje: 'Lugar aprobado correctamente', 
+          lugar: result.lugar,
+          notificaciones: {
+            propietario: userId ? 'Notificación enviada al propietario' : 'No se pudo notificar al propietario',
+            usuarios: 'Notificación enviada a todos los usuarios'
+          }
+        });
       } else {
-        // Notificar rechazo
+        // Notificar rechazo solo al propietario
         const userId = result.lugar.usuarioid || (result.lugar.usuario && result.lugar.usuario.id);
         if (userId) {
+          console.log('Enviando notificación de rechazo al propietario:', userId);
           io.to(`usuario-${userId}`).emit('lugar-rechazado', {
             lugar: result.lugar,
             timestamp: new Date().toISOString(),
             mensaje: 'Tu lugar no fue aprobado y ya no está activo'
           });
         }
-        res.json({ mensaje: 'Lugar no aprobado', lugar: result.lugar });
+        res.json({ 
+          mensaje: 'Lugar no aprobado', 
+          lugar: result.lugar,
+          notificaciones: {
+            propietario: userId ? 'Notificación de rechazo enviada al propietario' : 'No se pudo notificar al propietario'
+          }
+        });
       }
     } catch (error) {
       console.error("Error al aprobar el lugar:", error);
@@ -57,14 +91,20 @@ class PropietarioLugarController {
         const io = req.app.get('io');
         const userId = lugar.usuarioid || (lugar.usuario && lugar.usuario.id);
         if (userId) {
+          console.log('Enviando notificación de error al propietario:', userId);
           io.to(`usuario-${userId}`).emit('lugar-rechazado', {
             lugar,
             timestamp: new Date().toISOString(),
             mensaje: `Tu lugar no pudo ser aprobado: ${error.message}`
           });
         }
-      } catch (e) {}
-      res.status(400).json({ error: error.message });
+      } catch (e) {
+        console.error('Error al enviar notificación de error:', e);
+      }
+      res.status(400).json({ 
+        mensaje: "Error al aprobar el lugar",
+        error: error.message 
+      });
     }
   }
 
@@ -142,6 +182,9 @@ class PropietarioLugarController {
       try {
         const io = req.app.get('io');
         if (io) {
+          console.log('Enviando notificaciones de nuevo lugar...');
+          
+          // Notificar a administradores
           const adminPayload = {
             propietarioCorreo: req.usuario.correo,
             propietarioNombre: req.usuario.nombre || '',
@@ -152,21 +195,29 @@ class PropietarioLugarController {
           };
           
           io.to('admin-room').emit('nuevo-lugar-admin', adminPayload);
+          console.log('Notificación enviada a administradores');
           
+          // Notificar al propietario
           const propietarioSocket = `usuario-${req.usuario.id}`;
           io.to(propietarioSocket).emit('nuevo-lugar-propietario', {
             lugar: nuevoLugar,
             timestamp: new Date().toISOString(),
             mensaje: 'Tu lugar está en revisión'
           });
+          console.log('Notificación enviada al propietario');
+        } else {
+          console.log('Socket.IO no está disponible');
         }
       } catch (socketError) {
-        console.log('Socket no disponible:', socketError.message);
+        console.error('Error al enviar notificaciones:', socketError);
       }
 
       return res.status(201).json({
         mensaje: "Lugar creado con éxito",
-        lugar: nuevoLugar,
+        lugar: {
+          ...nuevoLugar.toJSON(),
+          fotos_lugar: nuevoLugar.fotos_lugar ? nuevoLugar.fotos_lugar.split(',') : []
+        }
       });
     } catch (error) {
       console.error("Error al crear lugar:", error);

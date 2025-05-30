@@ -42,6 +42,29 @@ class ComentarioController {
                 fecha_hora: new Date()
             });
 
+            // Obtener io para enviar notificaciones
+            const io = req.app.get('io');
+
+            // Obtener todos los usuarios que han comentado en este evento
+            const usuariosComentarios = await ComentarioService.obtenerUsuariosComentariosEvento(eventoid);
+
+            // Notificar solo a los usuarios que han comentado en el mismo evento
+            usuariosComentarios.forEach(usuario => {
+                if (usuario.id !== usuarioid) { // No notificar al usuario que hizo el comentario
+                    io.to(`usuario-${usuario.id}`).emit('nuevo-comentario-usuario', {
+                        evento: {
+                            id: eventoid,
+                            nombre: comentario.evento?.nombre || 'Evento'
+                        },
+                        comentario: {
+                            contenido: comentario.contenido,
+                            usuarioid: comentario.usuarioid
+                        },
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            });
+
             res.status(201).json({
                 mensaje: "Comentario creado exitosamente",
                 comentario
