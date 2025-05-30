@@ -130,6 +130,23 @@
         console.log('🔴 Notificación de rechazo:', data);
         add(`🚫 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
       });
+
+      // Nuevos eventos para usuarios (rol 4)
+      socket.on('nuevo-evento-usuario', data => {
+        console.log('EVENT nuevo-evento-usuario:', data);
+        add(`🎉 Nuevo evento: ${data.evento.nombre} en ${data.evento.lugar.nombre} (${data.timestamp})`);
+      });
+
+      socket.on('nuevo-lugar-usuario', data => {
+        console.log('EVENT nuevo-lugar-usuario:', data);
+        add(`🏠 Nuevo lugar disponible: ${data.lugar.nombre} (${data.timestamp})`);
+      });
+
+      socket.on('nuevo-comentario-usuario', data => {
+        console.log('EVENT nuevo-comentario-usuario:', data);
+        add(`💬 Nuevo comentario en ${data.evento.nombre}: ${data.comentario.contenido} (${data.timestamp})`);
+      });
+
       socket.on('connect_error', (err) => {
         add(`❌ Error de conexión: ${err.message}`);
       });
