@@ -3,11 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <title>Socket.IO Test</title>
-  <style>body{font-family:sans-serif;}#messages{list-style:none;padding:0;}#messages li{padding:4px;border-bottom:1px solid #ddd;}</style>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #messages {
+      list-style: none;
+      padding: 0;
+    }
+    #messages li {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 4px;
+    }
+    .user-info {
+      background: #e7f4ff;
+      padding: 1em;
+      margin-bottom: 1em;
+      border-radius: 4px;
+    }
+    .test-users {
+      background: #f0f0f0;
+      padding: 1em;
+      margin-bottom: 1em;
+      border-radius: 4px;
+    }
+    .test-users h3 {
+      margin-top: 0;
+    }
+    .test-users ul {
+      list-style: none;
+      padding: 0;
+    }
+    .test-users li {
+      margin-bottom: 8px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
 </head>
 <body>
   <h1>Socket.IO Notifications</h1>
+  
+  <div class="test-users">
+    <h3>Usuarios de Prueba</h3>
+    <ul>
+      <li>
+        <strong>Propietario (Rol 3):</strong><br>
+        Correo: propietario@test.com<br>
+        Contraseña: 123456<br>
+        ID: 3
+      </li>
+      <li>
+        <strong>Usuario (Rol 4):</strong><br>
+        Correo: usuario@test.com<br>
+        Contraseña: 123456<br>
+        ID: 4
+      </li>
+    </ul>
+  </div>
+
+  <div id="user-info" class="user-info"></div>
   <ul id="messages"></ul>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
     // Solicita el token JWT al usuario
@@ -20,6 +90,7 @@
       }
     }
     solicitarToken();
+
     // Decodifica el JWT solo para mostrar info (no para validar)
     function parseJwt(token) {
       try {
@@ -33,24 +104,42 @@
         return null;
       }
     }
+
     let payload = parseJwt(token);
     let usuarioid = null;
     let rol = null;
-    let userInfoDiv = null;
-    if (payload) {
-      usuarioid = payload.id;
-      rol = payload.rol;
-      userInfoDiv = document.createElement('div');
-      userInfoDiv.style.background = '#e7f4ff';
-      userInfoDiv.style.padding = '1em';
-      userInfoDiv.style.marginBottom = '1em';
-      userInfoDiv.id = 'user-info';
-      userInfoDiv.innerHTML = `Usuario: <b>${payload.correo || ''}</b> | Rol: <b>${payload.rol || ''}</b> | ID: <b>${payload.id || ''}</b> <button id='change-token'>Cambiar token</button>`;
-      document.body.insertBefore(userInfoDiv, document.body.firstChild);
+    let userInfoDiv = document.getElementById('user-info');
+
+    function actualizarInfoUsuario(payload) {
+      if (payload) {
+        usuarioid = payload.id;
+        rol = payload.rol;
+        userInfoDiv.innerHTML = `
+          <h3>Información del Usuario</h3>
+          <p><strong>Correo:</strong> ${payload.correo || 'No disponible'}</p>
+          <p><strong>Rol:</strong> ${getRolNombre(payload.rol)}</p>
+          <p><strong>ID:</strong> ${payload.id || 'No disponible'}</p>
+          <button id='change-token'>Cambiar Usuario</button>
+        `;
+      }
     }
+
+    function getRolNombre(rol) {
+      switch(rol) {
+        case 1: return 'Super Administrador';
+        case 2: return 'Administrador';
+        case 3: return 'Propietario';
+        case 4: return 'Usuario';
+        default: return 'Desconocido';
+      }
+    }
+
+    if (payload) {
+      actualizarInfoUsuario(payload);
+    }
+
     // Función para reconectar con nuevo token
     function reiniciarConexion(token) {
-      // Elimina listeners previos y desconecta el socket
       if (window.socket) {
         window.socket.off();
         window.socket.disconnect();
@@ -60,22 +149,10 @@
       });
       const socket = window.socket;
       payload = parseJwt(token);
-      usuarioid = payload ? payload.id : null;
-      rol = payload ? payload.rol : null;
-      if (document.getElementById('user-info')) {
-        document.getElementById('user-info').remove();
-      }
-      if (payload) {
-        userInfoDiv = document.createElement('div');
-        userInfoDiv.style.background = '#e7f4ff';
-        userInfoDiv.style.padding = '1em';
-        userInfoDiv.style.marginBottom = '1em';
-        userInfoDiv.id = 'user-info';
-        userInfoDiv.innerHTML = `Usuario: <b>${payload.correo || ''}</b> | Rol: <b>${payload.rol || ''}</b> | ID: <b>${payload.id || ''}</b> <button id='change-token'>Cambiar token</button>`;
-        document.body.insertBefore(userInfoDiv, document.body.firstChild);
-      }
+      actualizarInfoUsuario(payload);
       conectarSocket();
     }
+
     // Conecta usando el token JWT
     function conectarSocket() {
       if (!token) return;
@@ -84,12 +161,22 @@
       });
       window.socket = socket;
       const list = document.getElementById('messages');
-      function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}
+      function add(msg){ 
+        const li = document.createElement('li'); 
+        li.textContent = msg; 
+        list.appendChild(li);
+        // Mantener solo los últimos 50 mensajes
+        while (list.children.length > 50) {
+          list.removeChild(list.firstChild);
+        }
+      }
+
       socket.on('connect', () => {
         console.log(`✅ Conectado: ${socket.id}`);
-        // Unirse automáticamente a la sala correspondiente según el rol
-        // La suscripción a admin-room es automática desde el backend si el JWT es válido
+        add(`✅ Conectado al servidor (ID: ${socket.id})`);
+
         if ((rol === 1 || rol === '1' || rol === 2 || rol === '2') && !window._adminRoomSubscribed) {
+          socket.emit('join-admin-room', { rol });
           add('🔔 Suscrito a notificaciones de administrador (admin-room)');
           window._adminRoomSubscribed = true;
         }
@@ -101,6 +188,7 @@
             window._propRoomSubscribed = true;
           }
         }
+
         if (rol === 4 || rol === '4') {
           socket.emit('join-usuario-room', { rol });
           if (!window._userRoomSubscribed) {
@@ -109,29 +197,30 @@
           }
         }
       });
-      // Notificación para administradores
+
+      // Notificaciones para administradores
       socket.on('nuevo-lugar-admin', data => {
         console.log('EVENT nuevo-lugar-admin:', data);
-        // Mostrar correo y nombre del propietario y nombre del lugar
         add(`📍 ${data.mensaje}\nPropietario: ${data.propietarioCorreo}${data.propietarioNombre ? ' (' + data.propietarioNombre + ')' : ''}\nLugar: ${data.lugarNombre} (ID: ${data.lugarId})\n${data.timestamp}`);
       });
-      // Notificación específica para propietarios
+
+      // Notificaciones para propietarios
       socket.on('nuevo-lugar-propietario', data => {
         console.log('EVENT nuevo-lugar-propietario:', data);
         add(`✅ ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
       });
-      // Notificación de lugar aprobado (propietario)
+
       socket.on('lugar-aprobado', data => {
         console.log('EVENT lugar-aprobado:', data);
         add(`🎉 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
       });
-      // Notificación de lugar rechazado (propietario)
+
       socket.on('lugar-rechazado', data => {
         console.log('🔴 Notificación de rechazo:', data);
         add(`🚫 ${data.mensaje}: ${data.lugar.nombre} (${data.timestamp})`);
       });
 
-      // Nuevos eventos para usuarios (rol 4)
+      // Notificaciones para usuarios
       socket.on('nuevo-evento-usuario', data => {
         console.log('EVENT nuevo-evento-usuario:', data);
         add(`🎉 Nuevo evento: ${data.evento.nombre} en ${data.evento.lugar.nombre} (${data.timestamp})`);
@@ -151,15 +240,15 @@
         add(`❌ Error de conexión: ${err.message}`);
       });
     }
+
     conectarSocket();
+
     // Botón para cambiar token
     document.addEventListener('click', function(e){
       if (e.target && e.target.id === 'change-token') {
-        // Limpia los mensajes de suscripción previos
         window._adminRoomSubscribed = false;
         window._propRoomSubscribed = false;
         window._userRoomSubscribed = false;
-        // Elimina listeners previos y desconecta el socket
         if (window.socket) {
           window.socket.off();
           window.socket.disconnect();
@@ -168,11 +257,6 @@
         reiniciarConexion(token);
       }
     });
-    // --- Fin de frontend robusto para pruebas de notificaciones ---
-    const list = document.getElementById('messages');
-    function add(msg){ const li = document.createElement('li'); li.textContent = msg; list.appendChild(li);}
-    // Los listeners de eventos SOLO deben agregarse aquí, dentro de conectarSocket, y nunca fuera ni duplicados.
-
   </script>
 </body>
 </html>

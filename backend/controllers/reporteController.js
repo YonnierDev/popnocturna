@@ -179,7 +179,23 @@ class ReporteController {
             });
         } catch (error) {
             console.error('Error en actualizarEstadoLugar:', error);
-            res.status(500).json({ mensaje: "Error al actualizar el estado del lugar" });
+            // Manejar errores específicos
+            if (error.message === 'Este lugar no existe') {
+                return res.status(404).json({ 
+                    mensaje: error.message,
+                    error: "El lugar que intentas actualizar no existe"
+                });
+            }
+            if (error.message === 'Este lugar ya está aprobado' || error.message === 'Este lugar ya está rechazado') {
+                return res.status(400).json({ 
+                    mensaje: error.message,
+                    error: "No se puede realizar la operación solicitada"
+                });
+            }
+            res.status(500).json({ 
+                mensaje: "Error al actualizar el estado del lugar",
+                error: error.message 
+            });
         }
     }
 

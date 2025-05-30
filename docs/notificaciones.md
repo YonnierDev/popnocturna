@@ -64,9 +64,55 @@ socket.on('nueva-calificacion-usuario', (data) => {
 });
 ```
 
-## 2. Implementación en el Frontend
+## 2. Eventos Disponibles para Propietarios (Rol 3)
 
-### 2.1 Conexión Básica
+### 2.1 Aprobación de Lugar
+```javascript
+socket.on('lugar-aprobado', (data) => {
+  // data = {
+  //   lugar: {
+  //     id: number,
+  //     nombre: string
+  //   },
+  //   timestamp: string,
+  //   mensaje: "¡Tu lugar ha sido aprobado!"
+  // }
+});
+```
+
+### 2.2 Rechazo de Lugar
+```javascript
+socket.on('lugar-rechazado', (data) => {
+  // data = {
+  //   lugar: {
+  //     id: number,
+  //     nombre: string
+  //   },
+  //   timestamp: string,
+  //   mensaje: "Tu lugar no fue aprobado"
+  // }
+});
+```
+
+## 3. Eventos Disponibles para Administradores (Roles 1 y 2)
+
+### 3.1 Nuevos Lugares Pendientes
+```javascript
+socket.on('nuevo-lugar-admin', (data) => {
+  // data = {
+  //   lugar: {
+  //     id: number,
+  //     nombre: string
+  //   },
+  //   timestamp: string,
+  //   mensaje: "Nuevo lugar pendiente de aprobación"
+  // }
+});
+```
+
+## 4. Implementación en el Frontend
+
+### 4.1 Conexión Básica
 ```javascript
 import { io } from 'socket.io-client';
 
@@ -85,7 +131,24 @@ socket.on('connect_error', (error) => {
 });
 ```
 
-### 2.2 Manejo de Notificaciones
+### 4.2 Unirse a las Salas
+
+#### Para Propietarios
+```javascript
+socket.emit('join', { usuarioid: id });
+```
+
+#### Para Usuarios
+```javascript
+socket.emit('join-usuario-room', { rol: 4 });
+```
+
+#### Para Administradores
+```javascript
+socket.emit('join-admin-room', { rol: 1 }); // o rol: 2
+```
+
+### 4.3 Manejo de Notificaciones
 ```javascript
 // Ejemplo de manejo de notificaciones
 socket.on('nuevo-lugar-usuario', (data) => {
@@ -120,19 +183,46 @@ socket.on('nueva-calificacion-usuario', (data) => {
     tipo: 'calificacion'
   });
 });
+
+// Para propietarios
+socket.on('lugar-aprobado', (data) => {
+  mostrarNotificacion({
+    titulo: 'Lugar Aprobado',
+    mensaje: data.mensaje,
+    tipo: 'aprobacion'
+  });
+});
+
+socket.on('lugar-rechazado', (data) => {
+  mostrarNotificacion({
+    titulo: 'Lugar Rechazado',
+    mensaje: data.mensaje,
+    tipo: 'rechazo'
+  });
+});
+
+// Para administradores
+socket.on('nuevo-lugar-admin', (data) => {
+  mostrarNotificacion({
+    titulo: 'Nuevo Lugar Pendiente',
+    mensaje: data.mensaje,
+    tipo: 'pendiente'
+  });
+});
 ```
 
-## 3. Consideraciones Importantes
+## 5. Consideraciones Importantes
 
 1. **Autenticación**: Siempre incluir el token JWT en la conexión
 2. **Reconexión**: El cliente se reconectará automáticamente si pierde la conexión
 3. **Notificaciones Específicas**: 
    - Los comentarios solo se reciben si has comentado en el mismo evento
    - Las calificaciones solo se reciben si has calificado el mismo evento
+   - Las notificaciones de propietarios son personalizadas por usuario
 
-## 4. Detalles Técnicos del Backend (Para Referencia)
+## 6. Detalles Técnicos del Backend
 
-### 4.1 Configuración
+### 6.1 Configuración
 ```javascript
 const io = new Server(server, {
   cors: {
@@ -143,14 +233,15 @@ const io = new Server(server, {
 });
 ```
 
-### 4.2 Salas (Rooms)
+### 6.2 Salas (Rooms)
 - `admin-room`: Para administradores (roles 1 y 2)
 - `usuario-${userId}`: Para propietarios (rol 3)
 - `usuario-room`: Para usuarios normales (rol 4)
 
-### 4.3 Seguridad
+### 6.3 Seguridad
 1. Todas las conexiones deben ser autenticadas
 2. Los eventos son específicos por rol
 3. Las notificaciones se envían solo a las salas correspondientes
 4. Se implementa rate limiting para prevenir abusos
 5. Las notificaciones de comentarios y calificaciones son específicas para usuarios que han interactuado con el mismo evento
+6. Las notificaciones de propietarios son personalizadas por usuario para mantener la privacidad

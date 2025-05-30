@@ -134,15 +134,34 @@ class ReporteService {
 
     async actualizarEstadoLugar(id, estado) {
         try {
+            console.log('=== Inicio actualizarEstadoLugar ===');
+            console.log('ID del lugar:', id);
+            console.log('Estado a actualizar:', estado);
+
             const lugar = await Lugar.findByPk(id);
             if (!lugar) {
-                throw new Error('Lugar no encontrado');
+                throw new Error('Este lugar no existe');
             }
 
+            // Si el lugar ya está aprobado y se intenta aprobar de nuevo
+            if (lugar.aprobacion === true && estado === true) {
+                throw new Error('Este lugar ya está aprobado');
+            }
+
+            // Si el lugar ya está rechazado y se intenta rechazar de nuevo
+            if (lugar.aprobacion === false && estado === false) {
+                throw new Error('Este lugar ya está rechazado');
+            }
+
+            console.log('Estado actual del lugar:', lugar.aprobacion);
+            console.log('Actualizando a:', estado);
+
             const actualizado = await lugar.update({
-                aprobacion: estado
+                aprobacion: estado,
+                estado: estado
             });
 
+            console.log('Lugar actualizado:', actualizado.toJSON());
             return actualizado;
         } catch (error) {
             console.error('Error al actualizar estado del lugar:', error);

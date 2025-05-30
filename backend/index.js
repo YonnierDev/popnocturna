@@ -77,6 +77,28 @@ app.set('io', io);
 io.on("connection", (socket) => {
   console.log("Cliente conectado:", socket.id);
 
+  // Manejar unirse a sala de usuario
+  socket.on("join", ({ usuarioid }) => {
+    console.log(`Usuario ${usuarioid} uniéndose a sala usuario-${usuarioid}`);
+    socket.join(`usuario-${usuarioid}`);
+  });
+
+  // Manejar unirse a sala de usuarios (rol 4)
+  socket.on("join-usuario-room", ({ rol }) => {
+    if (rol === 4) {
+      console.log(`Usuario con rol ${rol} uniéndose a sala usuario-room`);
+      socket.join('usuario-room');
+    }
+  });
+
+  // Manejar unirse a sala de administradores
+  socket.on("join-admin-room", ({ rol }) => {
+    if (rol === 1 || rol === 2) {
+      console.log(`Usuario con rol ${rol} uniéndose a sala admin-room`);
+      socket.join('admin-room');
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("Cliente desconectado:", socket.id);
   });
