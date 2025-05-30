@@ -72,7 +72,7 @@ class UsuarioService {
 
   async buscarUsuario(id) {
     return await Usuario.findByPk(id, {
-      attributes: ['nombre', 'apellido', 'correo'],
+      attributes: ['id', 'nombre', 'apellido', 'correo', 'contrasena'],
       include: [
         {
           model: Rol,

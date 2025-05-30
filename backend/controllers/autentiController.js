@@ -1,33 +1,15 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const AutentiService = require("../service/autentiService");
+
 class AutentiController {
   static async registrar(req, res) {
     try {
-      console.log('\n=== Inicio de registro de usuario ===');
-      console.log('Datos recibidos:', req.body);
-      
       const datos = req.body;
-      
-      // Si no se proporciona rol, se asignará automáticamente el rol 4
-      if (!datos.rolid) {
-        console.log('No se proporcionó rol, se asignará rol 4 por defecto');
-      }
-
-      console.log('Intentando registrar usuario');
-      
       const resultado = await AutentiService.registrarUsuario(datos);
-      console.log('Usuario registrado exitosamente:', resultado);
-      
       res.status(201).json(resultado);
     } catch (error) {
-      console.error('\n=== Error en registro de usuario ===');
-      console.error('Error completo:', error);
-      console.error('Stack trace:', error.stack);
-      
-      // Manejo específico para errores de llave foránea
       if (error.message.includes('foreign key constraint fails')) {
-        console.error('Error de llave foránea detectado');
         return res.status(400).json({
           mensaje: "Error al crear el usuario",
           error: "Rol no válido",
@@ -35,15 +17,9 @@ class AutentiController {
           rolid: req.body.rolid
         });
       }
-
       const mensaje = error.message || "Error desconocido";
       const errores = error.errors || null;
-  
-      res.status(400).json({
-        mensaje,
-        errores,
-        detalles: "Error al procesar el registro"
-      });
+      res.status(400).json({ mensaje, errores, detalles: "Error al procesar el registro" });
     }
   }
   
@@ -109,28 +85,58 @@ class AutentiController {
 
   static async actualizarContrasena(req, res) {
     try {
-      const { token, nuevaContrasena, confirmarContrasena } = req.body;
-      if(!nuevaContrasena || !confirmarContrasena) {
-        return res.status(400).json({ mensaje: "Ambas contrasenas son obligatorias" });
+      const { nuevaContrasena, confirmarContrasena } = req.body;
+      
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ mensaje: "Token de autorización no proporcionado" });
       }
+      const token = authHeader.split(' ')[1];
+      
+      if (!nuevaContrasena || !confirmarContrasena) {
+        return res.status(400).json({ mensaje: "Ambos campos de contraseña son obligatorios" });
+      }
+
       if (nuevaContrasena !== confirmarContrasena) {
-        return res.status(400).json({ mensaje: "Las contrasenas no coinciden" });
+        return res.status(400).json({ mensaje: "Las contraseñas no coinciden" });
       }
-      const contrasenavalida = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/;
-      if (!contrasenavalida.test(nuevaContrasena)) {
-        return res.status(400).json({ mensaje: "Contraseña insegura" });
+
+      const validacionContrasena = AutentiService.validarContrasena(nuevaContrasena);
+      if (validacionContrasena !== true) {
+        return res.status(400).json({ mensaje: validacionContrasena });
       }
 
       const secret = process.env.JWT_SECRET;
       const decoded = jwt.verify(token, secret);  
       const id = decoded.id;
 
-      const nuevaHash = await bcrypt.hash(nuevaContrasena, 10);
+      const usuario = await AutentiService.buscarUsuarioPorId(id);
+      if (!usuario) {
+        return res.status(404).json({ mensaje: "Usuario no encontrado" });
+      }
 
+      if (!usuario.contrasena) {
+        return res.status(400).json({ mensaje: "No se encontró la contraseña actual del usuario" });
+      }
+
+      const esMismaContrasena = await bcrypt.compare(nuevaContrasena, usuario.contrasena);
+      if (esMismaContrasena) {
+        return res.status(400).json({ mensaje: "La nueva contraseña no puede ser igual a la actual" });
+      }
+
+      const nuevaHash = await bcrypt.hash(nuevaContrasena, 10);
       const resultado = await AutentiService.actualizarContrasena(id, nuevaHash);
       res.json(resultado);
     } catch (error) {
-      console.error("Error al actualizar contraseña",error);
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({ mensaje: "Token inválido" });
+      }
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ mensaje: "El enlace de recuperación ha expirado" });
+      }
+      if (error.message.includes('data and hash arguments required')) {
+        return res.status(400).json({ mensaje: "Error al verificar la contraseña actual" });
+      }
       res.status(400).json({ mensaje: error.message });
     }
   }
@@ -138,20 +144,13 @@ class AutentiController {
   static async reenviarCodigo(req, res) {
     try {
       const { correo } = req.body;
-      
       if (!correo) {
-        return res.status(400).json({
-          mensaje: "El correo es requerido"
-        });
+        return res.status(400).json({ mensaje: "El correo es requerido" });
       }
-
       const resultado = await AutentiService.reenviarCodigo(correo);
       res.json(resultado);
     } catch (error) {
-      console.error('Error al reenviar código:', error);
-      res.status(400).json({
-        mensaje: error.message
-      });
+      res.status(400).json({ mensaje: error.message });
     }
   }
 }

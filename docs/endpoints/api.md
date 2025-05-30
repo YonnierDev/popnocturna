@@ -31,6 +31,32 @@ POST /api/registrar
   - Si se intenta registrar un correo ya validado, se recibirá un error
   - Los datos se guardan temporalmente hasta la validación
 
+### Actualizar Contraseña
+```http
+PATCH /api/actualizar-contrasena
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+  ```json
+  {
+    "nuevaContrasena": "string",
+    "confirmarContrasena": "string"
+  }
+  ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Contraseña actualizada correctamente"
+  }
+  ```
+- **Códigos de Error**:
+  - `400`: "Las contraseñas no coinciden"
+  - `400`: "La nueva contraseña no puede ser igual a la actual"
+  - `400`: "Error al verificar la contraseña actual"
+  - `401`: "Token inválido"
+  - `401`: "El enlace de recuperación ha expirado"
+  - `404`: "Usuario no encontrado"
+
 ### Reenvío de Código de Verificación
 ```http
 POST /api/reenviar-codigo
