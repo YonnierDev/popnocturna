@@ -139,21 +139,16 @@ class CalificacionController {
 
   async crearCalificacion(req, res) {
     try {
-      console.log('=== Inicio crearCalificacion ===');
       const { rol: rolid, id: usuarioid } = req.usuario;
       const { eventoid, puntuacion } = req.body;
 
-      console.log('Datos recibidos:', { rolid, usuarioid, eventoid, puntuacion });
-
       // Validar que la puntuación esté entre 1 y 5
       if (puntuacion < 1 || puntuacion > 5) {
-        console.log('Error: La puntuación debe estar entre 1 y 5');
         return res.status(400).json({ error: "La puntuación debe estar entre 1 y 5" });
       }
 
       // Propietarios no pueden crear calificaciones
       if (rolid === 3) {
-        console.log('Error: Los propietarios no pueden crear calificaciones');
         return res.status(403).json({ error: "Los propietarios no pueden crear calificaciones" });
       }
 
@@ -164,10 +159,29 @@ class CalificacionController {
         estado: true
       });
 
-      console.log('Calificación creada exitosamente');
-      // Emitir socket al crear nueva calificación
+      // Obtener io para enviar notificaciones
       const io = req.app.get('io');
-      io.emit('nueva-calificacion', nuevaCalificacion);
+
+      // Obtener todos los usuarios que han calificado este evento
+      const usuariosCalificaciones = await CalificacionService.obtenerUsuariosCalificacionesEvento(eventoid);
+
+      // Notificar solo a los usuarios que han calificado el mismo evento
+      usuariosCalificaciones.forEach(usuario => {
+        if (usuario.id !== usuarioid) { // No notificar al usuario que hizo la calificación
+          io.to(`usuario-${usuario.id}`).emit('nueva-calificacion-usuario', {
+            evento: {
+              id: eventoid,
+              nombre: nuevaCalificacion.evento?.nombre || 'Evento'
+            },
+            calificacion: {
+              puntuacion: nuevaCalificacion.puntuacion,
+              usuarioid: nuevaCalificacion.usuarioid
+            },
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+
       res.status(201).json(nuevaCalificacion);
     } catch (error) {
       console.error("Error al crear calificación:", error);

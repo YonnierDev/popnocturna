@@ -88,7 +88,7 @@ class EventoService {
         { 
           model: Lugar, 
           as: "lugar",
-          attributes: ['id', 'nombre', 'direccion', 'ciudad', 'pais']
+          attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
         },
         { 
           model: Comentario, 

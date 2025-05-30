@@ -348,6 +348,7 @@ class LugarController {
 
   async cambiarEstado(req, res) {
     try {
+      console.log('=== Inicio cambiarEstado ===');
       const { rol } = req.usuario;
       
       if (!rol) {
@@ -368,6 +369,8 @@ class LugarController {
       const { id } = req.params;
       const { estado } = req.body;
 
+      console.log('Parámetros recibidos:', { id, estado });
+
       if (!id) {
         return res.status(400).json({
           mensaje: "Error de validación",
@@ -383,7 +386,9 @@ class LugarController {
         });
       }
 
+      console.log('Intentando actualizar estado...');
       const actualizados = await LugarService.actualizarEstado(id, estado);
+      console.log('Resultado de actualización:', actualizados);
 
       if (actualizados[0] === 0) {
         const existe = await LugarService.buscarLugar(id);
@@ -400,11 +405,51 @@ class LugarController {
         });
       }
 
+      console.log('Buscando lugar actualizado...');
       const lugar = await LugarService.buscarLugar(id, true);
+      console.log('Lugar encontrado:', lugar);
+      
+      // Obtener io para enviar notificaciones
+      const io = req.app.get('io');
+
+      // Si el lugar fue aprobado, notificar a los usuarios
+      if (lugar.aprobacion) {
+        console.log('Enviando notificaciones...');
+        
+        // Notificar al propietario del lugar (rol 3)
+        console.log('Enviando notificación al propietario:', lugar.usuarioid);
+        io.to(`usuario-${lugar.usuarioid}`).emit('lugar-aprobado', {
+          lugar: lugar,
+          timestamp: new Date().toISOString(),
+          mensaje: '¡Tu lugar ha sido aprobado!'
+        });
+
+        // Notificar a usuarios (rol 4)
+        console.log('Enviando notificación a usuarios (rol 4)');
+        io.to('usuario-room').emit('nuevo-lugar-usuario', {
+          lugar: lugar,
+          timestamp: new Date().toISOString(),
+          mensaje: `Nuevo lugar disponible: ${lugar.nombre}`
+        });
+        
+        console.log('Notificaciones enviadas');
+      } else {
+        // Notificar rechazo al propietario
+        console.log('Enviando notificación de rechazo al propietario:', lugar.usuarioid);
+        io.to(`usuario-${lugar.usuarioid}`).emit('lugar-rechazado', {
+          lugar: lugar,
+          timestamp: new Date().toISOString(),
+          mensaje: 'Tu lugar no fue aprobado y ya no está activo'
+        });
+      }
+
       res.json({ 
-        mensaje: 'Estado actualizado', 
+        mensaje: lugar.aprobacion ? 'aprobado' : 'rechazado', 
         lugar,
-        detalles: `El lugar ha sido ${estado ? 'activado' : 'desactivado'}`
+        notificaciones: {
+          propietario: 'Notificación enviada al propietario',
+          usuarios: lugar.aprobacion ? 'Notificación enviada a todos los usuarios' : 'No se requiere notificación a usuarios'
+        }
       });
     } catch (error) {
       console.error('Error en cambiarEstado:', error);
@@ -416,6 +461,54 @@ class LugarController {
       });
     }
   }
+
+  async listarLugaresPublicos(req, res) {
+    try {
+      const lugares = await LugarService.listarLugaresUsuario();
+      
+      if (!lugares || lugares.length === 0) {
+        return res.status(404).json({ 
+          mensaje: "No se encontraron lugares disponibles",
+          detalles: "No hay lugares aprobados y activos en este momento"
+        });
+      }
+
+      // Formatear la respuesta para incluir las fotos
+      const lugaresFormateados = lugares.map(lugar => ({
+        id: lugar.id,
+        nombre: lugar.nombre,
+        descripcion: lugar.descripcion,
+        ubicacion: lugar.ubicacion,
+        imagen: lugar.imagen,
+        fotos_lugar: lugar.fotos_lugar ? lugar.fotos_lugar.split(',') : [],
+        categoria: lugar.categoria ? {
+          id: lugar.categoria.id,
+          tipo: lugar.categoria.tipo
+        } : null,
+        eventos: lugar.eventos ? lugar.eventos.map(evento => ({
+          id: evento.id,
+          nombre: evento.nombre,
+          descripcion: evento.descripcion,
+          fecha_hora: evento.fecha_hora,
+          imagen: evento.imagen
+        })) : []
+      }));
+
+      res.status(200).json({
+        mensaje: "Lugares obtenidos correctamente",
+        lugares: lugaresFormateados
+      });
+    } catch (error) {
+      console.error('Error en listarLugaresPublicos:', error);
+      res.status(500).json({ 
+        mensaje: "Error al listar lugares", 
+        error: error.message,
+        tipo: error.name,
+        detalles: "Error interno del servidor al procesar la solicitud"
+      });
+    }
+  }
+
 }
 
 module.exports = new LugarController();

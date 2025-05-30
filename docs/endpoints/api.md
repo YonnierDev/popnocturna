@@ -942,7 +942,51 @@ GET /public/eventos
 GET /api/eventos
 ```
 - **Headers**: `Authorization: Bearer {token}`
-- **Query Parameters**: Igual que eventos públicos
+- **Query Parameters**:
+  - `page`: número de página (por defecto: 1)
+  - `limit`: elementos por página (por defecto: 10)
+  - `fechaDesde`: filtro por fecha inicial (opcional)
+  - `fechaHasta`: filtro por fecha final (opcional)
+- **Redirección por Rol**:
+  - **Roles 1,2 (Admin/SuperAdmin)**: Ve todos los eventos sin restricción de estado
+  - **Rol 3 (Propietario)**: Ve solo eventos activos de sus lugares
+  - **Rol 4 (Usuario)**: Ve solo eventos activos
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Eventos obtenidos correctamente",
+    "datos": [
+      {
+        "id": "number",
+        "nombre": "string",
+        "descripcion": "string",
+        "fecha_hora": "date",
+        "estado": "boolean",
+        "lugar": {
+          "id": "number",
+          "nombre": "string",
+          "ubicacion": "string",
+          "descripcion": "string"
+        },
+        "comentarios": [
+          {
+            "id": "number",
+            "contenido": "string",
+            "fecha_hora": "date",
+            "usuario": {
+              "id": "number",
+              "nombre": "string"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  ```
+- **Notas**:
+  - Los eventos se ordenan por fecha_hora de forma descendente
+  - Los comentarios incluidos son solo los que tienen estado activo
+  - La información del lugar varía según el rol del usuario
 
 ## Notificaciones
 
