@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   Calificacion.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       usuarioid: {
         type: DataTypes.INTEGER,
       },
@@ -37,6 +41,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Calificacion",
       tableName: "calificaciones",
+      paranoid: true,
+      timestamps: true,
     }
   );
   return Calificacion;

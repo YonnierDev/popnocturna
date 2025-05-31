@@ -24,6 +24,10 @@ module.exports = (sequelize) => {
 
   Lugar.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -82,6 +86,8 @@ module.exports = (sequelize) => {
       sequelize,
       modelName: "Lugar",
       tableName: "lugares",
+      paranoid: true,
+      timestamps: true,
       timestamps: true,
     }
   );

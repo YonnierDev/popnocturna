@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Comentario.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       usuarioid: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -52,6 +56,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Comentario",
       tableName: "comentarios",
+      paranoid: true,
+      timestamps: true,
     }
   );
 

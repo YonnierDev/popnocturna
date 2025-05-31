@@ -34,6 +34,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Evento.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       lugarid: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -76,6 +80,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Evento",
       tableName: "eventos",
+      paranoid: true,
+      timestamps: true,
     }
   );
 

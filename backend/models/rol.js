@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   Rol.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       nombre: {
         type: DataTypes.STRING,
         unique: true,
@@ -28,6 +32,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Rol",
       tableName: "rols",
+      paranoid: true,
+      timestamps: true,
     }
   );
   return Rol;

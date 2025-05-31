@@ -39,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Usuario.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       nombre: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -97,6 +101,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Usuario",
       tableName: "usuarios",
+      paranoid: true,
+      timestamps: true,
     }
   );
 

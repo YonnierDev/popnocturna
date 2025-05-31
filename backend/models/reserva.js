@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Reserva.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       usuarioid: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -48,6 +52,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Reserva",
       tableName: "reservas",
+      paranoid: true,
+      timestamps: true,
     }
   );
 

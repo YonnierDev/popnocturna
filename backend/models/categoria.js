@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
   
   Categoria.init(
     {
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -40,6 +44,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Categoria",
       tableName: "categorias",
+      paranoid: true,
+      timestamps: true,
     }
   );
   return Categoria;
