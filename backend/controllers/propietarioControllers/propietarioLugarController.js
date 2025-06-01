@@ -212,12 +212,17 @@ class PropietarioLugarController {
         console.error('Error al enviar notificaciones:', socketError);
       }
 
+      // Aseguramos que fotos_lugar sea un array
+      const lugarResponse = nuevoLugar.toJSON();
+      if (lugarResponse.fotos_lugar && typeof lugarResponse.fotos_lugar === 'string') {
+        lugarResponse.fotos_lugar = lugarResponse.fotos_lugar.split(',');
+      } else if (!lugarResponse.fotos_lugar) {
+        lugarResponse.fotos_lugar = [];
+      }
+      
       return res.status(201).json({
         mensaje: "Lugar creado con éxito",
-        lugar: {
-          ...nuevoLugar.toJSON(),
-          fotos_lugar: nuevoLugar.fotos_lugar ? nuevoLugar.fotos_lugar.split(',') : []
-        }
+        lugar: lugarResponse
       });
     } catch (error) {
       console.error("Error al crear lugar:", error);

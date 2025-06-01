@@ -1,6 +1,30 @@
-const { Lugar, Evento } = require("../../models");
+const { Lugar, Evento, Reserva, Usuario } = require("../../models");
 
 class PropietarioEventoReservaService {
+  async obtenerLugaresConEventos(usuarioid) {
+    try {
+      const lugares = await Lugar.findAll({
+        where: { 
+          usuarioid,
+          estado: true,
+          aprobacion: true 
+        },
+        include: [
+          {
+            model: Evento,
+            as: 'eventos',
+            where: { estado: true },
+            required: false
+          }
+        ]
+      });
+      
+      return lugares;
+    } catch (error) {
+      console.error('Error en obtenerLugaresConEventos:', error);
+      throw new Error('Error al obtener los lugares con eventos');
+    }
+  }
   async obtenerReservasEventoLugar(usuarioid) {
     try {
       const reservas = await Reserva.findAll({
@@ -32,7 +56,8 @@ class PropietarioEventoReservaService {
   
       return reservas;
     } catch (error) {
-      return "Error al obtener las reservas del propietario: " + error.message;
+      console.error('Error en obtenerReservasEventoLugar:', error);
+      throw new Error("Error al obtener las reservas del propietario: " + error.message);
     }
   }
   

@@ -199,6 +199,108 @@ POST /auth/login
   - "Error al enviar el correo de verificación"
   - "Error al crear el usuario"
 
+## Lugares
+
+### Crear un Lugar
+```http
+POST /propietario/lugar
+```
+- **Headers**: 
+  - `Authorization: Bearer {token}`
+  - `Content-Type: multipart/form-data`
+- **Body (form-data)**:
+  - `categoriaid` (required): ID de la categoría del lugar
+  - `nombre` (required): Nombre del lugar
+  - `descripcion` (required): Descripción del lugar
+  - `ubicacion` (required): Dirección del lugar
+  - `imagen` (required): Imagen principal del lugar (archivo)
+  - `fotos_lugar` (optional): Fotos adicionales del lugar (múltiples archivos)
+  - `carta_pdf` (optional): Carta en formato PDF (archivo)
+
+- **Respuesta Exitosa (201)**:
+  ```json
+  {
+    "mensaje": "Lugar creado con éxito",
+    "lugar": {
+      "fotos_lugar": [
+        "https://res.cloudinary.com/popaimagen/image/upload/v1748815345/lugares/lugar-1748815345923-0.8008296484217092.avif",
+        "https://res.cloudinary.com/popaimagen/image/upload/v1748815345/lugares/lugar-1748815345924-0.9844225737616896.jpg"
+      ],
+      "id": 20,
+      "usuarioid": 3,
+      "categoriaid": "4",
+      "nombre": "pruba 2",
+      "descripcion": "notificaciones",
+      "ubicacion": "Cl. 18 Nte. # 12-14",
+      "imagen": "https://res.cloudinary.com/popaimagen/image/upload/v1748815344/lugares/lugar-1748815344374.jpg",
+      "carta_pdf": "https://res.cloudinary.com/popaimagen/raw/upload/v1748815346/documentos/carta-1748815346699.pdf",
+      "estado": false,
+      "aprobacion": false,
+      "updatedAt": "2025-06-01T22:02:27.766Z",
+      "createdAt": "2025-06-01T22:02:27.766Z"
+    }
+  }
+  ```
+
+- **Códigos de Error**:
+  - `400`: Datos de entrada inválidos o faltantes
+  - `401`: No autenticado
+  - `403`: No tiene permisos para crear lugares
+  - `500`: Error al procesar la solicitud
+
+### Listar Lugares
+```http
+GET /api/lugares
+```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "lugares": [
+      {
+        "id": 1,
+        "nombre": "Lugar 1",
+        "direccion": "Dirección 1",
+        "categoria": "Categoría 1"
+      }
+    ]
+  }
+  ```
+
+### Eliminar Lugar
+```http
+DELETE /api/lugar/:id
+```
+
+### Actualizar Lugar
+```http
+PUT /api/lugar/:id
+```
+- **Headers**: `Authorization: Bearer {token}`
+- **Body**:
+  ```json
+  {
+    "usuarioid": "number",
+    "categoriaid": "number",
+    "nombre": "string",
+    "descripcion": "string",
+    "ubicacion": "string",
+    "imagen": "file (opcional)"
+  }
+  ```
+- **Respuesta Exitosa**:
+  ```json
+  {
+    "mensaje": "Lugar actualizado con éxito",
+    "lugar": {
+      "id": 1,
+      "nombre": "Nombre Actualizado",
+      "descripcion": "Descripción actualizada",
+      "ubicacion": "Nueva ubicación",
+      "imagen": "url_imagen",
+      "estado": true
+    }
+  ```
+
 ## Notas de Seguridad
 
 1. **Contraseñas**:

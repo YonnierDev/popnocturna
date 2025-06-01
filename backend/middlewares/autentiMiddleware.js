@@ -18,7 +18,11 @@ const autentiMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Token decodificado:', decoded);
     
-    req.usuario = decoded;
+    // Asegurarse de que el ID del usuario esté disponible como usuarioid para consistencia
+    req.usuario = {
+      ...decoded,
+      usuarioid: decoded.id || decoded.usuarioid
+    };
     console.log('Usuario asignado a req:', req.usuario);
     
     next();
