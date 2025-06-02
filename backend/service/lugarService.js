@@ -29,7 +29,7 @@ class LugarService {
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "descripcion"], 
+          attributes: ["nombre","portada","fecha_hora", "descripcion"], 
         },
       ],
     });
@@ -56,7 +56,7 @@ class LugarService {
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "descripcion"], 
+          attributes: ["nombre", "portada", "fecha_hora", "descripcion"], 
         },
       ],
     });
@@ -80,53 +80,49 @@ class LugarService {
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "fecha_hora"],
+          attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
         },
       ],
     });
   }
 
   async buscarLugarPropietario(id, usuarioid) {
-    return await Lugar.findOne({
+    const lugar = await Lugar.findOne({
       where: { 
         id,
-        usuarioid,
-        estado: true,
-        aprobacion: true
+        usuarioid
       },
       include: [
         {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["nombre", "correo"],
-        },
-        {
-          model: Categoria,
-          as: "categoria",
-          attributes: ["tipo"],
-        },
-        {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "fecha_hora"],
-        },
-      ],
+          attributes: ["id", "portada", "nombre", "fecha_hora", "descripcion", "precio", "capacidad"],
+          where: { estado: true },
+          required: false,
+          order: [['fecha_hora', 'DESC']]
+        }
+      ]
     });
+
+    if (!lugar) {
+      throw new Error("Lugar no encontrado o no tienes permiso para verlo");
+    }
+
+    if (!lugar.estado) {
+      throw new Error("Este lugar está actualmente inactivo");
+    }
+
+    if (!lugar.aprobacion) {
+      throw new Error("Este lugar está pendiente de aprobación");
+    }
+
+    return lugar;
   }
 
   async buscarLugarUsuario(id) {
-    return await Lugar.findOne({
-      where: { 
-        id,
-        estado: true,
-        aprobacion: true
-      },
+    const lugar = await Lugar.findOne({
+      where: { id },
       include: [
-        {
-          model: Usuario,
-          as: "usuario",
-          attributes: ["nombre", "correo"],
-        },
         {
           model: Categoria,
           as: "categoria",
@@ -135,10 +131,26 @@ class LugarService {
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "fecha_hora"],
+          attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
+          where: { estado: true },
+          required: false
         },
       ],
     });
+
+    if (!lugar) {
+      throw new Error("Lugar no encontrado");
+    }
+
+    if (!lugar.estado) {
+      throw new Error("Este lugar está actualmente inactivo");
+    }
+
+    if (!lugar.aprobacion) {
+      throw new Error("Este lugar está pendiente de aprobación");
+    }
+
+    return lugar;
   }
 
   async crearLugar(dataLugar) {
@@ -219,6 +231,33 @@ class LugarService {
 
   async verificarCategoria(categoriaid) {
     return await Categoria.findByPk(categoriaid);
+  }
+
+  async listarLugaresUsuario() {
+    return await Lugar.findAll({
+      where: {
+        estado: true,
+        aprobacion: true
+      },
+      include: [
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["tipo"],
+        }
+      ],
+      attributes: [
+        'id',
+        'nombre',
+        'descripcion',
+        'ubicacion',
+        'imagen',
+        'fotos_lugar',
+        'categoriaid',
+        'createdAt',
+        'updatedAt'
+      ]
+    });
   }
 }
 
