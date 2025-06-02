@@ -1,4 +1,4 @@
-const { Calificacion, Evento, Usuario, Lugar } = require("../models");
+const { Calificacion, Evento, Usuario, Lugar, sequelize } = require("../models");
 const { Op } = require('sequelize');
 
 class CalificacionService {
@@ -84,6 +84,40 @@ class CalificacionService {
       console.log('Calificación eliminada exitosamente');
     } catch (error) {
       console.error("Error al eliminar calificación (admin):", error);
+      throw error;
+    }
+  }
+
+  // Obtener usuarios que han calificado un evento específico
+  async obtenerUsuariosCalificacionesEvento(eventoid) {
+    try {
+      const calificaciones = await Calificacion.findAll({
+        where: { eventoid },
+        include: [
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'correo'],
+            required: true
+          }
+        ],
+        attributes: [] // No necesitamos los datos de la calificación, solo los usuarios
+      });
+
+      // Extraer y devolver solo los usuarios únicos
+      const usuariosUnicos = [];
+      const usuariosMap = new Map();
+      
+      calificaciones.forEach(calificacion => {
+        if (calificacion.usuario && !usuariosMap.has(calificacion.usuario.id)) {
+          usuariosMap.set(calificacion.usuario.id, true);
+          usuariosUnicos.push(calificacion.usuario);
+        }
+      });
+
+      return usuariosUnicos;
+    } catch (error) {
+      console.error('Error al obtener usuarios que calificaron el evento:', error);
       throw error;
     }
   }
@@ -316,38 +350,56 @@ class CalificacionService {
 
   async actualizarCalificacionUsuario(id, usuarioid, { puntuacion }) {
     try {
-      console.log('=== Inicio actualizarCalificacionUsuario ===');
-      console.log('Verificando calificación del usuario:', { id, usuarioid });
-
-      const calificacion = await Calificacion.findOne({
-        where: { id, usuarioid },
-        include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["id", "nombre"],
-          }
-        ]
-      });
-
-      if (!calificacion) {
-        console.log('Error: Calificación no encontrada o no pertenece al usuario');
-        throw new Error("Calificación no encontrada o no tienes permisos para modificarla");
+      // Validar que la puntuación esté entre 1 y 5
+      if (puntuacion < 1 || puntuacion > 5) {
+        throw new Error("La puntuación debe estar entre 1 y 5");
       }
 
-      console.log('Calificación encontrada:', {
-        id: calificacion.id,
-        usuario: calificacion.usuario.nombre,
-        puntuacionActual: calificacion.puntuacion,
-        nuevaPuntuacion: puntuacion
-      });
+      // Usar transacción para asegurar consistencia
+      return await sequelize.transaction(async (t) => {
+        // Buscar la calificación con sus relaciones
+        const calificacion = await Calificacion.findOne({
+          where: { id, usuarioid },
+          include: [
+            {
+              model: Evento,
+              as: 'evento',
+              include: [{
+                model: Lugar,
+                as: 'lugar',
+                attributes: ['id', 'nombre']
+              }],
+              attributes: ['id', 'nombre']
+            }
+          ],
+          transaction: t
+        });
 
-      await calificacion.update({ puntuacion });
-      console.log('Calificación actualizada exitosamente');
-      return calificacion;
+        if (!calificacion) {
+          throw new Error("No se encontró la calificación o no tienes permisos para modificarla");
+        }
+
+        // Actualizar la calificación
+        await calificacion.update({ puntuacion }, { transaction: t });
+
+        // Preparar la respuesta
+        return {
+          mensaje: 'Calificación actualizada con éxito',
+          calificacion: {
+            id: calificacion.id,
+            puntuacion: calificacion.puntuacion,
+            evento: {
+              id: calificacion.evento.id,
+              nombre: calificacion.evento.nombre,
+              lugar: calificacion.evento.lugar
+            },
+            fechaActualizacion: calificacion.updatedAt
+          }
+        };
+      });
     } catch (error) {
-      console.error("Error al actualizar calificación (usuario):", error);
-      throw error;
+      console.error('Error en actualizarCalificacionUsuario:', error.message);
+      throw new Error(error.message || 'No se pudo actualizar la calificación');
     }
   }
 
@@ -420,41 +472,61 @@ class CalificacionService {
   }
 
   // Método para crear calificaciones
-  async crearCalificacion({ usuarioid, eventoid, puntuacion, estado }) {
+  async crearCalificacion({ usuarioid, eventoid, puntuacion, estado = true }) {
     try {
-      console.log('=== Inicio crearCalificacion ===');
-      console.log('Datos recibidos:', { usuarioid, eventoid, puntuacion, estado });
-
-      // Validar que la puntuación esté entre 1 y 5
+      // Validación básica
       if (puntuacion < 1 || puntuacion > 5) {
-        console.log('Error: La puntuación debe estar entre 1 y 5');
         throw new Error("La puntuación debe estar entre 1 y 5");
       }
 
-      const usuario = await Usuario.findByPk(usuarioid);
-      if (!usuario) {
-        console.log('Error: Usuario no encontrado');
-        throw new Error("Usuario no encontrado");
-      }
-
-      const evento = await Evento.findByPk(eventoid);
-      if (!evento) {
-        console.log('Error: Evento no encontrado');
-        throw new Error("Evento no encontrado");
-      }
-
-      const calificacion = await Calificacion.create({
-        usuarioid,
-        eventoid,
-        puntuacion,
-        estado,
+      // Verificar si ya existe una calificación del usuario para este evento
+      const calificacionExistente = await Calificacion.findOne({
+        where: { usuarioid, eventoid }
       });
 
-      console.log('Calificación creada exitosamente:', calificacion);
-      return calificacion;
+      if (calificacionExistente) {
+        throw new Error("Ya has calificado este evento");
+      }
+
+      // Crear la calificación con transacción para asegurar consistencia
+      const resultado = await sequelize.transaction(async (t) => {
+        const calificacion = await Calificacion.create(
+          { usuarioid, eventoid, puntuacion, estado },
+          { transaction: t }
+        );
+
+        // Obtener el evento con la relación de lugar para la respuesta
+        const eventoConLugar = await Evento.findByPk(eventoid, {
+          include: [
+            {
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'nombre']
+            }
+          ],
+          transaction: t,
+          attributes: ['id', 'nombre', 'fecha_hora']
+        });
+
+        return {
+          mensaje: 'Calificación creada con éxito',
+          calificacion: {
+            id: calificacion.id,
+            puntuacion: calificacion.puntuacion,
+            evento: {
+              id: eventoConLugar.id,
+              nombre: eventoConLugar.nombre,
+              lugar: eventoConLugar.lugar
+            },
+            fecha: calificacion.createdAt
+          }
+        };
+      });
+
+      return resultado;
     } catch (error) {
-      console.error("Error al crear calificación:", error);
-      throw error;
+      console.error('Error en crearCalificacion:', error.message);
+      throw new Error(error.message || 'No se pudo crear la calificación');
     }
   }
 }
