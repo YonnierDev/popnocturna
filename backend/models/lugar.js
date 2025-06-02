@@ -88,7 +88,6 @@ module.exports = (sequelize) => {
       tableName: "lugares",
       paranoid: true,
       timestamps: true,
-      timestamps: true,
     }
   );
 

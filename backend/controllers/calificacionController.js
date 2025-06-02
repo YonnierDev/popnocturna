@@ -43,64 +43,60 @@ class CalificacionController {
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
-  async listarCalificaciones(req, res) {
-    try {
-      console.log('\n=== Inicio listarCalificaciones ===');
-      console.log('Usuario autenticado:', req.usuario);
-      
-      const { rol: rolid, id: usuarioid } = req.usuario;
-      const { page = 1, limit = 10, eventoid } = req.query;
 
-      console.log('Parámetros recibidos:', {
-        rolid,
-        page,
-        limit,
-        eventoid
+  // En calificacionController.js
+async listarCalificaciones(req, res) {
+  try {
+    const { rol: rolid, id: usuarioid } = req.usuario;
+    const { page = 1, limit = 10, eventoid } = req.query;
+
+    let resultado;
+
+    // Admins ven todo
+    if (rolid === 1 || rolid === 2) {
+      resultado = await CalificacionService.listarTodasLasCalificaciones({
+        page: parseInt(page),
+        limit: parseInt(limit)
       });
-
-      let resultado;
-
-      // Roles: 1=SuperAdmin, 2=Admin, 3=Propietario, 4=Usuario Normal
-      if (rolid === 1) {
-        console.log('Acceso como Super Admin');
-        resultado = await CalificacionService.listarCalificacionesAdmin({ page, limit });
-      } else if (rolid === 2) {
-        console.log('Acceso como Admin');
-        resultado = await CalificacionService.listarCalificacionesAdmin({ page, limit });
-      } else if (rolid === 3) {
-        console.log('Acceso como Propietario');
-        resultado = await CalificacionService.listarCalificacionesPorPropietario(usuarioid, { page, limit });
-      } else if (rolid === 4) {
-        console.log('Acceso como Usuario Normal');
-        // Validar que el query param eventoid esté presente
-        if (!eventoid) {
-          console.log('Error: Parámetro eventoid faltante');
-          return res.status(400).json({ mensaje: "El parámetro eventoid es obligatorio para ver calificaciones." });
-        }
-        console.log('Filtrando calificaciones por eventoid:', eventoid);
-        resultado = await CalificacionService.listarCalificacionesPorUsuario(usuarioid, { page, limit, eventoid });
-      } else {
-        console.log('Acceso denegado - Rol no permitido:', rolid);
-        return res.status(403).json({ mensaje: "No tienes permiso para ver calificaciones" });
-      }
-      console.log('Resultado listarCalificaciones:', resultado);
-
-      // Formatear paginación en el controller según rol
-      res.json({
-        mensaje: "Calificaciones obtenidas correctamente",
-        datos: formatearRespuestaPaginada({
-          total: resultado.count,
-          rows: resultado.rows,
-          page,
-          limit,
-          nombreColeccion: 'calificaciones'
-        })
+    } 
+    // Usuarios normales ven solo sus calificaciones
+    else if (rolid === 4) {
+      resultado = await CalificacionService.listarMisCalificaciones(usuarioid, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        eventoid  // Opcional: filtrar por evento
       });
-    } catch (error) {
-      console.error("Error al listar calificaciones:", error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+    } 
+    // Propietarios ven calificaciones de sus eventos
+    else if (rolid === 3) {
+      resultado = await CalificacionService.listarCalificacionesDeMisEventos(usuarioid, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        eventoid  // Opcional: filtrar por evento
+      });
+    } 
+    // Otros roles no permitidos
+    else {
+      return res.status(403).json({ 
+        mensaje: "No tienes permiso para ver calificaciones" 
+      });
     }
+
+    res.json({
+      total: resultado.count,
+      pagina: parseInt(page),
+      porPagina: parseInt(limit),
+      calificaciones: resultado.rows
+    });
+
+  } catch (error) {
+    console.error('Error al listar calificaciones:', error);
+    res.status(500).json({ 
+      mensaje: "Error al listar calificaciones",
+      error: error.message 
+    });
   }
+}
 
   async verCalificacion(req, res) {
     try {
@@ -241,47 +237,59 @@ class CalificacionController {
 
   async eliminarCalificacion(req, res) {
     try {
-      console.log('=== Inicio eliminarCalificacion ===');
       const { id } = req.params;
       const { rol: rolid, id: usuarioid } = req.usuario;
-
-      console.log('Datos completos del usuario:', req.usuario);
-      console.log('Rol del usuario:', rolid);
-
-      // Verificación del rol 3
-      if (rolid === 3) {
-        console.log('❌ BLOQUEO: Usuario es propietario (rol 3) - No puede eliminar calificaciones');
-        return res.status(403).json({ 
-          error: "Los propietarios no tienen permiso para eliminar calificaciones",
-          rol: rolid
+  
+      if (!id) {
+        return res.status(400).json({ 
+          mensaje: "Error de validación",
+          error: "ID de calificación no proporcionado" 
         });
       }
-
-      console.log('✅ Usuario autorizado para eliminar. Rol:', rolid);
-
-      // Solo permitir a roles 1, 2 y 4
-      if (rolid === 1 || rolid === 2) {
-        console.log('🔄 Eliminando como administrador');
-        await CalificacionService.eliminarCalificacionAdmin(id);
-      } else if (rolid === 4) {
-        console.log('🔄 Eliminando como usuario normal');
-        await CalificacionService.eliminarCalificacionUsuario(id, usuarioid);
-      } else {
-        console.log('❌ Rol no autorizado:', rolid);
-        return res.status(403).json({ error: "No tienes permiso para eliminar calificaciones" });
+  
+      let resultado;
+      
+      try {
+        if (rolid === 1 || rolid === 2) {
+          resultado = await CalificacionService.eliminarCalificacionAdmin(id);
+        } else if (rolid === 4) {
+          resultado = await CalificacionService.eliminarCalificacionUsuario(id, usuarioid);
+        } else if (rolid === 3) {
+          return res.status(403).json({ 
+            mensaje: "Acceso denegado",
+            error: "Los propietarios no pueden eliminar calificaciones"
+          });
+        } else {
+          return res.status(403).json({ 
+            mensaje: "Acceso denegado",
+            error: "Rol no autorizado" 
+          });
+        }
+  
+        return res.status(200).json({
+          mensaje: resultado.mensaje,
+          eliminadaPreviamente: resultado.eliminadaPreviamente || false,
+          timestamp: new Date()
+        });
+  
+      } catch (error) {
+        if (error.message.includes("no encontrada") || 
+            error.message.includes("no existe")) {
+          return res.status(404).json({ 
+            mensaje: "Calificación no encontrada",
+            error: error.message 
+          });
+        }
+        throw error;
       }
-
-      console.log('✅ Calificación eliminada exitosamente');
-      res.json({ mensaje: "Calificación eliminada correctamente" });
+  
     } catch (error) {
-      console.error("❌ Error al eliminar calificación:", error);
-      if (error.message.includes("no tienes permisos")) {
-        return res.status(403).json({ error: error.message });
-      }
-      if (error.message.includes("no encontrada")) {
-        return res.status(404).json({ error: error.message });
-      }
-      res.status(500).json({ error: error.message });
+      console.error("Error en eliminarCalificacion:", error);
+      return res.status(500).json({ 
+        mensaje: "Error al procesar la solicitud",
+        error: error.message,
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      });
     }
   }
 

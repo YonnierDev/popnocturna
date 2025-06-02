@@ -176,11 +176,82 @@ class UsuarioService {
   }  
 
   async eliminarUsuario(id) {
-    const usuario = await this.buscarUsuario(id);
-    if (!usuario) throw new Error("Usuario no encontrado");
-    await Usuario.destroy({ where: { id } });
-    return { mensaje: "Usuario eliminado correctamente", usuarioEliminado: usuario };
+    try {
+      // Buscar usuario incluyendo eliminados para verificar si ya fue eliminado
+      const usuario = await Usuario.findOne({
+        where: { id },
+        paranoid: false // Incluye eliminados
+      });
+
+      if (!usuario) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      // Verificar si ya está eliminado
+      if (usuario.deletedAt) {
+        return {
+          mensaje: 'El usuario ya estaba eliminado',
+          eliminadoPreviamente: true,
+          usuario
+        };
+      }
+
+      // Realizar soft delete
+      await usuario.destroy();
+
+      // Obtener el usuario actualizado
+      const usuarioEliminado = await Usuario.findOne({
+        where: { id },
+        paranoid: false, // Incluye eliminados
+        attributes: { exclude: ['contrasena', 'codigoVerificacion', 'codigoRecuperacion'] },
+        include: [{ model: Rol, as: "rol", attributes: ["id", "nombre"] }]
+      });
+
+      return {
+        mensaje: 'Usuario eliminado correctamente',
+        eliminadoPreviamente: false,
+        usuario: usuarioEliminado
+      };
+
+    } catch (error) {
+      console.error('Error en eliminarUsuario:', error);
+      throw error;
+    }
   }
+
+  async restaurarUsuario(id) {
+    try {
+      const usuario = await Usuario.findOne({
+        where: { id },
+        paranoid: false // Incluye eliminados
+      });
+
+      if (!usuario) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      if (!usuario.deletedAt) {
+        return { 
+          mensaje: 'El usuario no estaba eliminado',
+          restaurado: false,
+          usuario
+        };
+      }
+
+      await usuario.restore();
+
+      return { 
+        mensaje: 'Usuario restaurado correctamente',
+        restaurado: true,
+        usuario: await this.buscarUsuario(id) // Devuelve el usuario restaurado
+      };
+
+    } catch (error) {
+      console.error('Error en restaurarUsuario:', error);
+      throw error;
+    }
+  }
+
   
 
   async verificarRol(rolid) {

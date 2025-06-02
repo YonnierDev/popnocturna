@@ -1,3 +1,4 @@
+const {Lugar} = require("../models");
 const cloudinaryService = require("../service/cloudinaryService");
 const LugarService = require("../service/lugarService");
 
@@ -297,51 +298,62 @@ class LugarController {
 
   async eliminarLugar(req, res) {
     try {
-      const { rol } = req.usuario;
-      
-      if (!rol) {
-        return res.status(401).json({ 
-          mensaje: "Error de autenticación",
-          error: "Rol no definido en el token"
-        });
-      }
-
-      if (rol !== 1) {
-        return res.status(403).json({ 
-          mensaje: "Acceso denegado",
-          error: "No tiene permisos para eliminar lugares",
-          detalles: "Solo el super administrador puede eliminar lugares"
-        });
-      }
-
+      const { rol, usuarioid } = req.usuario;
       const { id } = req.params;
+  
+      // Validaciones básicas
       if (!id) {
         return res.status(400).json({
           mensaje: "Error de validación",
           error: "ID de lugar no proporcionado"
         });
       }
-
-      const existeLugar = await LugarService.buscarLugar(id);
-      if (!existeLugar) {
+  
+      // Solo admin y superadmin pueden eliminar
+      const esAdministrador = rol === 1 || rol === 2;
+      if (!esAdministrador) {
+        return res.status(403).json({ 
+          mensaje: "Acceso denegado",
+          error: "No tiene permisos para eliminar lugares",
+          detalles: "Solo los administradores pueden eliminar lugares"
+        });
+      }
+  
+      // Verificar si el lugar existe
+      const lugar = await Lugar.findByPk(id);
+      if (!lugar) {
         return res.status(404).json({ 
           mensaje: "Lugar no encontrado",
           detalles: "No existe un lugar con el ID proporcionado"
         });
       }
-
+  
+      // Si ya está eliminado
+      if (lugar.deletedAt) {
+        return res.status(410).json({
+          mensaje: "El lugar ya fue eliminado",
+          detalles: "Contacte al equipo de soporte para más información"
+        });
+      }
+  
+      // Ejecutar soft delete
       await LugarService.eliminarLugar(id);
-      res.json({ 
-        mensaje: "Lugar eliminado correctamente",
-        detalles: "El lugar ha sido eliminado permanentemente"
+  
+      // Registrar la acción
+      console.log(`Usuario ${usuarioid} desactivó el lugar ${id}`);
+  
+      // Respuesta exitosa
+      return res.status(200).json({
+        mensaje: 'Lugar desactivado correctamente',
+        timestamp: new Date()
       });
+  
     } catch (error) {
       console.error('Error en eliminarLugar:', error);
-      res.status(500).json({ 
-        mensaje: "Error al eliminar lugar", 
+      return res.status(500).json({ 
+        mensaje: "Error al procesar la solicitud", 
         error: error.message,
-        tipo: error.name,
-        detalles: "Error interno del servidor al procesar la solicitud"
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
       });
     }
   }

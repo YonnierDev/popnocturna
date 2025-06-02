@@ -3,21 +3,117 @@ const { Op } = require('sequelize');
 
 class CalificacionService {
   // Métodos para administradores (roles 1 y 2)
-  async listarCalificacionesAdmin({ page = 1, limit = 10 }) {
+  async listarTodasLasCalificaciones({ page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
-      const result = await Calificacion.findAndCountAll({
+      return await Calificacion.findAndCountAll({
         include: [
-          { model: Usuario, as: "usuario", attributes: ["id", "nombre", "correo"] },
-          { model: Evento, as: "evento", attributes: ["id", "nombre", "descripcion"] },
+          { 
+            model: Usuario, 
+            as: "usuario", 
+            attributes: ["id", "nombre", "correo"] 
+          },
+          { 
+            model: Evento, 
+            as: "evento", 
+            attributes: ["id", "nombre", "descripcion"] 
+          }
         ],
         order: [["createdAt", "DESC"]],
         limit: parseInt(limit, 10),
         offset,
       });
-      return result;
     } catch (error) {
-      console.error("Error al listar calificaciones (admin):", error);
+      console.error("Error al listar todas las calificaciones:", error);
+      throw error;
+    }
+  }
+
+  // Método para listar calificaciones de un evento (usuarios normales)
+  async listarCalificacionesDeEvento(eventoid, { page = 1, limit = 10 }) {
+    try {
+      const offset = (page - 1) * limit;
+      return await Calificacion.findAndCountAll({
+        where: { eventoid },
+        include: [
+          { 
+            model: Usuario, 
+            as: "usuario", 
+            attributes: ["id", "nombre"] 
+          }
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: parseInt(limit, 10),
+        offset,
+      });
+    } catch (error) {
+      console.error("Error al listar calificaciones del evento:", error);
+      throw error;
+    }
+  }
+
+  // Método para propietarios - ver calificaciones de sus eventos
+  async listarCalificacionesDeMisEventos(propietarioId, { page = 1, limit = 10, eventoid }) {
+    try {
+      const offset = (page - 1) * limit;
+      const where = {};
+      
+      if (eventoid) {
+        where.id = eventoid;
+      }
+  
+      return await Calificacion.findAndCountAll({
+        where: { estado: true }, // Solo calificaciones activas
+        include: [
+          {
+            model: Evento,
+            as: "evento",
+            where: { 
+              usuarioid: propietarioId,
+              ...where
+            },
+            attributes: ["id", "nombre"]
+          },
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["id", "nombre"]
+          }
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: parseInt(limit, 10),
+        offset,
+      });
+    } catch (error) {
+      console.error("Error al listar calificaciones de mis eventos:", error);
+      throw error;
+    }
+  }
+
+  async listarMisCalificaciones(usuarioid, { page = 1, limit = 10, eventoid }) {
+    try {
+      const offset = (page - 1) * limit;
+      const where = { usuarioid };
+      
+      if (eventoid) {
+        where.eventoid = eventoid;
+      }
+  
+      return await Calificacion.findAndCountAll({
+        where,
+        include: [
+          {
+            model: Evento,
+            as: "evento",
+            attributes: ["id", "nombre", "fecha_hora"]
+          }
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: parseInt(limit, 10),
+        offset,
+      });
+    } catch (error) {
+      console.error("Error al listar mis calificaciones:", error);
       throw error;
     }
   }
@@ -72,18 +168,39 @@ class CalificacionService {
   async eliminarCalificacionAdmin(id) {
     try {
       console.log('=== Inicio eliminarCalificacionAdmin ===');
-      console.log('Eliminando calificación:', { id });
-
-      const calificacion = await Calificacion.findByPk(id);
+      console.log('ID de calificación a eliminar (admin):', id);
+  
+      // Buscar la calificación incluyendo eliminadas
+      const calificacion = await Calificacion.findOne({
+        where: { id },
+        paranoid: false // Incluye eliminadas
+      });
+  
       if (!calificacion) {
-        console.log('Error: Calificación no encontrada');
+        console.log('❌ Error: Calificación no encontrada');
         throw new Error("Calificación no encontrada");
       }
-
+  
+      // Si ya está eliminada
+      if (calificacion.deletedAt) {
+        console.log('La calificación ya estaba eliminada');
+        return { 
+          mensaje: 'La calificación ya estaba eliminada',
+          eliminadaPreviamente: true
+        };
+      }
+  
+      // Soft delete
       await calificacion.destroy();
-      console.log('Calificación eliminada exitosamente');
+      console.log('✅ Calificación desactivada exitosamente (admin)');
+      
+      return { 
+        mensaje: 'Calificación desactivada correctamente',
+        eliminadaPreviamente: false
+      };
+  
     } catch (error) {
-      console.error("Error al eliminar calificación (admin):", error);
+      console.error("❌ Error en eliminarCalificacionAdmin:", error);
       throw error;
     }
   }
@@ -355,50 +472,54 @@ class CalificacionService {
     try {
       console.log('=== Inicio eliminarCalificacionUsuario ===');
       console.log('Datos recibidos:', { id, usuarioid });
-
+  
       // Verificar que el usuario no sea propietario (rol 3)
       const usuario = await Usuario.findByPk(usuarioid);
-      console.log('Usuario encontrado:', {
-        id: usuario?.id,
-        rol: usuario?.rolid
-      });
-
       if (!usuario) {
-        console.log('❌ Error: Usuario no encontrado');
         throw new Error("Usuario no encontrado");
       }
-
+  
       if (usuario.rolid === 3) {
-        console.log('❌ BLOQUEO: Usuario es propietario (rol 3) - No puede eliminar calificaciones');
         throw new Error("Los propietarios no pueden eliminar calificaciones");
       }
-
+  
+      // Buscar la calificación del usuario
       const calificacion = await Calificacion.findOne({
-        where: { id, usuarioid },
-        include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["id", "nombre", "rolid"],
-          }
-        ]
+        where: { 
+          id,
+          usuarioid 
+        },
+        paranoid: false, // Incluye eliminadas
+        include: [{
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "rolid"],
+        }]
       });
-
-      console.log('Calificación encontrada:', {
-        id: calificacion?.id,
-        usuario: calificacion?.usuario?.nombre,
-        rol: calificacion?.usuario?.rolid
-      });
-
+  
       if (!calificacion) {
-        console.log('❌ Error: Calificación no encontrada o no pertenece al usuario');
         throw new Error("Calificación no encontrada o no tienes permisos para eliminarla");
       }
-
+  
+      // Verificar que no esté ya eliminada
+      if (calificacion.deletedAt) {
+        return { 
+          mensaje: 'La calificación ya estaba eliminada',
+          eliminadaPreviamente: true
+        };
+      }
+  
+      // Soft delete
       await calificacion.destroy();
-      console.log('✅ Calificación eliminada exitosamente');
+      console.log('✅ Calificación desactivada exitosamente (usuario)');
+      
+      return { 
+        mensaje: 'Tu calificación ha sido eliminada correctamente',
+        eliminadaPreviamente: false
+      };
+  
     } catch (error) {
-      console.error("❌ Error al eliminar calificación (usuario):", error);
+      console.error("❌ Error en eliminarCalificacionUsuario:", error);
       throw error;
     }
   }

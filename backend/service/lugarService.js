@@ -182,7 +182,36 @@ class LugarService {
   }
 
   async eliminarLugar(id) {
-    return await Lugar.destroy({ where: { id } });
+    try {
+      // Buscar el lugar
+      const lugar = await Lugar.findByPk(id);
+      
+      if (!lugar) {
+        throw new Error('Lugar no encontrado');
+      }
+  
+      // Verificar que no tenga eventos activos
+      const tieneEventosActivos = await Evento.count({ 
+        where: { 
+          lugarid: id,
+          fecha_hora: { [Op.gte]: new Date() } // Solo eventos futuros
+        }
+      }) > 0;
+  
+      if (tieneEventosActivos) {
+        throw new Error('No se puede desactivar un lugar con eventos programados');
+      }
+  
+      // Soft delete
+      await lugar.destroy();
+      return { 
+        mensaje: 'Lugar desactivado correctamente'
+      };
+  
+    } catch (error) {
+      console.error('Error en servicio eliminarLugar:', error);
+      throw error;
+    }
   }
 
   async actualizarEstado(id, estado) {
