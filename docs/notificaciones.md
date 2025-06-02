@@ -1,4 +1,50 @@
-# 📣 Notificaciones en Tiempo Real – PopNocturna
+# Notificaciones en Tiempo Real – PopNocturna
+
+## 🔌 Configuración Inicial
+
+### Conexión WebSocket
+```javascript
+import { io } from 'socket.io-client';
+
+// En desarrollo
+const socket = io('http://localhost:7000', {
+  withCredentials: true,
+  extraHeaders: {
+    'Access-Control-Allow-Origin': 'http://localhost:5173',
+  },
+});
+
+// En producción
+const socket = io('https://popnocturna.vercel.app', {
+  withCredentials: true,
+  transports: ['websocket'],
+});
+
+// Manejar eventos de conexión
+export const setupSocket = (token) => {
+  // Configurar cabecera de autenticación
+  socket.auth = { token };
+  
+  socket.on('connect', () => {
+    console.log('Conectado al servidor de notificaciones');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Desconectado del servidor de notificaciones');
+  });
+
+  return socket;
+};
+```
+
+### Configuración CORS
+El backend está configurado para aceptar conexiones de:
+- `https://frontendpopa.vercel.app` (producción)
+- `http://localhost:5173` (desarrollo)
+
+Métodos HTTP permitidos: GET, POST, PUT, DELETE, PATCH, OPTIONS
+
+---
 
 ## 1. Eventos Disponibles para Usuarios (Rol 4)
 
@@ -116,7 +162,7 @@ socket.on('nuevo-lugar-admin', (data) => {
 ```javascript
 import { io } from 'socket.io-client';
 
-const socket = io('URL_DEL_BACKEND', {
+const socket = io('https://popnocturna.vercel.app', {
   auth: {
     token: 'TU_JWT_TOKEN'
   }
@@ -233,7 +279,53 @@ const io = new Server(server, {
 });
 ```
 
-### 6.2 Salas (Rooms)
+### 6.2 Salas (Rooms) - WebSocket
+
+#### Conexión Inicial
+```javascript
+// Unirse a la sala del usuario
+socket.emit('join', { usuarioid: userId });
+
+// Para usuarios normales (rol 4)
+socket.emit('join-usuario-room', { rol: 4 });
+
+// Para propietarios (rol 3)
+socket.emit('join-propietario-room', { rol: 3 });
+
+// Para administradores (roles 1 y 2)
+socket.emit('join-admin-room', { rol: 1 });
+```
+
+#### Salas Disponibles
+- `admin-room`: Para administradores (roles 1 y 2)
+- `propietario-${userId}`: Para propietarios (rol 3)
+- `usuario-${userId}`: Para usuarios normales (rol 4)
+- `usuario-room`: Para notificaciones generales de usuarios (rol 4)
+
+#### Manejo de Reconexión
+```javascript
+// Configurar reintentos de conexión
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+
+const connectWithRetry = () => {
+  socket.connect();
+  
+  socket.on('connect_error', (error) => {
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+      console.log(`Error de conexión. Reintentando en ${delay}ms...`);
+      setTimeout(connectWithRetry, delay);
+    } else {
+      console.error('Número máximo de intentos de reconexión alcanzado');
+    }
+  });
+};
+
+// Iniciar conexión con reintentos
+connectWithRetry();
+```
 - `admin-room`: Para administradores (roles 1 y 2)
 - `usuario-${userId}`: Para propietarios (rol 3)
 - `usuario-room`: Para usuarios normales (rol 4)
