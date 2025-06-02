@@ -81,19 +81,14 @@ class ComentarioController {
     // Actualizar un comentario
     async actualizar(req, res) {
         try {
-            const { id: usuarioid, rol } = req.usuario;
+            const { id: usuarioid } = req.usuario;
             const { id } = req.params;
             const { contenido } = req.body;
 
-            // Solo usuarios con rol permitido pueden actualizar
-            if (![1, 2, 4].includes(rol)) {
-                return res.status(403).json({ mensaje: "Solo los administradores o usuarios pueden actualizar comentarios" });
-            }
-
             // Validar que se proporcione el contenido
-            if (!contenido) {
+            if (!contenido || typeof contenido !== 'string') {
                 return res.status(400).json({ 
-                    mensaje: "El contenido del comentario es requerido"
+                    mensaje: "El contenido del comentario es requerido y debe ser un texto"
                 });
             }
 
@@ -106,20 +101,26 @@ class ComentarioController {
                 });
             }
 
-            const comentario = await ComentarioService.obtenerPorId(id);
+            // Obtener el comentario con validación de que sea del usuario y esté activo
+            const comentario = await ComentarioService.obtenerComentarioUsuario(usuarioid, id);
+            
             if (!comentario) {
-                return res.status(404).json({ mensaje: "Comentario no encontrado" });
+                return res.status(404).json({ 
+                    mensaje: "Comentario no encontrado o no tienes permiso para editarlo"
+                });
             }
 
-            // Si es admin/superadmin puede actualizar cualquier comentario, si es usuario solo el suyo
-            if ((rol === 4 && comentario.usuarioid !== usuarioid) || (rol !== 4 && ![1,2].includes(rol))) {
-                return res.status(403).json({ mensaje: "No tienes permiso para editar este comentario" });
-            }
-
-            const actualizado = await ComentarioService.actualizar(id, contenido);
+            // Actualizar solo el contenido
+            const actualizado = await ComentarioService.actualizar(id, { contenido });
+            
             res.json({
                 mensaje: "Comentario actualizado exitosamente",
-                comentario: actualizado
+                comentario: {
+                    id: actualizado.id,
+                    contenido: actualizado.contenido,
+                    fechaActualizacion: actualizado.updatedAt,
+                    eventoid: actualizado.eventoid
+                }
             });
         } catch (error) {
             console.error('Error al actualizar comentario:', error);

@@ -24,9 +24,10 @@ router.post('/comentario',
 );
 
 // Ruta para actualizar un comentario (solo el usuario dueño del comentario o admin)
-router.put('/comentario/:id', 
+// Actualizar un comentario (solo el autor con rol 4 puede actualizar sus comentarios)
+router.patch('/comentario/:id', 
   autentiMiddleware, 
-  verificarRol([1, 2, 4]),
+  verificarRol([4]),
   comentarioController.actualizar
 );
 

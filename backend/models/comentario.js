@@ -40,12 +40,15 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: true,
       },
       aprobacion: {
-        type: DataTypes.ENUM('pendiente', 'aceptado', 'rechazado'),
+        type: DataTypes.INTEGER,
         allowNull: true,
+        defaultValue: 0, // 0 = pendiente, 1 = aceptado, 2 = rechazado
+        comment: '0 = pendiente, 1 = aceptado, 2 = rechazado'
       },
       motivo_reporte: {
         type: DataTypes.STRING,
         allowNull: true,
+        comment: 'Motivo por el cual el comentario fue reportado o rechazado'
       },
     },
     {

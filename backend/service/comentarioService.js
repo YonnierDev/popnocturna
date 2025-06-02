@@ -113,6 +113,48 @@ class ComentarioService {
     });
   }
 
+  /**
+   * Obtiene los usuarios que han comentado en un evento específico
+   * @param {number} eventoid - ID del evento
+   * @returns {Promise<Array>} Lista de usuarios que han comentado en el evento
+   */
+  async obtenerUsuariosComentariosEvento(eventoid) {
+    try {
+      console.log(`Buscando usuarios que comentaron en el evento ${eventoid}`);
+      
+      const comentarios = await Comentario.findAll({
+        where: { 
+          eventoid,
+          estado: true,
+          aprobacion: 1 // Solo comentarios aceptados
+        },
+        include: [
+          { 
+            model: Usuario, 
+            as: "usuario", 
+            attributes: ["id", "nombre", "correo"],
+            required: true
+          }
+        ],
+        attributes: [], // No necesitamos los datos del comentario, solo del usuario
+        group: ['usuario.id'], // Agrupar por usuario para evitar duplicados
+        raw: true
+      });
+
+      console.log(`Usuarios encontrados: ${comentarios.length}`);
+      
+      // Mapear los resultados para devolver solo los datos del usuario
+      return comentarios.map(c => ({
+        id: c['usuario.id'],
+        nombre: c['usuario.nombre'],
+        correo: c['usuario.correo']
+      }));
+    } catch (error) {
+      console.error('Error en obtenerUsuariosComentariosEvento:', error);
+      throw error;
+    }
+  }
+
   async crear(data) {
     try {
       console.log('=== Inicio de crear comentario ===');
@@ -132,13 +174,14 @@ class ComentarioService {
         throw new Error('El usuario no existe');
       }
 
+      // Crear el comentario con estado 'pendiente' (0) de aprobación
       const comentario = await Comentario.create({
         usuarioid: data.usuarioid,
         eventoid: data.eventoid,
         contenido: data.contenido,
         fecha_hora: new Date(),
         estado: true,
-        aprobacion: null
+        aprobacion: 0  // 0 = pendiente, 1 = aceptado, 2 = rechazado
       });
 
       console.log('Comentario creado exitosamente:', comentario);
@@ -162,12 +205,48 @@ class ComentarioService {
     }
   }
 
-  async actualizar(id, contenido) {
+  /**
+   * Obtiene un comentario específico de un usuario si existe y está activo
+   * @param {number} usuarioid - ID del usuario
+   * @param {number} comentarioId - ID del comentario
+   * @returns {Promise<Object|null>} El comentario si existe y pertenece al usuario, null en caso contrario
+   */
+  async obtenerComentarioUsuario(usuarioid, comentarioId) {
     try {
-      const comentario = await this.obtenerPorId(id);
-      if (!comentario) throw new Error('Comentario no encontrado');
+      return await Comentario.findOne({
+        where: {
+          id: comentarioId,
+          usuarioid,
+          estado: true
+        },
+        attributes: ['id', 'contenido', 'eventoid', 'usuarioid']
+      });
+    } catch (error) {
+      console.error('Error al obtener comentario del usuario:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza un comentario existente
+   * @param {number} id - ID del comentario a actualizar
+   * @param {Object} datos - Datos a actualizar
+   * @returns {Promise<Object>} El comentario actualizado
+   */
+  async actualizar(id, datos) {
+    try {
+      const comentario = await Comentario.findByPk(id);
+      if (!comentario) {
+        throw new Error('Comentario no encontrado');
+      }
       
-      return await comentario.update({ contenido });
+      // Solo permitir actualizar el contenido
+      const datosActualizacion = {
+        contenido: datos.contenido,
+        updatedAt: new Date()
+      };
+      
+      return await comentario.update(datosActualizacion);
     } catch (error) {
       console.error('Error al actualizar comentario:', error);
       throw error;
