@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: popnocturna_backend
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    user: "1000:1000"  # Usar el mismo ID de usuario que el host para evitar problemas de permisos
