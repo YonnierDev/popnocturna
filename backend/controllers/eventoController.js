@@ -5,7 +5,7 @@ class EventoController {
     try {
       console.log('\n=== Inicio listarEventos ===');
       console.log('Usuario autenticado:', req.usuario);
-      
+
       const { rol: rolid } = req.usuario;
       const { page = 1, limit = 10, fechaDesde, fechaHasta } = req.query;
 
@@ -31,28 +31,28 @@ class EventoController {
       if (rolid === 1 || rolid === 2) {
         console.log('Acceso como administrador (rol:', rolid, ')');
         eventos = await eventoService.listarEventosAdmin(opciones);
-      } 
+      }
       // Si es propietario (rol 3), ver solo eventos activos de sus lugares
       else if (rolid === 3) {
         console.log('Acceso como propietario');
         const { id: usuarioid } = req.usuario;
         eventos = await eventoService.listarEventosPorPropietario(usuarioid, opciones);
-      } 
+      }
       // Si es usuario normal (rol 4), ver solo eventos activos
       else if (rolid === 4) {
         console.log('Acceso como usuario normal');
         const { id: usuarioid } = req.usuario;
         eventos = await eventoService.listarEventosPorUsuario(usuarioid, opciones);
-      } 
+      }
       else {
         console.log('Acceso denegado - Rol no permitido:', rolid);
         return res.status(403).json({ mensaje: "No tienes permiso para ver eventos" });
       }
 
       console.log('Eventos encontrados:', eventos?.length || 0);
-      res.json({ 
-        mensaje: "Eventos obtenidos correctamente", 
-        datos: eventos 
+      res.json({
+        mensaje: "Eventos obtenidos correctamente",
+        datos: eventos
       });
     } catch (error) {
       console.error("Error al listar eventos:", {
@@ -190,15 +190,12 @@ class EventoController {
       const { id } = req.params;
       const { rol: rolid, id: usuarioid } = req.usuario;
 
-      // Solo administradores (roles 1 y 2) pueden eliminar cualquier evento
       if (rolid === 1 || rolid === 2) {
         await eventoService.eliminarEventoAdmin(id);
-      } 
-      // Propietarios (rol 3) solo pueden eliminar sus propios eventos
+      }
       else if (rolid === 3) {
         await eventoService.eliminarEventoPropietario(id, usuarioid);
-      } 
-      // Otros roles no tienen permiso para eliminar eventos
+      }
       else {
         return res.status(403).json({ mensaje: "No tienes permiso para eliminar eventos" });
       }
@@ -253,9 +250,7 @@ class EventoController {
 
       if (rolid === 1 || rolid === 2) {
         eventoActualizado = await eventoService.cambiarEstadoEventoAdmin(id, estado);
-      } else if (rolid === 3) {
-        eventoActualizado = await eventoService.cambiarEstadoEventoPropietario(id, estado, usuarioid);
-      } else {
+      }else {
         return res.status(403).json({ mensaje: "No tienes permiso para cambiar el estado del evento" });
       }
 
@@ -269,7 +264,6 @@ class EventoController {
     }
   }
 
-  // Métodos públicos
   async listarEventosPublicos(req, res) {
     try {
       const { page = 1, limit = 10, estado, fechaDesde, fechaHasta } = req.query;
@@ -284,9 +278,9 @@ class EventoController {
 
       const eventos = await eventoService.listarEventosPublicos(opciones);
 
-      res.json({ 
-        mensaje: "Eventos públicos obtenidos correctamente", 
-        datos: eventos 
+      res.json({
+        mensaje: "Eventos públicos obtenidos correctamente",
+        datos: eventos
       });
     } catch (error) {
       console.error("Error al listar eventos públicos:", error);

@@ -10,6 +10,22 @@ class LugarError extends Error {
 }
 
 class LugarService {
+  async buscarLugar(id) {
+    return await Lugar.findByPk(id, {
+      include: [
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "correo"],
+        },
+        {
+          model: Categoria,
+          as: "categoria",
+          attributes: ["id", "tipo"],
+        },
+      ],
+    });
+  }
   async listarLugaresAdmin() {
     return await Lugar.findAll({
       where: {

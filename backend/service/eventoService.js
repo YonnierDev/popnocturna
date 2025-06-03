@@ -334,21 +334,6 @@ class EventoService {
     return evento;
   }
 
-  async cambiarEstadoEventoPropietario(id, estado, propietarioId) {
-    const evento = await Evento.findOne({
-      where: { id },
-      include: [{
-        model: Lugar,
-        as: "lugar",
-        where: { usuarioid: propietarioId }
-      }]
-    });
-
-    if (!evento) throw new Error("Evento no encontrado o no tienes permisos");
-    await evento.update({ estado });
-    return evento;
-  }
-
   // Métodos públicos
   async listarEventosPublicos({ offset, limit, fechaDesde, fechaHasta }) {
     const where = { estado: true };
