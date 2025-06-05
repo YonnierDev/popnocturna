@@ -49,6 +49,9 @@ app.use("/api", require("./routes/categoriaRoutes"));
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes"));
+
+// Rutas de autenticación
+app.use("/api/auth", require("./routes/autentiRouter"));
 app.use("/api", require("./routes/calificacionRoutes"));
 app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/comentarioRoutes"));
@@ -95,15 +98,18 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 7000;
 
 // Iniciar servidor
-server.listen(PORT, async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('🔧 Iniciando servidor...');
-    console.log('✅ Conexión a la base de datos establecida correctamente.');
-    console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
-  } catch (error) {
-    console.error('❌ Error al conectar con la base de datos:', error);
-  }
-});
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, async () => {
+    try {
+      await sequelize.authenticate();
+      console.log('🔧 Iniciando servidor...');
+      console.log('✅ Conexión a la base de datos establecida correctamente.');
+      console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+    } catch (error) {
+      console.error('❌ Error al conectar con la base de datos:', error);
+    }
+  });
+}
 
-module.exports = app;
+// Exportar app y server para las pruebas
+module.exports = { app, server };
