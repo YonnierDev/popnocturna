@@ -1,4 +1,5 @@
 const eventoService = require("../service/eventoService");
+const cloudinaryService = require("../service/cloudinaryService");
 
 class EventoController {
   async listarEventos(req, res) {
@@ -103,35 +104,76 @@ class EventoController {
   async crearEvento(req, res) {
     try {
       const { rol: rolid, id: usuarioid } = req.usuario;
+      const archivos = req.files || [];
       const datosEvento = req.body;
 
-      let nuevoEvento;
+      // Validar mínimo 1 y máximo 3 imágenes
+      if (archivos.length === 0) {
+        return res.status(400).json({
+          mensaje: "Error de validación",
+          error: "Se requiere al menos una imagen de portada"
+        });
+      }
+      if (archivos.length > 3) {
+        return res.status(400).json({
+          mensaje: "Error de validación",
+          error: "Se permiten máximo 3 imágenes de portada"
+        });
+      }
 
+      // Subir imágenes a Cloudinary y guardar URLs
+      const urlsPortada = [];
+      for (const archivo of archivos) {
+        try {
+          const nombreUnico = `evento-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const uploadResponse = await cloudinaryService.subirImagenEvento(
+            archivo.buffer,
+            nombreUnico
+          );
+          urlsPortada.push(uploadResponse.secure_url);
+        } catch (error) {
+          console.error('Error al subir imagen a Cloudinary:', error);
+        }
+      }
+
+      if (urlsPortada.length === 0) {
+        return res.status(500).json({
+          mensaje: "Error al subir imágenes",
+          error: "No se pudo subir ninguna imagen a Cloudinary"
+        });
+      }
+
+      // Guardar evento con URLs en portada
+      const datosCompletos = {
+        ...datosEvento,
+        portada: urlsPortada,
+        usuarioid
+      };
+
+      let nuevoEvento;
       if (rolid === 1 || rolid === 2) {
-        nuevoEvento = await eventoService.crearEventoAdmin(datosEvento, usuarioid);
+        nuevoEvento = await eventoService.crearEventoAdmin(datosCompletos, usuarioid);
       } else if (rolid === 3) {
-        nuevoEvento = await eventoService.crearEventoPropietario(datosEvento, usuarioid);
+        nuevoEvento = await eventoService.crearEventoPropietario(datosCompletos, usuarioid);
       } else {
         return res.status(403).json({ mensaje: "No tienes permiso para crear eventos" });
       }
 
-      // Obtener io para enviar notificaciones
+      // Notificaciones
       const io = req.app.get('io');
-
-      // Notificar a administradores (roles 1 y 2)
-      io.to('admin-room').emit('nuevo-evento-admin', {
-        propietario: req.usuario.correo,
-        evento: nuevoEvento,
-        timestamp: new Date().toISOString(),
-        mensaje: `Nuevo evento creado por ${req.usuario.correo}`
-      });
-
-      // Notificar a usuarios (rol 4)
-      io.to('usuario-room').emit('nuevo-evento-usuario', {
-        evento: nuevoEvento,
-        timestamp: new Date().toISOString(),
-        mensaje: `Nuevo evento disponible: ${nuevoEvento.nombre}`
-      });
+      if (io) {
+        io.to('admin-room').emit('nuevo-evento-admin', {
+          propietario: req.usuario.correo,
+          evento: nuevoEvento,
+          timestamp: new Date().toISOString(),
+          mensaje: `Nuevo evento creado por ${req.usuario.correo}`
+        });
+        io.to('usuario-room').emit('nuevo-evento-usuario', {
+          evento: nuevoEvento,
+          timestamp: new Date().toISOString(),
+          mensaje: `Nuevo evento disponible: ${nuevoEvento.nombre}`
+        });
+      }
 
       res.status(201).json({
         mensaje: "Evento creado correctamente",
@@ -139,10 +181,13 @@ class EventoController {
       });
     } catch (error) {
       console.error("Error al crear evento:", error);
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({
+        mensaje: "Error en el servicio",
+        error: error.message
+      });
     }
   }
-
+  
   async actualizarEvento(req, res) {
     try {
       const { id } = req.params;
