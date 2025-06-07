@@ -59,9 +59,23 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       portada: {
-        type: DataTypes.ARRAY(DataTypes.STRING), // Para almacenar múltiples URLs
+        type: DataTypes.TEXT, // Cambiado para coincidir con longtext y manejar JSON string
         allowNull: true,
-        defaultValue: [],
+        defaultValue: '[]', // Default como string JSON vacío
+        get() {
+          const rawValue = this.getDataValue('portada');
+          try {
+            return rawValue ? JSON.parse(rawValue) : [];
+          } catch (e) {
+            // Si hay un error al parsear (ej. no es un JSON válido), devolver array vacío
+            console.warn(`Error al parsear JSON de 'portada' para evento ID ${this.id}:`, rawValue, e);
+            return [];
+          }
+        },
+        set(value) {
+          // Asegurar que siempre se guarde un string JSON válido
+          this.setDataValue('portada', Array.isArray(value) ? JSON.stringify(value) : JSON.stringify([]));
+        },
       },
       estado: {
         type: DataTypes.BOOLEAN,
