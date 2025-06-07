@@ -55,20 +55,7 @@ class EventoService {
           model: Lugar,
           as: "lugar",
           where: { usuarioid: propietarioId },
-          attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
-        },
-        { 
-          model: Comentario, 
-          as: "comentarios",
-          where: { estado: true },
-          required: false,
-          include: [
-            {
-              model: Usuario,
-              as: "usuario",
-              attributes: ['id', 'nombre']
-            }
-          ]
+          attributes: ['id', 'nombre']
         }
       ],
       order: [['fecha_hora', 'DESC']],
@@ -88,21 +75,8 @@ class EventoService {
         { 
           model: Lugar, 
           as: "lugar",
-          attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
+          attributes: ['id', 'nombre']
         },
-        { 
-          model: Comentario, 
-          as: "comentarios",
-          where: { estado: true },
-          required: false,
-          include: [
-            {
-              model: Usuario,
-              as: "usuario",
-              attributes: ['id', 'nombre']
-            }
-          ]
-        }
       ],
       order: [['fecha_hora', 'DESC']],
       offset,
@@ -116,7 +90,7 @@ class EventoService {
         { 
           model: Lugar, 
           as: "lugar",
-          attributes: ['id', 'nombre', 'ubicacion', 'descripcion'],
+          attributes: ['id', 'nombre'],
           include: [
             {
               model: Usuario,
