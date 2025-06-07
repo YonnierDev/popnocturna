@@ -145,12 +145,10 @@ class LugarService {
           attributes: ["tipo"],
         },
         {
-          model: Evento,
-          as: "eventos",
-          attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
-          where: { estado: true },
-          required: false
-        },
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre"],
+        }
       ],
     });
 
