@@ -59,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       portada: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
+        type: DataTypes.ARRAY(DataTypes.STRING), // Para almacenar múltiples URLs
         allowNull: true,
         defaultValue: [],
       },

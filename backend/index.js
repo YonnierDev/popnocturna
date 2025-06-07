@@ -42,6 +42,7 @@ app.get("/", (req, res) => {
 });
 
 // Rutas
+app.use("/api", require("./routes/autentiRouter"));
 app.use("/api", usuarioRoutes);
 app.use("/api", perfilRouter);
 app.use("/api", require("./routes/rolRouter"));
@@ -53,7 +54,6 @@ app.use("/api", require("./routes/calificacionRoutes"));
 app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/comentarioRoutes"));
 app.use("/api", require("./routes/reporteRoutes"));
-app.use("/api", require("./routes/autentiRouter"));
 app.use("/api", require("./routes/propietarioRouters/categoriaUsuarioRolRouter"));
 app.use("/api", require("./routes/propietarioRouters/reservaUsuarioEventoLugarRouter"));
 app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRouter"));

@@ -1,3 +1,4 @@
+// service/cloudinaryService.js
 const cloudinary = require('cloudinary').v2;
 const dotenv = require('dotenv');
 dotenv.config();
@@ -10,35 +11,80 @@ cloudinary.config({
 });
 
 class CloudinaryService {
-  async subirImagen(buffer, nombre) {
+  // Método para subir imágenes de eventos
+  async subirImagenEvento(buffer, nombre) {
     try {
       return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
+        const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: "image",
-            folder: "lugares",
+            folder: "eventos", // Carpeta específica para imágenes de eventos
             public_id: nombre,
+            format: "jpg", // Formato de salida
+            quality: "auto:good", // Calidad automática buena
+            transformation: [
+              { width: 1200, crop: "limit" }, // Redimensionar manteniendo proporciones
+              { quality: "auto:good" }
+            ]
           },
           (error, result) => {
             if (error) {
-              console.error("Error al subir imagen:", error);
+              console.error("Error al subir imagen de evento:", error);
               reject(error);
             } else {
               resolve(result);
             }
           }
-        ).end(buffer);
+        );
+        
+        // Usar el buffer directamente
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
       });
     } catch (error) {
-      console.error("Error en subirImagen:", error);
+      console.error("Error en subirImagenEvento:", error);
       throw error;
     }
   }
 
+  // Método para subir imágenes de lugares (existente)
+  async subirImagenLugar(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "image",
+            folder: "lugares",
+            public_id: nombre,
+            transformation: [
+              { width: 1200, crop: "limit" },
+              { quality: "auto:good" }
+            ]
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir imagen de lugar:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+        
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      console.error("Error en subirImagenLugar:", error);
+      throw error;
+    }
+  }
+
+  // Método para subir PDFs (existente)
   async subirPDF(buffer, nombre) {
     try {
       return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
+        const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: "raw",
             folder: "documentos",
@@ -53,10 +99,33 @@ class CloudinaryService {
               resolve(result);
             }
           }
-        ).end(buffer);
+        );
+        
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
       });
     } catch (error) {
       console.error("Error en subirPDF:", error);
+      throw error;
+    }
+  }
+
+  // Método para eliminar una imagen
+  async eliminarImagen(publicId) {
+    try {
+      return await cloudinary.uploader.destroy(publicId);
+    } catch (error) {
+      console.error("Error al eliminar imagen:", error);
+      throw error;
+    }
+  }
+
+  // Método para eliminar múltiples imágenes
+  async eliminarImagenes(publicIds) {
+    try {
+      return await cloudinary.api.delete_resources(publicIds);
+    } catch (error) {
+      console.error("Error al eliminar imágenes:", error);
       throw error;
     }
   }
