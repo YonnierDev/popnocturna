@@ -177,6 +177,7 @@ class EventoService {
     });
   }
 
+  
   async crearEventoAdmin(datos, usuarioid) {
     return await Evento.create({
       ...datos,
@@ -198,7 +199,7 @@ class EventoService {
 
     const datosParaCrear = {
       ...datos,
-      estado: false,
+      estado: true,  
       usuarioid: propietarioId,
       lugarid: lugar.id
     };
