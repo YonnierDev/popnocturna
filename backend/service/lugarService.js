@@ -113,8 +113,8 @@ class LugarService {
           model: Evento,
           as: "eventos",
           attributes: ["id", "portada", "nombre", "fecha_hora", "descripcion", "precio", "capacidad"],
-          where: { estado: true },
-          required: false,
+          where: { estado: true }, // Asumiendo que solo quieres eventos activos
+          required: false, // Para que devuelva el lugar aunque no tenga eventos
           order: [['fecha_hora', 'DESC']]
         }
       ]
@@ -145,12 +145,10 @@ class LugarService {
           attributes: ["tipo"],
         },
         {
-          model: Evento,
-          as: "eventos",
-          attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
-          where: { estado: true },
-          required: false
-        },
+          model: Usuario,
+          as: "usuario",
+          attributes: ["nombre"],
+        }
       ],
     });
 
