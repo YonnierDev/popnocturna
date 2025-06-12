@@ -612,7 +612,7 @@ class ReservaController {
       console.log('Params:', req.params);
       console.log('Body recibido:', req.body);
       
-      let { numero_reserva } = req.params;
+      const { numero_reserva } = req.params;
       
       // Obtener aprobación sin importar mayúsculas/minúsculas
       const aprobacion = req.body.aprobacion || req.body.Aprobacion;
@@ -636,15 +636,8 @@ class ReservaController {
         });
       }
 
-      // Asegurar que el número de reserva tenga exactamente el formato RES-XXX
-      // Extraer solo los números del final
-      const numero = numero_reserva.replace(/\D/g, '').padStart(3, '0');
-      // Formatear exactamente como RES-XXX
-      numero_reserva = `RES-${numero}`;
-      console.log('Número de reserva normalizado:', numero_reserva);
-      const aprobacionNormalizada = aprobacion.toLowerCase();
-      
       // Validar valor de aprobación
+      const aprobacionNormalizada = aprobacion.toLowerCase();
       if (!['aceptado', 'rechazado', 'pendiente'].includes(aprobacionNormalizada)) {
         return res.status(400).json({ 
           success: false,
@@ -652,78 +645,29 @@ class ReservaController {
         });
       }
 
-      console.log('Buscando reserva:', numero_reserva);
-      
-      // Buscar la reserva (búsqueda flexible)
-      const reserva = await Reserva.findOne({
-        where: sequelize.where(
-          sequelize.fn('UPPER', sequelize.col('numero_reserva')),
-          '=',
-          numero_reserva.toUpperCase()
-        ),
-        include: [
-          { 
-            model: Evento, 
-            as: 'evento', 
-            include: [{ 
-              model: Lugar, 
-              as: 'lugar',
-              attributes: ['id', 'nombre', 'usuarioid']
-            }],
-            required: false
-          },
-          { 
-            model: Usuario, 
-            as: 'usuario',
-            attributes: ['id', 'nombre', 'correo', 'rolid'],
-            required: false
-          }
-        ]
-      });
-      
-      console.log('Resultado de búsqueda:', reserva ? 'Encontrada' : 'No encontrada');
+      // Usar el servicio para actualizar la aprobación
+      const resultado = await ReservaService.actualizarAprobacionReserva(
+        numero_reserva,
+        aprobacionNormalizada,
+        usuarioId,
+        rol
+      );
 
-      if (!reserva) {
-        return res.status(404).json({
+      // Manejar respuesta del servicio
+      if (!resultado.success) {
+        return res.status(resultado.status || 400).json({
           success: false,
-          mensaje: `No se encontró la reserva ${numero_reserva}`
+          mensaje: resultado.mensaje,
+          error: resultado.error
         });
       }
-
-      console.log('Reserva encontrada:', reserva.id);
-      
-      // Verificar permisos (admin o dueño del lugar)
-      const esAdmin = [1, 2].includes(rol);
-      const esPropietario = rol === 3 && 
-                          reserva.evento?.lugar?.usuarioid === usuarioId;
-
-      if (!esAdmin && !esPropietario) {
-        return res.status(403).json({
-          success: false,
-          mensaje: 'No tienes permiso para aprobar/rechazar esta reserva'
-        });
-      }
-
-      // Actualizar estado
-      console.log('Actualizando estado a:', aprobacionNormalizada);
-      reserva.aprobacion = aprobacionNormalizada;
-      await reserva.save();
-
-      // Construir respuesta simple
-      const respuesta = {
-        success: true,
-        mensaje: `Reserva ${aprobacionNormalizada} correctamente`,
-        data: {
-          id: reserva.id,
-          numero_reserva: reserva.numero_reserva,
-          aprobacion: reserva.aprobacion,
-          estado: reserva.estado,
-          fecha_actualizacion: reserva.updatedAt
-        }
-      };
 
       console.log('Respuesta exitosa');
-      return res.json(respuesta);
+      return res.json({
+        success: true,
+        mensaje: resultado.mensaje,
+        data: resultado.data
+      });
       
     } catch (error) {
       console.error('Error en aprobarReserva:', error);

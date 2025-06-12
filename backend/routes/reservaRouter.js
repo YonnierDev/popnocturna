@@ -39,17 +39,11 @@ router.get(
   ReservaController.buscarReservaPorNumero
 );
 
-// Ruta de prueba simple
-router.get('/test', (req, res) => {
-  res.json({ message: 'La API está funcionando correctamente' });
-});
-
 // Aprobar/Rechazar reserva
-// Ejemplo: PATCH /api/reserva/aprobar/RES-008
 router.patch(
   "/reserva/aprobar/:numero_reserva",
   autentiMiddleare,
-  validarRol(1, 2, 3),  // Solo admin (1,2) o dueño (3)
+  validarRol(1, 2, 3), 
   ReservaController.aprobarReserva
 );
 

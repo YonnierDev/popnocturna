@@ -1,5 +1,5 @@
 const { sequelize, Usuario, Evento, Lugar, Reserva, Rol } = require("../models");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 
 class ReservaService {
   // Listar reservas según rol
@@ -584,6 +584,117 @@ class ReservaService {
         { model: Evento, as: "evento", attributes: ["nombre", "fecha_hora"] }
       ]
     });
+  }
+
+  /**
+   * Actualiza el estado de aprobación de una reserva
+   * @param {string} numeroReserva - Número de reserva (con o sin prefijo RES-)
+   * @param {string} aprobacion - Nuevo estado (aceptado/rechazado/pendiente)
+   * @param {number} usuarioId - ID del usuario que realiza la acción
+   * @param {number} rol - Rol del usuario (1:admin, 2:staff, 3:propietario)
+   * @returns {Promise<Object>} - Objeto con el resultado de la operación
+   */
+  async actualizarAprobacionReserva(numeroReserva, aprobacion, usuarioId, rol) {
+    const t = await sequelize.transaction();
+    
+    try {
+      // Normalizar número de reserva
+      const numero = numeroReserva.replace(/\D/g, '').padStart(3, '0');
+      const numeroNormalizado = `RES-${numero}`;
+      
+      // Buscar la reserva con sus relaciones
+      const reserva = await Reserva.findOne({
+        where: {
+          numero_reserva: numeroNormalizado
+        },
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            include: [{
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'usuarioid']
+            }]
+          },
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'correo']
+          }
+        ],
+        transaction: t,
+        lock: t.LOCK.UPDATE
+      });
+
+      if (!reserva) {
+        await t.rollback();
+        return { success: false, mensaje: 'Reserva no encontrada', status: 404 };
+      }
+
+      // Validar permisos
+      const esAdmin = [1, 2].includes(rol);
+      const esPropietario = rol === 3 && 
+                         reserva.evento?.lugar?.usuarioid === usuarioId;
+
+      if (!esAdmin && !esPropietario) {
+        await t.rollback();
+        return { 
+          success: false, 
+          mensaje: 'No tienes permiso para realizar esta acción',
+          status: 403
+        };
+      }
+
+      // Verificar si ya tiene el estado solicitado
+      const aprobacionActual = reserva.aprobacion?.toLowerCase();
+      const aprobacionSolicitada = aprobacion.toLowerCase();
+      
+      if (aprobacionActual === aprobacionSolicitada) {
+        await t.rollback();
+        return {
+          success: true,
+          mensaje: `La reserva ya se encuentra en estado "${aprobacionSolicitada}"`,
+          data: {
+            id: reserva.id,
+            numero_reserva: reserva.numero_reserva,
+            aprobacion: reserva.aprobacion,
+            estado: reserva.estado,
+            fecha_actualizacion: reserva.updatedAt
+          },
+          status: 200
+        };
+      }
+
+      // Actualizar estado
+      reserva.aprobacion = aprobacionSolicitada;
+      await reserva.save({ transaction: t });
+      
+      // Confirmar transacción
+      await t.commit();
+
+      return {
+        success: true,
+        mensaje: `Reserva ${aprobacion} correctamente`,
+        data: {
+          id: reserva.id,
+          numero_reserva: reserva.numero_reserva,
+          aprobacion: reserva.aprobacion,
+          estado: reserva.estado,
+          fecha_actualizacion: reserva.updatedAt
+        }
+      };
+
+    } catch (error) {
+      await t.rollback();
+      console.error('Error en actualizarAprobacionReserva:', error);
+      return { 
+        success: false, 
+        mensaje: 'Error al actualizar la reserva',
+        error: error.message,
+        status: 500
+      };
+    }
   }
 }
 
