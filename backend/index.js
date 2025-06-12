@@ -42,24 +42,38 @@ app.get("/", (req, res) => {
 });
 
 // Rutas
+// Rutas de autenticación y usuarios
 app.use("/api", require("./routes/autentiRouter"));
 app.use("/api", usuarioRoutes);
 app.use("/api", perfilRouter);
 app.use("/api", require("./routes/rolRouter"));
+app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
+
+// Rutas de catálogo
 app.use("/api", require("./routes/categoriaRoutes"));
-app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes"));
-app.use("/api", require("./routes/calificacionRoutes"));
+
+// Rutas de reservas
 app.use("/api", require("./routes/reservaRouter"));
+app.use("/api", require("./routes/calificacionRoutes"));
 app.use("/api", require("./routes/comentarioRoutes"));
-app.use("/api", require("./routes/reporteRoutes"));
-app.use("/api", require("./routes/propietarioRouters/categoriaUsuarioRolRouter"));
-app.use("/api", require("./routes/propietarioRouters/reservaUsuarioEventoLugarRouter"));
+app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
+
+// Rutas de propietario
+app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
+
+// Rutas de reservas de propietario
+const reservaUsuarioEventoRouter = require("./routes/propietarioRouters/reservaUsuarioEventoLugarRouter");
+app.use("/api/propietario", reservaUsuarioEventoRouter);
+console.log('Rutas de reservas de propietario montadas en /api/propietario');
+
 app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRouter"));
 app.use("/api", require("./routes/propietarioRouters/propietarioReservaEventoLugarRouter"));
-app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
-app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
+app.use("/api", require("./routes/propietarioRouters/categoriaUsuarioRolRouter"));
+
+// Reportes
+app.use("/api", require("./routes/reporteRoutes"));
 
 // Socket.IO
 const io = new Server(server, {

@@ -1,10 +1,32 @@
 const { Usuario, Evento, Lugar, Reserva } = require("../../models");
 
 class ReservaUsuarioEventoLugarService {
-  async listarReservasConDetalles(usuarioid) {
+  async listarReservasConDetalles(usuarioid, lugarId = null) {
     try {
+      console.log('=== listarReservasConDetalles ===');
+      console.log('Usuario ID:', usuarioid);
+      console.log('Lugar ID solicitado:', lugarId);
+      
+      const whereClause = { estado: true };
+      const includeLugar = {
+        model: Lugar,
+        as: "lugar",
+        attributes: ["id", "nombre"],
+        where: { usuarioid, estado: true },
+        required: true
+      };
+
+      // Si se proporciona un lugarId, lo agregamos al where del lugar
+      if (lugarId) {
+        console.log('Filtrando por lugar ID:', lugarId);
+        includeLugar.where.id = lugarId;
+      }
+
+      console.log('Buscando reservas con whereClause:', whereClause);
+      console.log('IncludeLugar configurado como:', includeLugar);
+      
       const reservas = await Reserva.findAll({
-        where: { estado: true },
+        where: whereClause,
         include: [
           {
             model: Usuario,
@@ -20,13 +42,7 @@ class ReservaUsuarioEventoLugarService {
             where: { estado: true },
             required: true,
             include: [
-              {
-                model: Lugar,
-                as: "lugar",
-                attributes: ["id", "nombre"],
-                where: { usuarioid, estado: true },
-                required: true,
-              },
+              includeLugar
             ],
           },
         ],

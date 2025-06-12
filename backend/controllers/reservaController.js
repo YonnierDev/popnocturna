@@ -1,3 +1,5 @@
+const { Usuario, Evento, Lugar, Reserva, sequelize } = require("../models");
+const { Op } = require('sequelize');
 const ReservaService = require("../service/reservaService");
 
 class ReservaController {
@@ -17,11 +19,8 @@ class ReservaController {
       let resultado;
       let rolNombre;
 
-      if (rolid === 1) {
-        rolNombre = "Super Administrador";
-        resultado = await ReservaService.listarReservas(opciones);
-      } else if (rolid === 2) {
-        rolNombre = "Administrador";
+      if (rolid === 1 || rolid === 2) {
+        rolNombre = rolid === 1 ? "Super Administrador" : "Administrador";
         resultado = await ReservaService.listarReservas(opciones);
       } else if (rolid === 3) {
         rolNombre = "Propietario";
@@ -136,31 +135,76 @@ class ReservaController {
   async crearReserva(req, res) {
     try {
       const usuarioid = req.usuario.id;
-      const { eventoid, fecha_hora } = req.body;
+      const { eventoid, fecha_hora, cantidad_entradas = 1 } = req.body;
       const aprobacion = "Pendiente";
       const estado = true;
 
+      // Validar cantidad de entradas
+      if (!cantidad_entradas || cantidad_entradas < 1) {
+        return res.status(400).json({ 
+          success: false,
+          mensaje: "La cantidad de entradas debe ser al menos 1" 
+        });
+      }
+
+      // Verificar si el usuario existe
       const usuarioExistente = await ReservaService.verificarUsuario(usuarioid);
       if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario no existe" });
+        return res.status(400).json({ 
+          success: false,
+          mensaje: "El usuario no existe" 
+        });
       }
 
-      const eventoExistente = await ReservaService.verificarEvento(eventoid);
-      if (!eventoExistente) {
-        return res
-          .status(400)
-          .json({ mensaje: "El evento no existe o está inactivo" });
+      // Verificar evento, capacidad y permisos
+      try {
+        const { tienePermiso, mensaje, capacidadDisponible } = await ReservaService.verificarDisponibilidad(
+          eventoid, 
+          cantidad_entradas,
+          usuarioid
+        );
+
+        if (!tienePermiso) {
+          return res.status(403).json({ 
+            success: false,
+            mensaje: mensaje || "No tienes permiso para realizar esta acción" 
+          });
+        }
+
+        if (capacidadDisponible < cantidad_entradas) {
+          return res.status(400).json({
+            success: false,
+            mensaje: `No hay suficiente capacidad disponible. Quedan ${capacidadDisponible} entradas.`,
+            capacidadDisponible
+          });
+        }
+      } catch (error) {
+        return res.status(400).json({ 
+          success: false,
+          mensaje: error.message 
+        });
       }
 
+      // Crear la reserva
       const nuevaReserva = await ReservaService.crearReserva(
         usuarioid,
         eventoid,
         fecha_hora,
         aprobacion,
-        estado
+        estado,
+        cantidad_entradas
       );
 
-      res.status(201).json(nuevaReserva);
+      // Obtener información actualizada del evento para la respuesta
+      const eventoActualizado = await ReservaService.obtenerEventoConCapacidad(eventoid);
+      
+      res.status(201).json({
+        success: true,
+        mensaje: "Reserva creada exitosamente",
+        data: nuevaReserva,
+        capacidadActual: eventoActualizado.capacidad - (eventoActualizado.entradasReservadas || 0),
+        capacidadTotal: eventoActualizado.capacidad
+      });
     } catch (error) {
       console.error("Error en crearReserva:", error);
       res
@@ -172,48 +216,214 @@ class ReservaController {
   async actualizarReserva(req, res) {
     try {
       const { id } = req.params;
-      const { usuarioid, eventoid, fecha_hora, aprobacion, estado } = req.body;
+      const { eventoid, fecha_hora, aprobacion, estado, cantidad_entradas } = req.body;
+      const { id: usuarioId, rol: rolUsuario, rolid } = req.usuario;
+      
+      // Asegurarse de que tengamos el rol del usuario
+      const rol = rolUsuario || rolid;
+      
+      console.log('Datos del usuario:', { usuarioId, rol, rolUsuario, rolid });
 
-      // Verificar si el usuario y el evento existen
-      const usuarioExistente = await ReservaService.verificarUsuario(usuarioid);
-      if (!usuarioExistente) {
-        return res.status(400).json({ mensaje: "El usuario no existe" });
+      // Validar que se proporcione al menos un campo para actualizar
+      if (!eventoid && !fecha_hora && aprobacion === undefined && 
+          estado === undefined && cantidad_entradas === undefined) {
+        return res.status(400).json({
+          success: false,
+          mensaje: "Debe proporcionar al menos un campo para actualizar"
+        });
       }
 
-      const eventoExistente = await ReservaService.verificarEvento(eventoid);
-      if (!eventoExistente) {
-        return res.status(400).json({ mensaje: "El evento no existe" });
-      }
+      console.log('Buscando reserva con ID:', id, 'para usuario ID:', usuarioId);
+      
+      // Obtener la reserva existente con información del evento
+      const reservaExistente = await Reserva.findByPk(id, {
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            include: [{ 
+              model: Lugar, 
+              as: 'lugar',
+              attributes: ['id', 'nombre', 'usuarioid']
+            }],
+            attributes: ['id', 'nombre', 'lugarid', 'fecha_hora', 'capacidad']
+          },
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'apellido', 'correo']
+          }
+        ]
+      });
 
-      // Verificar si la reserva existe
-      const reservaExistente = await ReservaService.buscarReserva(id);
-      console.log("Reserva existente:", reservaExistente); // Log de la reserva existente
+      // Si no existe la reserva, retornar error
       if (!reservaExistente) {
-        return res.status(400).json({ mensaje: "La reserva no existe" });
+        console.log('Reserva no encontrada con ID:', id);
+        return res.status(404).json({ 
+          success: false,
+          mensaje: "La reserva no existe" 
+        });
+      }
+      
+      console.log('Reserva encontrada:', {
+        id: reservaExistente.id,
+        usuarioid: reservaExistente.usuarioid,
+        usuarioActual: usuarioId,
+        esDueno: reservaExistente.usuarioid === usuarioId,
+        rolUsuario: rol
+      });
+
+      // Verificar permisos según el rol
+      let tienePermiso = false;
+      let mensajeError = "No tienes permiso para realizar esta acción";
+      
+      // Verificar si el usuario es el dueño de la reserva
+      const esDuenoReserva = reservaExistente.usuarioid === usuarioId;
+      console.log('Es dueño de la reserva:', esDuenoReserva, {
+        idReserva: reservaExistente.id,
+        usuarioReserva: reservaExistente.usuarioid,
+        usuarioActual: usuarioId
+      });
+      
+      // Verificar si el usuario es propietario del lugar del evento
+      const esPropietarioLugar = rol === 3 && 
+                              reservaExistente.evento?.lugar?.usuarioid === usuarioId;
+
+      // Validaciones por rol
+      switch(rol) {
+        case 1: // Super Admin - Puede hacer cualquier cosa
+          tienePermiso = true;
+          break;
+          
+        case 2: // Admin - Puede cambiar estado (activo/inactivo)
+          if (estado !== undefined) {
+            tienePermiso = true;
+          } else if (aprobacion !== undefined) {
+            mensajeError = "Los administradores no pueden aprobar/rechazar reservas";
+          } else if (esDuenoReserva) {
+            // Si es el dueño, puede actualizar sus propios datos
+            tienePermiso = true;
+          }
+          break;
+          
+        case 3: // Propietario - Solo puede aprobar/rechazar reservas de su lugar
+          if (aprobacion !== undefined && 
+              (aprobacion === 'Aprobado' || aprobacion === 'Rechazado')) {
+            tienePermiso = esPropietarioLugar;
+            mensajeError = "Solo puedes aprobar/rechazar reservas de tu lugar";
+          } else if (esDuenoReserva) {
+            // Si es el dueño, puede actualizar sus propios datos
+            tienePermiso = true;
+          }
+          break;
+          
+        case 4: // Usuario - Solo puede actualizar sus propias reservas (evento y fecha)
+          if (esDuenoReserva) {
+            // Validar que solo intente actualizar eventoid o fecha_hora
+            const camposPermitidos = ['eventoid', 'fecha_hora'];
+            const camposSolicitados = Object.keys(req.body).filter(key => req.body[key] !== undefined);
+            const camposNoPermitidos = camposSolicitados.filter(campo => !camposPermitidos.includes(campo));
+            
+            if (camposNoPermitidos.length > 0) {
+              return res.status(403).json({
+                success: false,
+                mensaje: `Solo puedes actualizar los siguientes campos: ${camposPermitidos.join(', ')}`
+              });
+            }
+            
+            // Si no hay campos para actualizar, retornar error
+            if (camposSolicitados.length === 0) {
+              return res.status(400).json({
+                success: false,
+                mensaje: `Debes proporcionar al menos uno de los siguientes campos: ${camposPermitidos.join(', ')}`
+              });
+            }
+            
+            tienePermiso = true;
+          } else {
+            mensajeError = "Solo puedes actualizar tus propias reservas";
+          }
+          break;
       }
 
-      // Si no se proporciona estado, mantener el estado actual
-      const estadoActual =
-        estado !== undefined ? estado : reservaExistente.estado;
+      if (!tienePermiso) {
+        return res.status(403).json({ success: false, mensaje: mensajeError });
+      }
 
-      const reservaActualizada = await ReservaService.actualizarReserva(
-        id,
-        usuarioid,
-        eventoid,
-        fecha_hora,
-        aprobacion,
-        estadoActual
-      );
+      // Validar disponibilidad si se está cambiando el evento o la cantidad de entradas
+      if ((eventoid && eventoid !== reservaExistente.eventoid) || 
+          (cantidad_entradas !== undefined && cantidad_entradas !== reservaExistente.cantidad_entradas)) {
+            
+        const eventoId = eventoid || reservaExistente.eventoid;
+        const cantidad = cantidad_entradas || reservaExistente.cantidad_entradas;
+        
+        const { tienePermiso: permisoDisponibilidad, 
+                mensaje: mensajeDisponibilidad, 
+                capacidadDisponible } = await ReservaService.verificarDisponibilidad(
+          eventoId, 
+          cantidad,
+          usuarioId
+        );
+
+        if (!permisoDisponibilidad) {
+          return res.status(403).json({ 
+            success: false,
+            mensaje: mensajeDisponibilidad || "No hay disponibilidad para la cantidad solicitada"
+          });
+        }
+
+        // Ajustar la capacidad disponible sumando las entradas de la reserva actual
+        const capacidadTotalDisponible = capacidadDisponible + 
+          (eventoid === reservaExistente.eventoid ? reservaExistente.cantidad_entradas : 0);
+        
+        if (cantidad > capacidadTotalDisponible) {
+          return res.status(400).json({
+            success: false,
+            mensaje: `No hay suficiente capacidad disponible. Quedan ${capacidadDisponible} entradas.`,
+            capacidadDisponible
+          });
+        }
+      }
+
+      // Preparar datos para actualizar
+      const datosActualizar = {};
+      
+      // Solo incluir los campos que se van a actualizar
+      if (eventoid !== undefined) datosActualizar.eventoid = eventoid;
+      if (fecha_hora !== undefined) datosActualizar.fecha_hora = fecha_hora;
+      if (aprobacion !== undefined) datosActualizar.aprobacion = aprobacion;
+      if (estado !== undefined) datosActualizar.estado = estado;
+      if (cantidad_entradas !== undefined) {
+        if (cantidad_entradas < 1) {
+          return res.status(400).json({
+            success: false,
+            mensaje: "La cantidad de entradas debe ser al menos 1"
+          });
+        }
+        datosActualizar.cantidad_entradas = cantidad_entradas;
+      }
+
+      // Actualizar la reserva
+      const reservaActualizada = await ReservaService.actualizarReserva(id, datosActualizar);
+      
+      // Obtener información actualizada del evento para la respuesta
+      const eventoIdActual = eventoid || reservaExistente.eventoid;
+      const eventoActualizado = await ReservaService.obtenerEventoConCapacidad(eventoIdActual);
 
       res.json({
+        success: true,
         mensaje: "Reserva actualizada correctamente",
-        reservaActualizada,
+        data: reservaActualizada,
+        capacidadActual: eventoActualizado.capacidadDisponible,
+        capacidadTotal: eventoActualizado.capacidad
       });
     } catch (error) {
-      console.error("Error en la actualización:", error);
-      res
-        .status(500)
-        .json({ mensaje: "Error al actualizar reserva", error: error.message });
+      console.error("Error en la actualización de reserva:", error);
+      res.status(500).json({ 
+        success: false,
+        mensaje: "Error al actualizar la reserva",
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor'
+      });
     }
   }
 
@@ -297,72 +507,231 @@ class ReservaController {
 
   async buscarReservaPorNumero(req, res) {
     try {
-      const { numero_reserva } = req.params;
+      let { numero_reserva } = req.params;
+      console.log('Buscando reserva con número (original):', numero_reserva);
   
-      const reserva = await ReservaService.buscarReservaPorNumero(numero_reserva);
-  
-      if (!reserva) {
-        return res.status(404).json({ mensaje: "Reserva no encontrada" });
+      // Verificar que el número de reserva no esté vacío
+      if (!numero_reserva || typeof numero_reserva !== 'string') {
+        return res.status(400).json({ 
+          success: false,
+          mensaje: "Número de reserva no proporcionado o inválido" 
+        });
       }
-  
-      const reservaResponse = {
-        numero_reserva: reserva.numero_reserva,
-        aprobacion: reserva.aprobacion,
-        estado: reserva.estado,
-        fecha_hora: reserva.fecha_hora,
-        usuario: {
-          nombre: reserva.usuario.nombre,
-          correo: reserva.usuario.correo,
-        },
-        evento: {
-          nombre: reserva.evento.nombre,
-          fecha_hora: reserva.evento.fecha_hora,
-        },
-      };
-  
-      console.log(reserva.evento);
 
-      res.json(reservaResponse);
+      // Normalizar el número de reserva
+      let numeroReal = numero_reserva.trim().toUpperCase();
+      console.log('Número de reserva normalizado:', numeroReal);
+  
+      // Buscar la reserva
+      const reserva = await ReservaService.buscarReservaPorNumero(numeroReal);
+  
+      // Verificar si la reserva existe
+      if (!reserva) {
+        return res.status(404).json({ 
+          success: false,
+          mensaje: `No se encontró ninguna reserva con el número: ${numeroReal}` 
+        });
+      }
+
+      // Verificar que los datos necesarios estén presentes
+      if (!reserva.usuario || !reserva.evento) {
+        console.error('Datos incompletos en la reserva encontrada:', JSON.stringify(reserva, null, 2));
+        return res.status(500).json({
+          success: false,
+          mensaje: 'Datos de la reserva incompletos',
+          error: process.env.NODE_ENV === 'development' ? 'Los datos de la reserva están incompletos' : undefined
+        });
+      }
+
+      // Verificar permisos
+      const { id: usuarioId, rol } = req.usuario;
+      const esDuenoReserva = reserva.usuarioid === usuarioId;
+      const esAdmin = [1, 2].includes(rol);
+      const esPropietarioLugar = rol === 3 && reserva.evento?.lugar?.usuarioid === usuarioId;
+
+      if (!esDuenoReserva && !esAdmin && !esPropietarioLugar) {
+        return res.status(403).json({
+          success: false,
+          mensaje: "No tienes permiso para ver esta reserva"
+        });
+      }
+
+      try {
+        // Construir la respuesta de manera segura
+        const respuesta = {
+          success: true,
+          data: {
+            id: reserva.id,
+            numero_reserva: reserva.numero_reserva,
+            aprobacion: reserva.aprobacion,
+            estado: reserva.estado,
+            fecha_hora: reserva.fecha_hora,
+            cantidad_entradas: reserva.cantidad_entradas,
+            usuario: {
+              id: reserva.usuario?.id,
+              nombre: reserva.usuario?.nombre || 'Usuario no disponible',
+              correo: reserva.usuario?.correo
+            },
+            evento: {
+              id: reserva.evento?.id,
+              nombre: reserva.evento?.nombre || 'Evento sin nombre',
+              fecha_hora: reserva.evento?.fecha_hora,
+              lugar: reserva.evento?.lugar ? {
+                id: reserva.evento.lugar.id,
+                nombre: reserva.evento.lugar.nombre
+              } : null
+            }
+          }
+        };
+        
+        return res.json(respuesta);
+        
+      } catch (construccionError) {
+        console.error('Error al construir la respuesta:', construccionError);
+        return res.status(500).json({
+          success: false,
+          mensaje: 'Error al procesar los datos de la reserva',
+          error: process.env.NODE_ENV === 'development' ? construccionError.message : undefined
+        });
+      }
+      
     } catch (error) {
       console.error("Error al buscar la reserva por número:", error);
-      res
-        .status(500)
-        .json({ mensaje: "Error en el servicio", error: error.message });
+      res.status(500).json({ 
+        success: false,
+        mensaje: "Error al procesar la solicitud",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      });
     }
   }
-  
 
+// ...
   async aprobarReserva(req, res) {
     try {
-      const { numero_reserva } = req.params;
-      const { aprobacion } = req.body;
-
-      if (
-        !["aceptado", "rechazado", "pendiente"].includes(
-          aprobacion.toLowerCase()
-        )
-      ) {
-        return res.status(400).json({ error: "Valor de aprobación inválido." });
+      console.log('=== Inicio de aprobación de reserva ===');
+      console.log('Params:', req.params);
+      console.log('Body recibido:', req.body);
+      
+      let { numero_reserva } = req.params;
+      
+      // Obtener aprobación sin importar mayúsculas/minúsculas
+      const aprobacion = req.body.aprobacion || req.body.Aprobacion;
+      
+      const { id: usuarioId, rol } = req.usuario || {};
+      
+      console.log('Aprobación procesada:', aprobacion);
+      
+      // Validar datos básicos
+      if (!numero_reserva) {
+        return res.status(400).json({ 
+          success: false,
+          mensaje: 'El número de reserva es requerido' 
+        });
       }
 
-      const reserva = await ReservaService.actualizarAprobacionPorNumero(
-        numero_reserva,
-        aprobacion
-      );
+      if (!aprobacion || typeof aprobacion !== 'string') {
+        return res.status(400).json({ 
+          success: false,
+          mensaje: 'El estado de aprobación es requerido' 
+        });
+      }
+
+      // Asegurar que el número de reserva tenga exactamente el formato RES-XXX
+      // Extraer solo los números del final
+      const numero = numero_reserva.replace(/\D/g, '').padStart(3, '0');
+      // Formatear exactamente como RES-XXX
+      numero_reserva = `RES-${numero}`;
+      console.log('Número de reserva normalizado:', numero_reserva);
+      const aprobacionNormalizada = aprobacion.toLowerCase();
+      
+      // Validar valor de aprobación
+      if (!['aceptado', 'rechazado', 'pendiente'].includes(aprobacionNormalizada)) {
+        return res.status(400).json({ 
+          success: false,
+          mensaje: 'Valor de aprobación inválido. Debe ser: aceptado, rechazado o pendiente' 
+        });
+      }
+
+      console.log('Buscando reserva:', numero_reserva);
+      
+      // Buscar la reserva (búsqueda flexible)
+      const reserva = await Reserva.findOne({
+        where: sequelize.where(
+          sequelize.fn('UPPER', sequelize.col('numero_reserva')),
+          '=',
+          numero_reserva.toUpperCase()
+        ),
+        include: [
+          { 
+            model: Evento, 
+            as: 'evento', 
+            include: [{ 
+              model: Lugar, 
+              as: 'lugar',
+              attributes: ['id', 'nombre', 'usuarioid']
+            }],
+            required: false
+          },
+          { 
+            model: Usuario, 
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'correo', 'rolid'],
+            required: false
+          }
+        ]
+      });
+      
+      console.log('Resultado de búsqueda:', reserva ? 'Encontrada' : 'No encontrada');
 
       if (!reserva) {
-        return res.status(404).json({ error: "Reserva no encontrada." });
+        return res.status(404).json({
+          success: false,
+          mensaje: `No se encontró la reserva ${numero_reserva}`
+        });
       }
 
-      // Ocultamos el id si quieres
-      const { id, ...reservaSinId } = reserva.toJSON();
+      console.log('Reserva encontrada:', reserva.id);
+      
+      // Verificar permisos (admin o dueño del lugar)
+      const esAdmin = [1, 2].includes(rol);
+      const esPropietario = rol === 3 && 
+                          reserva.evento?.lugar?.usuarioid === usuarioId;
 
-      res.json({
-        mensaje: "Reserva actualizada correctamente",
-        reserva: reservaSinId,
-      });
+      if (!esAdmin && !esPropietario) {
+        return res.status(403).json({
+          success: false,
+          mensaje: 'No tienes permiso para aprobar/rechazar esta reserva'
+        });
+      }
+
+      // Actualizar estado
+      console.log('Actualizando estado a:', aprobacionNormalizada);
+      reserva.aprobacion = aprobacionNormalizada;
+      await reserva.save();
+
+      // Construir respuesta simple
+      const respuesta = {
+        success: true,
+        mensaje: `Reserva ${aprobacionNormalizada} correctamente`,
+        data: {
+          id: reserva.id,
+          numero_reserva: reserva.numero_reserva,
+          aprobacion: reserva.aprobacion,
+          estado: reserva.estado,
+          fecha_actualizacion: reserva.updatedAt
+        }
+      };
+
+      console.log('Respuesta exitosa');
+      return res.json(respuesta);
+      
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error('Error en aprobarReserva:', error);
+      return res.status(500).json({
+        success: false,
+        mensaje: 'Error en el servidor',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 }

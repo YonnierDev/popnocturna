@@ -1,4 +1,4 @@
-const { Usuario, Evento, Lugar, Reserva, Rol } = require("../models");
+const { sequelize, Usuario, Evento, Lugar, Reserva, Rol } = require("../models");
 const { Op } = require("sequelize");
 
 class ReservaService {
@@ -95,8 +95,13 @@ class ReservaService {
       where,
       offset,
       limit,
+      attributes: ['id', 'numero_reserva', 'fecha_hora', 'aprobacion', 'estado', 'cantidad_entradas'],
       include: [
-        { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
+        { 
+          model: Usuario, 
+          as: "usuario", 
+          attributes: ["id", "nombre", "correo"] 
+        },
         { 
           model: Evento, 
           as: "evento", 
@@ -127,38 +132,191 @@ class ReservaService {
     return resultado;
   }
 
-  // Buscar reserva por número
+  // Buscar reserva por número (insensible a mayúsculas/minúsculas)
   async buscarReservaPorNumero(numero_reserva) {
-    return await Reserva.findOne({
-      where: { numero_reserva },
+    console.log('Buscando reserva con número (servicio):', numero_reserva);
+    
+    const resultado = await Reserva.findOne({
+      where: sequelize.where(
+        sequelize.fn('LOWER', sequelize.col('numero_reserva')),
+        '=',
+        numero_reserva.toLowerCase()
+      ),
       include: [
-        { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
-        { model: Evento, as: "evento", attributes: ["nombre", "fecha_hora"] }
+        { 
+          model: Usuario, 
+          as: "usuario", 
+          attributes: ["id", "nombre", "correo", "rolid"],
+          include: [{
+            model: Rol,
+            as: "rol",
+            attributes: ["id", "nombre"]
+          }]
+        },
+        { 
+          model: Evento, 
+          as: "evento", 
+          attributes: ["id", "nombre", "fecha_hora", "lugarid"],
+          include: [
+            {
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'nombre', 'usuarioid']
+            }
+          ]
+        }
       ]
     });
+    
+    console.log('Resultado de la búsqueda:', resultado ? 'Encontrado' : 'No encontrado');
+    return resultado;
   }
 
-  // Verificar evento
-  async verificarEvento(eventoid) {
+  // Verificar disponibilidad y permisos para reservar
+  async verificarDisponibilidad(eventoid, cantidadEntradas, usuarioid) {
     try {
+      // Obtener información del evento
       const evento = await Evento.findByPk(eventoid, {
-        attributes: ["id", "nombre", "fecha_hora", "estado", "capacidad", "precio"],
+        attributes: ["id", "nombre", "fecha_hora", "estado", "capacidad", "precio", "lugarid", "usuarioid"],
         include: [{
           model: Lugar,
           as: "lugar",
-          attributes: ["id", "nombre", "estado", "aprobacion"]
+          attributes: ["id", "nombre", "estado", "aprobacion", "usuarioid"]
         }]
       });
 
+      // Verificar si el evento existe
       if (!evento) {
-        throw new Error("El evento no existe");
+        return { 
+          tienePermiso: false, 
+          mensaje: "El evento no existe",
+          capacidadDisponible: 0
+        };
       }
 
+      // Verificar si el usuario es el propietario del evento
+      if (usuarioid && evento.usuarioid === usuarioid) {
+        return { 
+          tienePermiso: false, 
+          mensaje: "No puedes reservar en tu propio evento",
+          capacidadDisponible: 0
+        };
+      }
+
+      // Verificar si el evento está activo
       if (!evento.estado) {
-        throw new Error("El evento está inactivo");
+        return { 
+          tienePermiso: false, 
+          mensaje: "El evento está inactivo",
+          capacidadDisponible: 0
+        };
       }
 
-      return evento;
+      // Verificar si el lugar existe
+      if (!evento.lugar) {
+        return { 
+          tienePermiso: false, 
+          mensaje: "El lugar asociado al evento no existe",
+          capacidadDisponible: 0
+        };
+      }
+
+      // Verificar si el lugar está activo
+      if (!evento.lugar.estado) {
+        return { 
+          tienePermiso: false, 
+          mensaje: "El lugar del evento está inactivo",
+          capacidadDisponible: 0
+        };
+      }
+
+      // Verificar si el lugar está aprobado
+      if (!evento.lugar.aprobacion) {
+        return { 
+          tienePermiso: false, 
+          mensaje: "El lugar del evento no está aprobado",
+          capacidadDisponible: 0
+        };
+      }
+
+      // Obtener la suma de entradas ya reservadas
+      const resultado = await Reserva.sum('cantidad_entradas', {
+        where: {
+          eventoid,
+          estado: true,
+          aprobacion: { [Op.in]: ["Pendiente", "Aprobado"] }
+        }
+      });
+
+      const entradasReservadas = resultado || 0;
+      const capacidadDisponible = evento.capacidad - entradasReservadas;
+
+      return {
+        tienePermiso: true,
+        capacidadDisponible,
+        entradasReservadas,
+        capacidadTotal: evento.capacidad
+      };
+    } catch (error) {
+      console.error("Error en verificarDisponibilidad:", error);
+      return { 
+        tienePermiso: false, 
+        mensaje: error.message || "Error al verificar disponibilidad",
+        capacidadDisponible: 0
+      };
+    }
+  }
+
+  // Obtener información de capacidad de un evento
+  async obtenerEventoConCapacidad(eventoid) {
+    try {
+      const evento = await Evento.findByPk(eventoid, {
+        attributes: ["id", "nombre", "capacidad"]
+      });
+
+      if (!evento) {
+        throw new Error("Evento no encontrado");
+      }
+
+      const resultado = await Reserva.sum('cantidad_entradas', {
+        where: {
+          eventoid,
+          estado: true,
+          aprobacion: { [Op.in]: ["Pendiente", "Aprobado"] }
+        }
+      });
+
+      const entradasReservadas = resultado || 0;
+      
+      return {
+        ...evento.get({ plain: true }),
+        entradasReservadas,
+        capacidadDisponible: evento.capacidad - entradasReservadas
+      };
+    } catch (error) {
+      console.error("Error en obtenerEventoConCapacidad:", error);
+      throw error;
+    }
+  }
+
+  // Método para compatibilidad con código existente
+  async verificarEvento(eventoid, cantidadEntradas = 1) {
+    try {
+      const { tienePermiso, mensaje, capacidadDisponible } = await this.verificarDisponibilidad(
+        eventoid, 
+        cantidadEntradas,
+        null // No verificamos el usuario aquí para mantener compatibilidad
+      );
+
+      if (!tienePermiso) {
+        throw new Error(mensaje || "No se pudo verificar el evento");
+      }
+
+      if (capacidadDisponible < cantidadEntradas) {
+        throw new Error(`No hay suficiente capacidad disponible. Quedan ${capacidadDisponible} entradas.`);
+      }
+
+      return await Evento.findByPk(eventoid);
     } catch (error) {
       console.error("Error en verificarEvento:", error);
       throw error;
@@ -167,7 +325,7 @@ class ReservaService {
 
   // Verificar usuario
   async verificarUsuario(usuarioid) {
-    return await Usuario.findByPk(usuarioid, {
+    const usuario = await Usuario.findByPk(usuarioid, {
       attributes: ["id", "nombre", "correo", "rolid"],
       include: [{
         model: Rol,
@@ -175,21 +333,39 @@ class ReservaService {
         attributes: ["id", "nombre"]
       }]
     });
+    
+    console.log('Resultado de la búsqueda de usuario:', usuario ? 'Encontrado' : 'No encontrado');
+    return usuario;
   }
 
   // Crear nueva reserva
-  async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado) {
+  async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado, cantidad_entradas = 1) {
     try {
-      const evento = await this.verificarEvento(eventoid);
+      // Verificar si el usuario ya tiene una reserva para este evento
+      const reservaExistente = await Reserva.findOne({
+        where: { usuarioid, eventoid, estado: true }
+      });
+
+      if (reservaExistente) {
+        throw new Error("Ya tienes una reserva activa para este evento");
+      }
+
+      // Obtener el último número de reserva
+      const ultimaReserva = await Reserva.findOne({
+        attributes: ['id'],
+        order: [['id', 'DESC']]
+      });
+
+      // Generar el siguiente número de reserva secuencial
+      const siguienteNumero = ultimaReserva ? ultimaReserva.id + 1 : 1;
+      const numero_reserva = `RES-${String(siguienteNumero).padStart(3, '0')}`;
+
+      const evento = await this.verificarEvento(eventoid, cantidad_entradas);
       const usuario = await this.verificarUsuario(usuarioid);
       
       if (!usuario) {
         throw new Error("El usuario no existe");
       }
-
-      const timestamp = Date.now().toString().slice(-6);
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const numero_reserva = `RES${timestamp}${random}`;
 
       const reserva = await Reserva.create({
         usuarioid,
@@ -197,7 +373,8 @@ class ReservaService {
         fecha_hora,
         aprobacion,
         estado,
-        numero_reserva
+        numero_reserva,
+        cantidad_entradas
       });
 
       return await Reserva.findByPk(reserva.id, {
@@ -226,25 +403,55 @@ class ReservaService {
   }
 
   // Actualizar reserva
-  async actualizarReserva(id, usuarioid, eventoid, fecha_hora, aprobacion, estado) {
+  async actualizarReserva(id, datosActualizar) {
+    const t = await sequelize.transaction();
+    
     try {
-      const reserva = await this.buscarReservaPorId(id);
+      // Buscar la reserva existente
+      const reserva = await Reserva.findByPk(id, { transaction: t });
       if (!reserva) {
         throw new Error("La reserva no existe");
       }
 
-      // Verificar que el usuario es el dueño de la reserva
-      if (reserva.usuarioid !== usuarioid) {
-        throw new Error("No tienes permiso para actualizar esta reserva");
+      // Verificar que haya datos para actualizar
+      if (!datosActualizar || Object.keys(datosActualizar).length === 0) {
+        await t.rollback();
+        return reserva;
       }
 
-      await Reserva.update(
-        { usuarioid, eventoid, fecha_hora, aprobacion, estado },
-        { where: { id } }
-      );
-      return await this.buscarReservaPorId(id);
+      // Actualizar la reserva
+      await reserva.update(datosActualizar, { transaction: t });
+      
+      // Confirmar la transacción
+      await t.commit();
+      
+      // Obtener y retornar la reserva actualizada con sus relaciones
+      return await Reserva.findByPk(id, {
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            include: [{ 
+              model: Lugar, 
+              as: 'lugar',
+              attributes: ['id', 'nombre', 'usuarioid']
+            }],
+            attributes: ['id', 'nombre', 'lugarid', 'fecha_hora', 'capacidad']
+          },
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'apellido', 'correo']
+          }
+        ]
+      });
     } catch (error) {
       console.error("Error en actualizarReserva:", error);
+      // Si hay un error, hacer rollback de la transacción
+      if (t && !t.finished) {
+        await t.rollback();
+      }
+      // Lanzar el error para que el controlador lo maneje
       throw error;
     }
   }
@@ -295,7 +502,81 @@ class ReservaService {
     }
   }
 
+  // Actualizar aprobación de reserva por número
+  async actualizarAprobacionPorNumero(numeroReserva, aprobacion, usuarioId, rol) {
+    const t = await sequelize.transaction();
+    
+    try {
+      // Normalizar número de reserva
+      const numeroNormalizado = numeroReserva.trim().toUpperCase();
+      
+      // Buscar la reserva con sus relaciones
+      const reserva = await Reserva.findOne({
+        where: { numero_reserva: numeroNormalizado },
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            include: [{
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'usuarioid']
+            }]
+          }
+        ],
+        transaction: t
+      });
+
+      if (!reserva) {
+        throw new Error('Reserva no encontrada');
+      }
+
+      // Verificar permisos
+      const esAdmin = [1, 2].includes(rol);
+      const esPropietarioLugar = rol === 3 && reserva.evento?.lugar?.usuarioid === usuarioId;
+
+      if (!esAdmin && !esPropietarioLugar) {
+        throw new Error('No tienes permiso para aprobar/rechazar esta reserva');
+      }
+
+      // Actualizar estado de aprobación
+      reserva.aprobacion = aprobacion.toLowerCase();
+      await reserva.save({ transaction: t });
+      
+      // Confirmar transacción
+      await t.commit();
+      
+      // Obtener la reserva actualizada con relaciones
+      const reservaActualizada = await Reserva.findByPk(reserva.id, {
+        include: [
+          { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'correo'] },
+          { 
+            model: Evento, 
+            as: 'evento',
+            include: [{
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'nombre']
+            }]
+          }
+        ]
+      });
+      
+      return reservaActualizada;
+      
+    } catch (error) {
+      // Revertir transacción en caso de error
+      await t.rollback();
+      console.error('Error en actualizarAprobacionPorNumero:', error);
+      throw error; // Relanzar el error para manejarlo en el controlador
+    }
+  }
+
   // Métodos auxiliares
+  async buscarReserva(id) {
+    return await Reserva.findByPk(id);
+  }
+
   async buscarReservaPorId(id) {
     return await Reserva.findByPk(id, {
       include: [

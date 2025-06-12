@@ -8,7 +8,7 @@ const propietarioReservaEventoLugarController = require('../../controllers/propi
 router.get(
   '/propietario/reservas/pendientes',
   autentiMiddleware,
-  validarRol(3), 
+  validarRol(1, 2, 3), 
   propietarioReservaEventoLugarController.obtenerReservasPendientes
 );
 
