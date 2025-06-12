@@ -397,6 +397,53 @@ class EventoController {
       res.status(500).json({ mensaje: "Error en el servicio" });
     }
   }
+
+  async listarReservasEvento(req, res) {
+    try {
+      const { eventoId } = req.params;
+      const { rol: rolid, id: usuarioid } = req.usuario;
+      const { page = 1, limit = 10, estado } = req.query;
+
+      // Verificar que el evento existe y el usuario tiene permiso
+      const evento = await eventoService.obtenerEventoPorId(eventoId);
+      
+      if (!evento) {
+        return res.status(404).json({ mensaje: 'Evento no encontrado' });
+      }
+
+      // Verificar permisos
+      if (rolid === 3 && evento.usuarioid !== usuarioid) {
+        return res.status(403).json({ 
+          mensaje: 'No tienes permiso para ver las reservas de este evento' 
+        });
+      }
+
+      const opciones = {
+        offset: (page - 1) * limit,
+        limit: parseInt(limit),
+        estado
+      };
+
+      const { count, rows: reservas } = await eventoService.listarReservasEvento(eventoId, opciones);
+
+      res.json({
+        mensaje: 'Reservas del evento obtenidas correctamente',
+        datos: reservas,
+        metadata: {
+          total: count,
+          pagina: parseInt(page),
+          limite: parseInt(limit),
+          totalPaginas: Math.ceil(count / parseInt(limit))
+        }
+      });
+    } catch (error) {
+      console.error('Error al listar reservas del evento:', error);
+      res.status(500).json({ 
+        mensaje: 'Error al listar reservas del evento',
+        error: error.message 
+      });
+    }
+  }
 }
 
 module.exports = new EventoController();

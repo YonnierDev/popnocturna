@@ -12,16 +12,40 @@ class ReservaService {
       };
     }
 
-    return await Reserva.findAndCountAll({
+    const resultado = await Reserva.findAndCountAll({
       where,
       offset,
       limit,
       include: [
         { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
-        { model: Evento, as: "evento", attributes: ["nombre", "fecha_hora"] }
+        { 
+          model: Evento, 
+          as: "evento", 
+          attributes: ["id", "nombre", "portada", "fecha_hora"],
+          include: [
+            {
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
       ],
       order: [['fecha_hora', 'DESC']]
     });
+
+    // Asegurarse de que portada sea siempre un array
+    resultado.rows = resultado.rows.map(reserva => {
+      const reservaJson = reserva.get({ plain: true });
+      if (reservaJson.evento) {
+        reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada) 
+          ? reservaJson.evento.portada 
+          : [reservaJson.evento.portada].filter(Boolean);
+      }
+      return reserva;
+    });
+
+    return resultado;
   }
 
   // Listar reservas para propietarios
@@ -67,16 +91,40 @@ class ReservaService {
       };
     }
 
-    return await Reserva.findAndCountAll({
+    const resultado = await Reserva.findAndCountAll({
       where,
       offset,
       limit,
       include: [
         { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
-        { model: Evento, as: "evento", attributes: ["nombre", "fecha_hora"] }
+        { 
+          model: Evento, 
+          as: "evento", 
+          attributes: ["id", "nombre", "portada", "fecha_hora"],
+          include: [
+            {
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['id', 'nombre']
+            }
+          ]
+        }
       ],
       order: [['fecha_hora', 'DESC']]
     });
+
+    // Asegurarse de que portada sea siempre un array
+    resultado.rows = resultado.rows.map(reserva => {
+      const reservaJson = reserva.get({ plain: true });
+      if (reservaJson.evento) {
+        reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada) 
+          ? reservaJson.evento.portada 
+          : [reservaJson.evento.portada].filter(Boolean);
+      }
+      return reserva;
+    });
+
+    return resultado;
   }
 
   // Buscar reserva por número

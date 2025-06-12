@@ -7,13 +7,11 @@ const validarRol = require("../middlewares/validarRol");
 router.get(
   "/reservas",
   autentiMiddleare,
-  validarRol(1, 2, 3, 4),
   ReservaController.listarReservas
 );
 router.get(
   "/reserva/:numero_reserva",
   autentiMiddleare,
-  validarRol(1, 2, 3),
   ReservaController.buscarReservaPorNumero
 );
 router.post(

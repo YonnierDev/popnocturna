@@ -68,7 +68,8 @@ class ReservaController {
             evento: {
               id: reservaJson.evento?.id,
               nombre: reservaJson.evento?.nombre,
-              fecha_hora: reservaJson.evento?.fecha_hora
+              fecha_hora: reservaJson.evento?.fecha_hora,
+              portada: reservaJson.evento?.portada || [] // Asegurar que siempre sea un array
             }
           };
         });

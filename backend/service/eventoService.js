@@ -405,6 +405,40 @@ class EventoService {
       attributes: ['id', 'nombre', 'descripcion', 'fecha_hora', 'precio', 'capacidad']
     });
   }
+
+  async obtenerEventoPorId(eventoId) {
+    return await Evento.findByPk(eventoId, {
+      include: [
+        {
+          model: Lugar,
+          as: 'lugar',
+          attributes: ['id', 'nombre', 'usuarioid']
+        }
+      ]
+    });
+  }
+
+  async listarReservasEvento(eventoId, { offset, limit, estado }) {
+    const where = { eventoid: eventoId };
+    if (estado) where.estado = estado;
+
+    const Reserva = require('../models').Reserva;
+    const Usuario = require('../models').Usuario;
+
+    return await Reserva.findAndCountAll({
+      where,
+      offset,
+      limit,
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'correo']
+        }
+      ],
+      order: [['fecha_hora', 'DESC']]
+    });
+  }
 }
 
 module.exports = new EventoService();
