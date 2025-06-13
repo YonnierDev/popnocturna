@@ -479,9 +479,13 @@ class CalificacionService {
         throw new Error("La puntuación debe estar entre 1 y 5");
       }
 
-      // Verificar si ya existe una calificación del usuario para este evento
+      // Verificar si ya existe una calificación activa del usuario para este evento
       const calificacionExistente = await Calificacion.findOne({
-        where: { usuarioid, eventoid }
+        where: { 
+          usuarioid, 
+          eventoid,
+          estado: true // Solo verificar calificaciones activas
+        }
       });
 
       if (calificacionExistente) {

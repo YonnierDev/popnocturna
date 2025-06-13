@@ -1,6 +1,7 @@
-const { Lugar } = require("../models");
+const { Lugar, Evento, Reserva } = require("../models");
+const { Op } = require('sequelize');
 const CalificacionService = require("../service/calificacionService");
-const {formatearRespuestaPaginada} = require("./paginacionController");
+const { formatearRespuestaPaginada } = require("./paginacionController");
 
 class CalificacionController {
   async listarCalificacionesPorLugar(req, res) {
@@ -140,11 +141,11 @@ class CalificacionController {
   async crearCalificacion(req, res) {
     try {
       const { rol: rolid, id: usuarioid } = req.usuario;
-      const { eventoid, puntuacion } = req.body;
+      const { puntuacion } = req.body;
 
       // Validar que la puntuación esté entre 1 y 5
-      if (puntuacion < 1 || puntuacion > 5) {
-        return res.status(400).json({ error: "La puntuación debe estar entre 1 y 5" });
+      if (!puntuacion || puntuacion < 1 || puntuacion > 5) {
+        return res.status(400).json({ error: "La puntuación es obligatoria y debe estar entre 1 y 5" });
       }
 
       // Propietarios no pueden crear calificaciones
@@ -152,9 +153,25 @@ class CalificacionController {
         return res.status(403).json({ error: "Los propietarios no pueden crear calificaciones" });
       }
 
+      // Verificar que se proporcione un eventoid
+      if (!req.body.eventoid) {
+        return res.status(400).json({ 
+          error: "Se requiere el ID del evento (eventoid) para crear una calificación" 
+        });
+      }
+      
+      const eventoidFinal = req.body.eventoid;
+      
+      // Verificar que el evento exista
+      const evento = await Evento.findByPk(eventoidFinal);
+      if (!evento) {
+        return res.status(404).json({ error: "El evento especificado no existe" });
+      }
+
+      // Intentar crear la calificación
       const nuevaCalificacion = await CalificacionService.crearCalificacion({
         usuarioid,
-        eventoid,
+        eventoid: eventoidFinal,
         puntuacion,
         estado: true
       });
@@ -163,29 +180,45 @@ class CalificacionController {
       const io = req.app.get('io');
 
       // Obtener todos los usuarios que han calificado este evento
-      const usuariosCalificaciones = await CalificacionService.obtenerUsuariosCalificacionesEvento(eventoid);
+      const usuariosCalificaciones = await CalificacionService.obtenerUsuariosCalificacionesEvento(eventoidFinal);
 
       // Notificar solo a los usuarios que han calificado el mismo evento
-      usuariosCalificaciones.forEach(usuario => {
-        if (usuario.id !== usuarioid) { // No notificar al usuario que hizo la calificación
-          io.to(`usuario-${usuario.id}`).emit('nueva-calificacion-usuario', {
-            evento: {
-              id: eventoid,
-              nombre: nuevaCalificacion.evento?.nombre || 'Evento'
-            },
-            calificacion: {
-              puntuacion: nuevaCalificacion.puntuacion,
-              usuarioid: nuevaCalificacion.usuarioid
-            },
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
+      if (io) {
+        usuariosCalificaciones.forEach(usuario => {
+          if (usuario.id !== usuarioid) { // No notificar al usuario que hizo la calificación
+            io.to(`usuario-${usuario.id}`).emit('nueva-calificacion-usuario', {
+              evento: {
+                id: eventoidFinal,
+                nombre: nuevaCalificacion.evento?.nombre || 'Evento'
+              },
+              calificacion: {
+                puntuacion: nuevaCalificacion.puntuacion,
+                usuarioid: nuevaCalificacion.usuarioid
+              },
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
+      }
 
-      res.status(201).json(nuevaCalificacion);
+      return res.status(201).json({
+        mensaje: 'Calificación creada exitosamente',
+        calificacion: nuevaCalificacion
+      });
     } catch (error) {
-      console.error("Error al crear calificación:", error);
-      res.status(500).json({ error: error.message });
+      console.error('Error en crearCalificacion:', error);
+      
+      // Manejar el caso específico de calificación duplicada
+      if (error.message === 'Ya has calificado este evento') {
+        return res.status(400).json({ 
+          error: 'Ya has calificado este evento anteriormente' 
+        });
+      }
+      
+      // Para otros errores
+      return res.status(400).json({ 
+        error: error.message || 'Error al crear la calificación' 
+      });
     }
   }
 

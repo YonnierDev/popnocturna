@@ -167,12 +167,6 @@ class EventoService {
       where: { id, estado: true },
       include: [
         { model: Lugar, as: "lugar" },
-        { 
-          model: Comentario, 
-          as: "comentarios",
-          where: { usuarioid: usuarioId, estado: true },
-          required: false
-        }
       ]
     });
   }

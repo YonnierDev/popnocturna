@@ -204,16 +204,8 @@ class EventoController {
       const datosEvento = { ...req.body }; // Copiamos req.body para poder modificarlo
       const archivos = req.files || []; // Acceder a los archivos subidos
 
-      console.log('\n=== Inicio actualizarEvento ===');
-      console.log('ID del evento:', id);
-      console.log('ID del usuario:', usuarioid);
-      console.log('Rol del usuario:', rolid);
-      console.log('Datos del body:', req.body); // Log original del body
-      console.log('Archivos recibidos:', archivos.length); // Log de archivos
-
       // Lógica para manejar la subida de nuevas imágenes
       if (archivos.length > 0) {
-        console.log('Procesando nuevas imágenes para actualizar...');
         const urlsPortadaNuevas = [];
         for (const archivo of archivos) {
           try {
@@ -221,7 +213,6 @@ class EventoController {
             const nombreUnico = `evento-${Date.now()}-${Math.floor(Math.random() * 1000)}${path.extname(archivo.originalname)}`;
             const resultadoUpload = await cloudinaryService.subirImagenEvento(archivo.buffer, 'eventos', nombreUnico);
             urlsPortadaNuevas.push(resultadoUpload.secure_url);
-            console.log('Imagen subida a Cloudinary:', resultadoUpload.secure_url);
           } catch (uploadError) {
             console.error("Error al subir imagen a Cloudinary:", uploadError);
             // Considera si devolver un error aquí o continuar sin la imagen
