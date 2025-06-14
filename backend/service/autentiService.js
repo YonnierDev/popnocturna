@@ -109,7 +109,8 @@ class AutentiService {
       };
       await transporter.sendMail(mailOptions);
     } catch (error) {
-      throw new Error('Error al enviar el correo de verificación');
+      console.error('Error al enviar correo de verificación:', error);
+       throw new Error('Error al enviar el correo de verificación');
     }
   }
 
