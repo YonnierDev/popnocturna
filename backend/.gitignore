@@ -109,3 +109,4 @@ apidoc/
 config.local.js
 config.dev.js
 .qodo
+.env
