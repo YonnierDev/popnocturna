@@ -223,6 +223,9 @@ class ComentarioController {
             if (rol === 3) {
                 // Propietarios solo ven comentarios de sus eventos
                 comentarios = await ComentarioService.obtenerPorEventoPropietario(eventoid, usuarioid);
+            } else if (rol === 4) {
+                // Rol 4 ve comentarios pendientes o rechazados
+                comentarios = await ComentarioService.obtenerComentariosPendientesRechazados(eventoid);
             } else {
                 // Otros roles ven todos los comentarios del evento
                 comentarios = await ComentarioService.obtenerPorEvento(eventoid);

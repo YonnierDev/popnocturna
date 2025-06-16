@@ -341,28 +341,34 @@ class ComentarioService {
 
   async obtenerPorEvento(eventoid) {
     try {
-      console.log('=== Inicio de obtenerPorEvento ===');
+      console.log('=== Inicio de obtenerPorEvento (Admin) ===');
       console.log('Evento ID:', eventoid);
 
       const comentarios = await Comentario.findAll({
         where: { 
-          eventoid,
-          estado: true 
+          eventoid
+          // Sin filtros de estado o aprobación para admins
         },
         include: [
           {
             model: Usuario,
             as: 'usuario',
             attributes: ['id', 'nombre', 'correo']
+          },
+          {
+            model: Evento,
+            as: 'evento',
+            attributes: ['id', 'nombre']
           }
         ],
-        order: [['fecha_hora', 'DESC']]
+        order: [['fecha_hora', 'DESC']],
+        paranoid: false // Esto incluirá registros eliminados lógicamente (soft delete)
       });
 
-      console.log('Cantidad de comentarios encontrados:', comentarios.length);
+      console.log('Total de comentarios encontrados (incluyendo inactivos):', comentarios.length);
       return comentarios;
     } catch (error) {
-      console.error('Error en obtenerPorEvento:', error);
+      console.error('Error en obtenerPorEvento (Admin):', error);
       throw error;
     }
   }
@@ -404,6 +410,29 @@ class ComentarioService {
       console.error('Error en obtenerPorEventoPropietario:', error);
       throw error;
     }
+  }
+
+  async obtenerComentariosPendientesRechazados(eventoid) {
+    return await Comentario.findAll({
+        where: { 
+            eventoid,
+            estado: true,
+            aprobacion: [0, 2] // 0: pendiente, 2: rechazado
+        },
+        include: [
+            {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'correo']
+            },
+            {
+                model: Evento,
+                as: 'evento',
+                attributes: ['id', 'nombre']
+            }
+        ],
+        order: [['fecha_hora', 'DESC']]
+    });
   }
 
   async obtenerReportados() {

@@ -100,11 +100,6 @@ temp/
 .firebaserc
 firebase-debug.log
 
-# Archivos de documentación generados
-docs/
-jsdoc/
-apidoc/
-
 # Archivos de configuración local
 config.local.js
 config.dev.js
