@@ -32,24 +32,6 @@ class AutentiController {
       });
       
     } catch (error) {
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      
-      const errorInfo = {
-        error: {
-          name: error.name,
-          message: error.message,
-          code: error.code,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-          errorObject: JSON.stringify(error, Object.getOwnPropertyNames(error))
-        },
-        context: logContext,
-        duration: `${duration}ms`,
-        body: req.body
-      };
-      
-      console.error('❌ Error en el controlador de registro:', JSON.stringify(errorInfo, null, 2));
-
       // Manejar errores específicos
       if (error.message.includes('foreign key constraint fails')) {
         return res.status(400).json({
@@ -68,15 +50,6 @@ class AutentiController {
           detalles: "Error de validación en los datos del formulario"
         });
       }
-      
-      // Manejar errores de validación (deben ir primero para capturar errores de validación temprana)
-      if (error.message.includes('validación') || error.message.includes('obligatorios')) {
-        return res.status(422).json({
-          codigo: 'VALIDACION_FALLIDA',
-          mensaje: error.message,
-          detalles: "Error de validación en los datos del formulario"
-        });
-      }
 
       // Manejar errores de correo duplicado
       if (error.message.includes('ya está en uso') || error.message.includes('ya existe')) {
@@ -84,31 +57,6 @@ class AutentiController {
           codigo: 'CORREO_DUPLICADO',
           mensaje: "El correo electrónico ya está registrado",
           detalles: error.message
-        });
-      }
-      
-      // Manejar errores de nodemailer
-      if (error.message.includes('Error al enviar correo') || 
-          error.message.includes('Invalid login') || 
-          error.code === 'EAUTH') {
-        return res.status(502).json({
-          codigo: 'ERROR_CORREO',
-          mensaje: "Error de autenticación del servidor de correo",
-          detalles: "No se pudo autenticar con el servidor de correo. Por favor, intente más tarde.",
-          error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-      }
-      
-      // Manejar errores de tiempo de espera
-      if (error.code === 'ETIMEDOUT' || 
-          error.code === 'ECONNECTION' || 
-          error.message.includes('timeout') ||
-          error.message.includes('ECONNREFUSED')) {
-        return res.status(504).json({
-          codigo: 'TIEMPO_AGOTADO',
-          mensaje: "Tiempo de espera agotado",
-          detalles: "El servidor no respondió a tiempo. Por favor, intente nuevamente.",
-          error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
       }
 

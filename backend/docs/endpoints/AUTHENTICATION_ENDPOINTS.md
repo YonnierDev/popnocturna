@@ -1,22 +1,51 @@
 # Documentación de Endpoints de Autenticación
 
-### Respuesta Exitosa
+## Tabla de Contenidos
+1. [Registro de Usuario](#registro-de-usuario)
+2. [Inicio de Sesión](#inicio-de-sesión)
+3. [Recuperación de Contraseña](#recuperación-de-contraseña)
+4. [Actualización de Contraseña](#actualización-de-contraseña)
+
+---
+
+## Registro de Usuario
+
+Crea una nueva cuenta de usuario en el sistema. El proceso de registro es inmediato y no requiere validación de correo electrónico.
+
+### Endpoint
+```
+POST /api/registrar
+```
+
+### Cuerpo de la Solicitud
 ```json
 {
-  "codigo": "REGISTRO_EXITOSO",
-  "mensaje": "Registro exitoso",
-  "registroExitoso": true,
-  "usuario": {
-    "id": 1,
-    "nombre": "Juan",
-    "correo": "juan.perez@ejemplo.com",
-    "rol": "Usuario Estándar",
-    "estado": true
-  }
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "correo": "juan.perez@ejemplo.com",
+  "contrasena": "Contraseña123!",
+  "fecha_nacimiento": "1990-01-01",
+  "genero": "Masculino"
 }
 ```
-   - Edad mínima: 18 años
-   - Formato de fecha: YYYY-MM-DD
+
+### Validaciones
+1. **Campos obligatorios**: 
+   - `nombre`: Nombre del usuario
+   - `apellido`: Apellido del usuario
+   - `correo`: Correo electrónico válido
+   - `contrasena`: Contraseña segura
+   - `fecha_nacimiento`: Fecha en formato YYYY-MM-DD
+   - `genero`: (Opcional) Género del usuario
+
+2. **Validaciones de formato**:
+   - Correo electrónico válido
+   - Contraseña:
+     - Mínimo 8 caracteres, máximo 20
+     - Al menos una letra mayúscula
+     - Al menos una letra minúscula
+     - Al menos un número
+     - Al menos un símbolo
 
 3. **Validaciones de negocio**:
    - El correo no puede estar registrado previamente
@@ -59,71 +88,7 @@
 }
 ```
 
-**Error (500 Internal Server Error) - Error inesperado**
-```json
-{
-  "codigo": "ERROR_INTERNO",
-  "mensaje": "Error interno del servidor",
-  "detalles": "Ocurrió un error inesperado al procesar la solicitud"
-}
-```
 
-**Error (400 Bad Request) - Datos incompletos**
-```json
-{
-  "codigo": "DATOS_INCOMPLETOS",
-  "mensaje": "Correo y contraseña son obligatorios"
-}
-```
-
-### Respuestas
-
-**Éxito (201 Created)**
-```json
-{
-  "codigo": "REGISTRO_EXITOSO",
-  "mensaje": "Registro exitoso. Por favor, verifica tu correo electrónico.",
-  "correo": "juan.perez@ejemplo.com",
-  "registroExitoso": true
-}
-```
-
-**Error (422 Unprocessable Entity) - Validación fallida**
-```json
-{
-  "codigo": "VALIDACION_FALLIDA",
-  "mensaje": "Error de validación en los datos del formulario",
-  "detalles": "El campo 'nombre' es obligatorio"
-}
-```
-
-**Error (409 Conflict) - Correo duplicado**
-```json
-{
-  "codigo": "CORREO_DUPLICADO",
-  "mensaje": "El correo electrónico ya está registrado",
-  "detalles": "El correo juan.perez@ejemplo.com ya está en uso"
-}
-```
-
-**Error (502 Bad Gateway) - Error de servidor de correo**
-```json
-{
-  "codigo": "ERROR_CORREO",
-  "mensaje": "Error de autenticación del servidor de correo",
-  "detalles": "No se pudo autenticar con el servidor de correo. Por favor, intente más tarde.",
-  "error": "Invalid login: 535-5.7.8 Username and Password not accepted"
-}
-```
-
-**Error (504 Gateway Timeout) - Tiempo de espera agotado**
-```json
-{
-  "codigo": "TIEMPO_AGOTADO",
-  "mensaje": "Tiempo de espera agotado",
-  "detalles": "El servidor no respondió a tiempo. Por favor, intente nuevamente."
-}
-```
 
 **Error (500 Internal Server Error) - Error inesperado**
 ```json
