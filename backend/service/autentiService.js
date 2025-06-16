@@ -6,47 +6,138 @@ const TemporalService = require("./temporalService");
 const UsuarioService = require("./usuarioService");
 require("dotenv").config();
 
-// Configuración del transporte de correo
+// Configuración mejorada del transporte de correo con más detalles de depuración
 const createTransporter = () => {
-  console.log('Cargando configuración de correo...');
-  console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Configurado' : 'No configurado');
+  console.log('\n=== Iniciando configuración del transporte de correo ===');
   
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  // Verificar variables de entorno
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  
+  console.log(`Entorno: ${nodeEnv}`);
+  console.log(`Correo configurado: ${emailUser ? 'Sí' : 'No'}`);
+  
+  if (!emailUser || !emailPass) {
     const errorMsg = 'Error: Las variables de entorno EMAIL_USER y EMAIL_PASS son requeridas';
-    console.error(errorMsg);
-    throw new Error(errorMsg);
+    console.error('❌ ' + errorMsg);
+    console.error(`EMAIL_USER: ${emailUser ? 'Configurado' : 'Falta'}`);
+    console.error(`EMAIL_PASS: ${emailPass ? 'Configurado' : 'Falta'}`);
+    throw new Error('Error de configuración del servidor de correo');
   }
 
-  console.log('Configurando transporte de correo...');
-  const transporter = nodemailer.createTransport({
+  // Configuración del transporte
+  const smtpConfig = {
     service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true para 465, false para otros puertos
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: emailUser,
+      pass: emailPass
     },
+    // Solo deshabilitar la verificación del certificado en desarrollo
     tls: {
-      // Solo para desarrollo, en producción deberías usar un certificado válido
-      rejectUnauthorized: false
+      rejectUnauthorized: nodeEnv !== 'production'
     },
-    // Configuración adicional para mejorar la confiabilidad
+    // Configuración de reintentos
     pool: true,
     maxConnections: 1,
-    maxMessages: 5
-  });
+    maxMessages: 5,
+    // Debugging
+    debug: nodeEnv === 'development',
+    logger: nodeEnv === 'development'
+  };
 
-  // Verificar la conexión al crear el transporte
-  transporter.verify((error, success) => {
-    if (error) {
-      console.error('Error al verificar el transportador:', error);
-    } else {
-      console.log('Servidor de correo listo para enviar mensajes');
+  console.log('\nConfiguración SMTP:');
+  console.log(`- Servidor: ${smtpConfig.host}:${smtpConfig.port}`);
+  console.log(`- Seguridad: ${smtpConfig.secure ? 'SSL/TLS' : 'STARTTLS'}`);
+  console.log(`- Autenticación: ${smtpConfig.auth.user}`);
+  
+  console.log('\nCreando transporte de correo...');
+  const transporter = nodemailer.createTransport(smtpConfig);
+
+  // Manejador de eventos para depuración
+  transporter.on('log', (log) => {
+    if (typeof log === 'object') {
+      log = JSON.stringify(log);
     }
+    console.log(`[SMTP] ${log}`);
   });
 
-  return transporter;
+  // Verificar la conexión
+  console.log('\nVerificando conexión con el servidor SMTP...');
+  return new Promise((resolve, reject) => {
+    transporter.verify((error, success) => {
+      if (error) {
+        console.error('❌ Error al verificar la conexión SMTP:', {
+          code: error.code,
+          command: error.command,
+          message: error.message,
+          stack: nodeEnv === 'development' ? error.stack : undefined
+        });
+        
+        // Mensajes de error comunes
+        if (error.code === 'EAUTH') {
+          console.error('\n⚠️ Error de autenticación:');
+          console.error('- Verifica que el correo y la contraseña sean correctos');
+          console.error('- Asegúrate de haber habilitado "Acceso de aplicaciones menos seguras"');
+          console.error('- O genera una "Contraseña de aplicación" en la configuración de tu cuenta de Google');
+        } else if (error.code === 'ECONNECTION') {
+          console.error('\n⚠️ Error de conexión:');
+          console.error('- Verifica tu conexión a Internet');
+          console.error('- El servidor SMTP podría estar caído');
+          console.error('- Verifica si hay restricciones de firewall');
+        }
+        
+        reject(new Error('No se pudo conectar al servidor de correo'));
+      } else {
+        console.log('✅ Conexión SMTP verificada correctamente');
+        console.log('=== Configuración de correo completada ===\n');
+        resolve(transporter);
+      }
+    });
+  });
 };
 
-const transporter = createTransporter();
+// Crear el transporte de correo
+let transporter;
+
+// Función para inicializar el transporte de correo
+const inicializarTransporter = async () => {
+  try {
+    console.log('Inicializando transporte de correo...');
+    return await createTransporter();
+  } catch (error) {
+    console.error('❌ Error crítico al configurar el transporte de correo:', error.message);
+    console.error('El servidor continuará ejecutándose, pero el envío de correos no funcionará');
+    
+    // Devolver un transporte simulado que falla cuando se usa
+    return {
+      sendMail: async () => {
+        throw new Error('El transporte de correo no se configuró correctamente: ' + error.message);
+      },
+      verify: async () => {
+        throw new Error('El transporte de correo no se configuró correctamente: ' + error.message);
+      }
+    };
+  }
+};
+
+// Inicializar el transporte de inmediato y manejar cualquier error
+inicializarTransporter()
+  .then(t => { transporter = t; })
+  .catch(err => {
+    console.error('Error al inicializar el transporte de correo:', err);
+    transporter = {
+      sendMail: async () => {
+        throw new Error('Error al inicializar el transporte de correo: ' + err.message);
+      },
+      verify: async () => {
+        throw new Error('Error al inicializar el transporte de correo: ' + err.message);
+      }
+    };
+  });
 
 class AutentiService {
   static generarCodigo() {
@@ -116,11 +207,28 @@ class AutentiService {
   }
 
   static async enviarCorreoVerificacion(correo, codigo) {
+    const startTime = Date.now();
+    const logContext = { correo, codigo, timestamp: new Date().toISOString() };
+    
     try {
+      console.log('\n=== Inicio envío de correo de verificación ===');
+      console.log('Contexto:', JSON.stringify(logContext, null, 2));
+      
+      // Verificar que el transporte esté configurado
       if (!transporter) {
-        throw new Error('El servicio de correo no está configurado correctamente');
+        const errorMsg = 'El servicio de correo no está configurado correctamente';
+        console.error('❌ ' + errorMsg);
+        throw new Error(errorMsg);
       }
 
+      // Verificar parámetros de entrada
+      if (!correo || !codigo) {
+        const errorMsg = 'Correo y código son requeridos';
+        console.error('❌ ' + errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Configurar opciones del correo
       const mailOptions = {
         from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
         to: correo,
@@ -138,21 +246,80 @@ class AutentiService {
               Este es un correo automático, por favor no respondas a este mensaje.
             </p>
           </div>
-        `
+        `,
+        // Añadir encabezados para seguimiento
+        headers: {
+          'X-Auto-Response-Suppress': 'OOF, AutoReply',
+          'X-Priority': '1',
+          'X-MSMail-Priority': 'High',
+          'X-Mailer': 'Popayán Nocturna Mailer'
+        }
       };
 
-      console.log('Enviando correo a:', correo);
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Correo enviado:', info.messageId);
+      console.log(`\n📤 Enviando correo de verificación a: ${correo}`);
+      console.log('Opciones de correo:', JSON.stringify({
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject
+      }, null, 2));
+
+      // Enviar el correo con timeout
+      const sendMailPromise = transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tiempo de espera agotado al enviar el correo')), 30000)
+      );
+
+      const info = await Promise.race([sendMailPromise, timeoutPromise]);
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      console.log('✅ Correo enviado exitosamente');
+      console.log('- ID del mensaje:', info.messageId);
+      console.log('- Destinatario:', info.envelope.to);
+      console.log('- Tiempo de envío:', duration + 'ms');
+      console.log('=== Fin envío de correo de verificación ===\n');
+      
       return info;
+      
     } catch (error) {
-      console.error('Error detallado al enviar correo:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack,
-        response: error.response
-      });
-      throw new Error('Error al enviar el correo de verificación. Por favor, intente nuevamente.');
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      const errorInfo = {
+        error: {
+          name: error.name,
+          message: error.message,
+          code: error.code,
+          command: error.command,
+          responseCode: error.responseCode,
+          response: error.response,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        },
+        context: logContext,
+        duration: duration + 'ms'
+      };
+      
+      console.error('❌ Error al enviar correo de verificación:', JSON.stringify(errorInfo, null, 2));
+      
+      // Mensajes de error más amigables
+      let mensajeError = 'Error al enviar el correo de verificación. Por favor, intente nuevamente.';
+      
+      if (error.code === 'EAUTH') {
+        mensajeError = 'Error de autenticación con el servidor de correo. Por favor, contacta al soporte.';
+      } else if (error.code === 'ECONNECTION') {
+        mensajeError = 'No se pudo conectar al servidor de correo. Verifica tu conexión a internet.';
+      } else if (error.message.includes('Tiempo de espera agotado')) {
+        mensajeError = 'El servidor de correo no respondió a tiempo. Por favor, inténtalo de nuevo.';
+      } else if (error.responseCode === 550) {
+        mensajeError = 'No se pudo entregar el correo. Verifica que la dirección de correo sea correcta.';
+      }
+      
+      const errorParaLanzar = new Error(mensajeError);
+      errorParaLanzar.originalError = error;
+      errorParaLanzar.code = error.code || 'EMAIL_SEND_ERROR';
+      
+      throw errorParaLanzar;
     }
   }
 
