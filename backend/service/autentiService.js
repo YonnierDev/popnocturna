@@ -241,57 +241,88 @@ class AutentiService {
   }
 
   static async reenviarCodigo(correo) {
-    const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
-    if (usuarioExistente) {
-      throw new Error("Este correo ya está registrado");
-    }
-
-    const codigoExistente = await TemporalService.obtenerCodigo(correo);
-    if (!codigoExistente) {
-      throw new Error("No hay un registro pendiente para este correo");
-    }
-
-    const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
-    if (tiempoRestante > 0) {
-      throw new Error(`Debes esperar ${Math.ceil(tiempoRestante / 60000)} minutos antes de solicitar un nuevo código`);
-    }
-
-    const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
-    if (!datosTemporales) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Datos de registro no encontrados");
-    }
-
-    await TemporalService.eliminarCodigo(correo);
-
-    const codigo = this.generarCodigo();
-    const ahora = new Date();
-    const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000);
-    expiracion.setHours(expiracion.getHours() - 5);
-
+    console.log(`Solicitando reenvío de código para: ${correo}`);
+    
     try {
+      // Verificar si el correo ya está registrado como usuario activo
+      const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
+      if (usuarioExistente) {
+        console.log('Intento de reenvío para correo ya registrado:', correo);
+        throw new Error("Este correo electrónico ya está registrado. Por favor, inicia sesión o utiliza la opción de recuperación de contraseña si lo necesitas.");
+      }
+
+      // Verificar si hay un código existente
+      const codigoExistente = await TemporalService.obtenerCodigo(correo);
+      
+      // Verificar si hay datos temporales
+      const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
+      if (!datosTemporales) {
+        console.log('No se encontraron datos temporales para el correo:', correo);
+        throw new Error("No hay un registro pendiente para este correo. Por favor, completa el formulario de registro nuevamente.");
+      }
+
+      // Si hay un código existente, verificar si aún es válido
+      if (codigoExistente) {
+        const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
+        if (tiempoRestante > 0) {
+          const minutosRestantes = Math.ceil(tiempoRestante / 60000);
+          console.log(`Código aún válido por ${minutosRestantes} minutos para: ${correo}`);
+          throw new Error(`Ya hay un código de verificación activo. Por favor, revisa tu correo o espera ${minutosRestantes} minutos para solicitar uno nuevo.`);
+        }
+        // Si el código expiró, continuar para generar uno nuevo
+        console.log('Código anterior expirado, generando uno nuevo para:', correo);
+      }
+
+      // Generar nuevo código y configurar expiración
+      const codigo = this.generarCodigo();
+      const ahora = new Date();
+      const nuevaExpiracion = new Date(ahora.getTime() + 5 * 60 * 1000);
+      nuevaExpiracion.setHours(nuevaExpiracion.getHours() - 5);
+
+      console.log('Enviando nuevo código a:', correo);
+      
+      // Enviar el correo con el nuevo código
       await this.enviarCorreoVerificacion(correo, codigo);
-      await TemporalService.guardarCodigo(correo, codigo, expiracion);
+      
+      // Actualizar el código y los datos temporales
+      await TemporalService.guardarCodigo(correo, codigo, nuevaExpiracion);
       await TemporalService.guardarDatosTemporales(correo, {
         ...datosTemporales,
-        fecha_expiracion: expiracion
+        fecha_expiracion: nuevaExpiracion
       });
 
+      // Configurar eliminación automática del código después de 5 minutos
       setTimeout(async () => {
         try {
+          console.log('Eliminando código expirado para:', correo);
           await TemporalService.eliminarCodigo(correo);
         } catch (error) {
           console.error('Error al eliminar código expirado:', error);
         }
       }, 5 * 60 * 1000);
 
+      console.log('Nuevo código enviado exitosamente a:', correo);
       return {
-        mensaje: "Nuevo código de verificación enviado",
-        correo: correo
+        mensaje: "Se ha enviado un nuevo código de verificación a tu correo electrónico. Por favor, revísalo y sigue las instrucciones.",
+        correo: correo,
+        expiracion: nuevaExpiracion.toISOString()
       };
+      
     } catch (error) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Error al enviar el nuevo código de verificación");
+      console.error('Error en reenviarCodigo:', {
+        correo: correo,
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Proporcionar mensajes más descriptivos según el tipo de error
+      if (error.message.includes('No hay un registro pendiente') || 
+          error.message.includes('ya está registrado')) {
+        throw error; // Mantener los mensajes específicos
+      }
+      
+      throw new Error("No se pudo enviar el nuevo código de verificación. Por favor, verifica tu conexión e inténtalo de nuevo.");
     }
   }
 

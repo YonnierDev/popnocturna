@@ -14,8 +14,20 @@ class AutentiController {
       const datos = req.body;
       const resultado = await AutentiService.registrarUsuario(datos);
       
+      // Si el registro fue exitoso pero el correo no se pudo enviar
+      if (resultado.requiereReenvio) {
+        console.warn('Registro exitoso pero requiere reenvío de código para:', datos.correo);
+        return res.status(202).json({
+          ...resultado,
+          requiereReenvio: true
+        });
+      }
+      
       console.log('Registro exitoso para:', datos.correo);
-      res.status(201).json(resultado);
+      res.status(201).json({
+        ...resultado,
+        registroExitoso: true
+      });
       
     } catch (error) {
       console.error('Error en el controlador de registro:', {
@@ -25,8 +37,10 @@ class AutentiController {
         timestamp: new Date().toISOString()
       });
 
+      // Manejar errores específicos
       if (error.message.includes('foreign key constraint fails')) {
         return res.status(400).json({
+          codigo: 'ROL_INVALIDO',
           mensaje: "Error al crear el usuario",
           error: "Rol no válido",
           detalles: "El rol especificado no existe en la base de datos",
@@ -34,21 +48,48 @@ class AutentiController {
         });
       }
 
-      // Manejar errores específicos de nodemailer
-      if (error.message.includes('Invalid login') || error.code === 'EAUTH') {
-        return res.status(500).json({
-          mensaje: "Error de autenticación del servidor de correo",
-          detalles: "Por favor, verifica las credenciales del correo electrónico"
+      // Manejar errores de validación
+      if (error.message.includes('validación') || error.message.includes('obligatorios')) {
+        return res.status(422).json({
+          codigo: 'VALIDACION_FALLIDA',
+          mensaje: error.message,
+          detalles: "Error de validación en los datos del formulario"
         });
       }
 
-      const mensaje = error.message || "Error desconocido al procesar el registro";
-      const errores = error.errors || null;
-      
-      res.status(400).json({ 
-        mensaje, 
-        errores, 
-        detalles: "Error al procesar el registro" 
+      // Manejar errores de correo duplicado
+      if (error.message.includes('ya está en uso')) {
+        return res.status(409).json({
+          codigo: 'CORREO_DUPLICADO',
+          mensaje: error.message,
+          detalles: "El correo electrónico ya está registrado"
+        });
+      }
+
+      // Manejar errores de nodemailer
+      if (error.message.includes('Invalid login') || error.code === 'EAUTH') {
+        return res.status(502).json({
+          codigo: 'ERROR_CORREO',
+          mensaje: "Error de autenticación del servidor de correo",
+          detalles: "No se pudo autenticar con el servidor de correo. Por favor, intente más tarde.",
+          error: error.message
+        });
+      }
+
+      // Manejar errores de tiempo de espera
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+        return res.status(504).json({
+          codigo: 'TIEMPO_AGOTADO',
+          mensaje: "Tiempo de espera agotado",
+          detalles: "El servidor de correo no respondió a tiempo. Por favor, intente nuevamente."
+        });
+      }
+
+      // Error genérico
+      res.status(500).json({
+        codigo: 'ERROR_INTERNO',
+        mensaje: error.message || "Error interno del servidor",
+        detalles: "Ocurrió un error inesperado al procesar la solicitud"
       });
     }
   }
@@ -174,13 +215,64 @@ class AutentiController {
   static async reenviarCodigo(req, res) {
     try {
       const { correo } = req.body;
+      
       if (!correo) {
-        return res.status(400).json({ mensaje: "El correo es requerido" });
+        return res.status(400).json({
+          codigo: 'CORREO_REQUERIDO',
+          mensaje: 'El correo electrónico es requerido',
+          detalles: 'No se proporcionó un correo electrónico para reenviar el código'
+        });
       }
+      
+      console.log('Solicitando reenvío de código para:', correo);
       const resultado = await AutentiService.reenviarCodigo(correo);
-      res.json(resultado);
+      
+      res.status(200).json({
+        ...resultado,
+        mensaje: 'Se ha enviado un nuevo código de verificación a tu correo electrónico.',
+        exito: true
+      });
+      
     } catch (error) {
-      res.status(400).json({ mensaje: error.message });
+      console.error('Error al reenviar código:', {
+        error: error.message,
+        stack: error.stack,
+        correo: req.body.correo,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Manejar errores específicos
+      if (error.message.includes('ya está registrado')) {
+        return res.status(409).json({
+          codigo: 'USUARIO_YA_REGISTRADO',
+          mensaje: error.message,
+          detalles: 'Este correo ya está registrado. Por favor, inicia sesión.'
+        });
+      }
+      
+      if (error.message.includes('No hay un registro pendiente')) {
+        return res.status(404).json({
+          codigo: 'REGISTRO_NO_ENCONTRADO',
+          mensaje: error.message,
+          detalles: 'No se encontró un registro pendiente para este correo. Por favor, regístrate de nuevo.'
+        });
+      }
+      
+      if (error.message.includes('código de verificación activo')) {
+        return res.status(429).json({
+          codigo: 'CODIGO_ACTIVO',
+          mensaje: error.message,
+          detalles: 'Ya hay un código de verificación activo para este correo.'
+        });
+      }
+      
+      // Error genérico
+      res.status(500).json({
+        codigo: 'ERROR_REENVIO',
+        mensaje: 'Error al reenviar el código de verificación',
+        detalles: error.message || 'Ocurrió un error inesperado',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 }
