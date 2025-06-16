@@ -21,15 +21,60 @@
 3. **Validaciones de negocio**:
    - El correo no puede estar registrado previamente
    - El formato de la fecha debe ser válido
+   - El usuario se crea directamente con estado activo
 
-### Flujo de Registro
-1. El cliente envía los datos del formulario al endpoint `/api/registrar`.
-2. El servidor valida los datos recibidos.
-3. Se verifica que el correo no esté registrado.
-4. Se genera un código de verificación de 6 dígitos.
-5. Se guarda temporalmente la información del usuario con estado inactivo.
-6. Se envía un correo electrónico con el código de verificación.
-7. El código expira después de 5 minutos.
+### Respuestas
+
+**Éxito (201 Created)**
+```json
+{
+  "codigo": "REGISTRO_EXITOSO",
+  "mensaje": "Registro exitoso",
+  "registroExitoso": true,
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan",
+    "correo": "juan.perez@ejemplo.com",
+    "rol": "Usuario Estándar",
+    "estado": true
+  }
+}
+```
+
+**Error (422 Unprocessable Entity) - Validación fallida**
+```json
+{
+  "codigo": "VALIDACION_FALLIDA",
+  "mensaje": "Error de validación en los datos del formulario",
+  "detalles": "El campo 'nombre' es obligatorio"
+}
+```
+
+**Error (409 Conflict) - Correo duplicado**
+```json
+{
+  "codigo": "CORREO_DUPLICADO",
+  "mensaje": "El correo electrónico ya está registrado",
+  "detalles": "El correo juan.perez@ejemplo.com ya está en uso"
+}
+```
+
+**Error (500 Internal Server Error) - Error inesperado**
+```json
+{
+  "codigo": "ERROR_INTERNO",
+  "mensaje": "Error interno del servidor",
+  "detalles": "Ocurrió un error inesperado al procesar la solicitud"
+}
+```
+
+**Error (400 Bad Request) - Datos incompletos**
+```json
+{
+  "codigo": "DATOS_INCOMPLETOS",
+  "mensaje": "Correo y contraseña son obligatorios"
+}
+```
 
 ### Respuestas
 
@@ -184,8 +229,7 @@ PATCH /api/actualizar-contrasena
 
 1. **Contraseñas**: Las contraseñas se almacenan con hash bcrypt.
 2. **Tokens JWT**: Tienen un tiempo de expiración y firma segura.
-3. **Códigos de verificación**: Expiran después de 5 minutos.
-4. **Límite de intentos**: Se recomienda implementar límites de intentos para prevenir ataques de fuerza bruta.
+3. **Límite de intentos**: Se recomienda implementar límites de intentos para prevenir ataques de fuerza bruta.
 
 ## Manejo de Errores
 
