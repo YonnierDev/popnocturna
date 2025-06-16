@@ -5,10 +5,26 @@ const AutentiService = require("../service/autentiService");
 class AutentiController {
   static async registrar(req, res) {
     try {
+      console.log('Solicitud de registro recibida:', {
+        correo: req.body.correo,
+        nombre: req.body.nombre,
+        timestamp: new Date().toISOString()
+      });
+      
       const datos = req.body;
       const resultado = await AutentiService.registrarUsuario(datos);
+      
+      console.log('Registro exitoso para:', datos.correo);
       res.status(201).json(resultado);
+      
     } catch (error) {
+      console.error('Error en el controlador de registro:', {
+        error: error.message,
+        stack: error.stack,
+        body: req.body,
+        timestamp: new Date().toISOString()
+      });
+
       if (error.message.includes('foreign key constraint fails')) {
         return res.status(400).json({
           mensaje: "Error al crear el usuario",
@@ -17,9 +33,23 @@ class AutentiController {
           rolid: req.body.rolid
         });
       }
-      const mensaje = error.message || "Error desconocido";
+
+      // Manejar errores específicos de nodemailer
+      if (error.message.includes('Invalid login') || error.code === 'EAUTH') {
+        return res.status(500).json({
+          mensaje: "Error de autenticación del servidor de correo",
+          detalles: "Por favor, verifica las credenciales del correo electrónico"
+        });
+      }
+
+      const mensaje = error.message || "Error desconocido al procesar el registro";
       const errores = error.errors || null;
-      res.status(400).json({ mensaje, errores, detalles: "Error al procesar el registro" });
+      
+      res.status(400).json({ 
+        mensaje, 
+        errores, 
+        detalles: "Error al procesar el registro" 
+      });
     }
   }
   

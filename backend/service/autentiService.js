@@ -6,25 +6,47 @@ const TemporalService = require("./temporalService");
 const UsuarioService = require("./usuarioService");
 require("dotenv").config();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
+// Configuración del transporte de correo
+const createTransporter = () => {
+  console.log('Cargando configuración de correo...');
+  console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Configurado' : 'No configurado');
+  
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    const errorMsg = 'Error: Las variables de entorno EMAIL_USER y EMAIL_PASS son requeridas';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
-});
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Error al verificar el transportador:', error);
-  }
-});
+  console.log('Configurando transporte de correo...');
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    },
+    tls: {
+      // Solo para desarrollo, en producción deberías usar un certificado válido
+      rejectUnauthorized: false
+    },
+    // Configuración adicional para mejorar la confiabilidad
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 5
+  });
+
+  // Verificar la conexión al crear el transporte
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error('Error al verificar el transportador:', error);
+    } else {
+      console.log('Servidor de correo listo para enviar mensajes');
+    }
+  });
+
+  return transporter;
+};
+
+const transporter = createTransporter();
 
 class AutentiService {
   static generarCodigo() {
@@ -95,35 +117,60 @@ class AutentiService {
 
   static async enviarCorreoVerificacion(correo, codigo) {
     try {
+      if (!transporter) {
+        throw new Error('El servicio de correo no está configurado correctamente');
+      }
+
       const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
         to: correo,
         subject: 'Verificación de correo - Popayán Nocturna',
         html: `
-          <h2>Bienvenido a Popayán Nocturna</h2>
-          <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código:</p>
-          <h3 style="font-size: 24px; color: #2196F3; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px; margin: 20px 0;">${codigo}</h3>
-          <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
-          <p>Gracias por registrarte en Popayán Nocturna.</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4a4a4a;">Bienvenido a Popayán Nocturna</h2>
+            <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código en la aplicación:</p>
+            <div style="background: #f5f5f5; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+              <h3 style="font-size: 24px; color: #2196F3; margin: 0; letter-spacing: 2px;">${codigo}</h3>
+            </div>
+            <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
+            <p>Gracias por registrarte en Popayán Nocturna.</p>
+            <p style="font-size: 12px; color: #888; margin-top: 30px;">
+              Este es un correo automático, por favor no respondas a este mensaje.
+            </p>
+          </div>
         `
       };
-      await transporter.sendMail(mailOptions);
+
+      console.log('Enviando correo a:', correo);
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Correo enviado:', info.messageId);
+      return info;
     } catch (error) {
-      console.error('Error al enviar correo de verificación:', error);
-       throw new Error('Error al enviar el correo de verificación');
+      console.error('Error detallado al enviar correo:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        response: error.response
+      });
+      throw new Error('Error al enviar el correo de verificación. Por favor, intente nuevamente.');
     }
   }
 
   static async registrarUsuario(datos) {
     try {
+      console.log('Iniciando registro para:', datos.correo);
+      
+      // Validar campos del formulario
       await this.validarCamposRegistro(datos);
       const { correo, contrasena, rolid } = datos;
   
+      // Verificar si el correo ya está registrado
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
       if (usuarioExistente) {
         throw new Error("Correo ya está en uso");
       }
   
+      // Verificar si ya hay un código activo para este correo
       const codigoExistente = await TemporalService.obtenerCodigo(correo);
       if (codigoExistente) {
         const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
@@ -132,15 +179,19 @@ class AutentiService {
         }
       }
   
+      // Hashear la contraseña
       const contrasenaHash = await bcrypt.hash(contrasena, 10);
       const codigo = this.generarCodigo();
       
+      // Configurar fechas
       const ahora = new Date();
       const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000);
       expiracion.setHours(expiracion.getHours() - 5);
+
+      console.log('Guardando datos temporales para:', correo);
   
       try {
-        await this.enviarCorreoVerificacion(correo, codigo);
+        // Guardar el código y los datos temporales primero
         await TemporalService.guardarCodigo(correo, codigo, expiracion);
         await TemporalService.guardarDatosTemporales(correo, {
           ...datos,
@@ -150,23 +201,41 @@ class AutentiService {
           fecha_creacion: ahora,
           fecha_expiracion: expiracion
         });
+
+        console.log('Datos temporales guardados, enviando correo...');
+        
+        // Enviar el correo de verificación
+        await this.enviarCorreoVerificacion(correo, codigo);
   
+        // Configurar eliminación automática del código después de 5 minutos
         setTimeout(async () => {
           try {
+            console.log('Eliminando código expirado para:', correo);
             await TemporalService.eliminarCodigo(correo);
           } catch (error) {
             console.error('Error al eliminar código expirado:', error);
           }
         }, 5 * 60 * 1000);
   
+        console.log('Registro exitoso para:', correo);
         return { 
           mensaje: "Registro iniciado. Por favor, verifica tu correo electrónico.",
           correo: correo
         };
-      } catch (error) {
+      } catch (emailError) {
+        console.error('Error durante el registro:', emailError);
+        // Limpiar datos temporales si hay un error
+        try {
+          await TemporalService.eliminarCodigo(correo);
+          await TemporalService.eliminarDatosTemporales(correo);
+        } catch (cleanupError) {
+          console.error('Error al limpiar datos temporales:', cleanupError);
+        }
+        
         throw new Error("Error al enviar el correo de verificación. Por favor, intente nuevamente.");
       }
     } catch (error) {
+      console.error('Error en registrarUsuario:', error);
       throw error;
     }
   }
