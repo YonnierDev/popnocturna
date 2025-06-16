@@ -135,7 +135,7 @@ class PropietarioLugarController {
 
       // Procesar la imagen principal
       if (req.files && req.files['imagen']) {
-        const uploadResponse = await cloudinaryService.subirImagen(
+        const uploadResponse = await cloudinaryService.subirImagenLugar(
           req.files['imagen'][0].buffer,
           `lugar-${Date.now()}`
         );
@@ -147,7 +147,7 @@ class PropietarioLugarController {
       // Procesar las fotos adicionales
       if (req.files && req.files['fotos_lugar']) {
         const uploadPromises = req.files['fotos_lugar'].map(file => 
-          cloudinaryService.subirImagen(file.buffer, `lugar-${Date.now()}-${Math.random()}`)
+          cloudinaryService.subirImagenLugar(file.buffer, `lugar-${Date.now()}-${Math.random()}`)
         );
         
         const uploadResults = await Promise.all(uploadPromises);

@@ -1,30 +1,8 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
-const TemporalService = require("./temporalService");
 const UsuarioService = require("./usuarioService");
 require("dotenv").config();
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Error al verificar el transportador:', error);
-  }
-});
 
 class AutentiService {
   static generarCodigo() {
@@ -52,7 +30,7 @@ class AutentiService {
 
   static async validarCamposRegistro(datos) {
     const { nombre, apellido, correo, fecha_nacimiento, contrasena, genero } = datos;
-  
+
     if (!nombre || !apellido || !correo || !fecha_nacimiento || !contrasena || !genero) {
       throw new Error("Todos los campos son obligatorios");
     }
@@ -65,201 +43,64 @@ class AutentiService {
     if (!rolExistente) {
       throw new Error(`El rol con ID ${datos.rolid} no existe`);
     }
-  
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
       throw new Error("Correo no válido");
     }
-  
+
     const validacionContrasena = this.validarContrasena(contrasena);
     if (validacionContrasena !== true) {
       throw new Error(validacionContrasena); 
     }
-  
+
     const generosPermitidos = ["Masculino", "Femenino", "Otro"];
     if (!generosPermitidos.includes(genero)) {
       throw new Error("Género no válido");
     }
-  
+
     const fechaNacimiento = new Date(fecha_nacimiento);
     const hoy = new Date();
     const edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
     const mes = hoy.getMonth() - fechaNacimiento.getMonth();
     const dia = hoy.getDate() - fechaNacimiento.getDate();
     const edadExacta = mes < 0 || (mes === 0 && dia < 0) ? edad - 1 : edad;
-  
+
     if (edadExacta < 18) {
       throw new Error("Edad mínima de registro: 18 años");
     }
   }
 
-  static async enviarCorreoVerificacion(correo, codigo) {
-    try {
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: correo,
-        subject: 'Verificación de correo - Popayán Nocturna',
-        html: `
-          <h2>Bienvenido a Popayán Nocturna</h2>
-          <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código:</p>
-          <h3 style="font-size: 24px; color: #2196F3; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 8px; margin: 20px 0;">${codigo}</h3>
-          <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
-          <p>Gracias por registrarte en Popayán Nocturna.</p>
-        `
-      };
-      await transporter.sendMail(mailOptions);
-    } catch (error) {
-      throw new Error('Error al enviar el correo de verificación');
-    }
-  }
-
   static async registrarUsuario(datos) {
     try {
+      // Validar campos del formulario
       await this.validarCamposRegistro(datos);
       const { correo, contrasena, rolid } = datos;
-  
+
+      // Verificar si el correo ya está registrado
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
       if (usuarioExistente) {
         throw new Error("Correo ya está en uso");
       }
-  
-      const codigoExistente = await TemporalService.obtenerCodigo(correo);
-      if (codigoExistente) {
-        const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
-        if (tiempoRestante > 0) {
-          throw new Error(`Ya existe un código de verificación activo. Por favor, espera ${Math.ceil(tiempoRestante / 60000)} minutos o verifica tu correo.`);
-        }
-      }
-  
+
+      // Hashear la contraseña
       const contrasenaHash = await bcrypt.hash(contrasena, 10);
-      const codigo = this.generarCodigo();
-      
-      const ahora = new Date();
-      const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000);
-      expiracion.setHours(expiracion.getHours() - 5);
-  
-      try {
-        await this.enviarCorreoVerificacion(correo, codigo);
-        await TemporalService.guardarCodigo(correo, codigo, expiracion);
-        await TemporalService.guardarDatosTemporales(correo, {
-          ...datos,
-          contrasena: contrasenaHash,
-          estado: false,
-          rolid: rolid,
-          fecha_creacion: ahora,
-          fecha_expiracion: expiracion
-        });
-  
-        setTimeout(async () => {
-          try {
-            await TemporalService.eliminarCodigo(correo);
-          } catch (error) {
-            console.error('Error al eliminar código expirado:', error);
-          }
-        }, 5 * 60 * 1000);
-  
-        return { 
-          mensaje: "Registro iniciado. Por favor, verifica tu correo electrónico.",
-          correo: correo
-        };
-      } catch (error) {
-        throw new Error("Error al enviar el correo de verificación. Por favor, intente nuevamente.");
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
 
-  static async reenviarCodigo(correo) {
-    const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
-    if (usuarioExistente) {
-      throw new Error("Este correo ya está registrado");
-    }
-
-    const codigoExistente = await TemporalService.obtenerCodigo(correo);
-    if (!codigoExistente) {
-      throw new Error("No hay un registro pendiente para este correo");
-    }
-
-    const tiempoRestante = new Date(codigoExistente.expiracion) - new Date();
-    if (tiempoRestante > 0) {
-      throw new Error(`Debes esperar ${Math.ceil(tiempoRestante / 60000)} minutos antes de solicitar un nuevo código`);
-    }
-
-    const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
-    if (!datosTemporales) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Datos de registro no encontrados");
-    }
-
-    await TemporalService.eliminarCodigo(correo);
-
-    const codigo = this.generarCodigo();
-    const ahora = new Date();
-    const expiracion = new Date(ahora.getTime() + 5 * 60 * 1000);
-    expiracion.setHours(expiracion.getHours() - 5);
-
-    try {
-      await this.enviarCorreoVerificacion(correo, codigo);
-      await TemporalService.guardarCodigo(correo, codigo, expiracion);
-      await TemporalService.guardarDatosTemporales(correo, {
-        ...datosTemporales,
-        fecha_expiracion: expiracion
-      });
-
-      setTimeout(async () => {
-        try {
-          await TemporalService.eliminarCodigo(correo);
-        } catch (error) {
-          console.error('Error al eliminar código expirado:', error);
-        }
-      }, 5 * 60 * 1000);
-
-      return {
-        mensaje: "Nuevo código de verificación enviado",
-        correo: correo
-      };
-    } catch (error) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Error al enviar el nuevo código de verificación");
-    }
-  }
-
-  static async validarCodigoCorreo(correo, codigo) {
-    const codigoGuardado = await TemporalService.obtenerCodigo(correo);
-    if (!codigoGuardado) {
-      throw new Error("Código no encontrado o expirado");
-    }
-
-    const ahora = new Date();
-    const expiracion = new Date(codigoGuardado.expiracion);
-    expiracion.setHours(expiracion.getHours() + 5);
-
-    if (String(codigoGuardado.codigo) !== String(codigo) || ahora > expiracion) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Código inválido o expirado");
-    }
-
-    const datosTemporales = await TemporalService.obtenerDatosTemporales(correo);
-    if (!datosTemporales) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Datos de registro no encontrados");
-    }
-
-    try {
+      // Crear usuario directamente
       const usuario = await UsuarioService.crearUsuario({
-        ...datosTemporales,
-        estado: true
+        ...datos,
+        contrasena: contrasenaHash,
+        estado: true,
+        rolid: rolid
       });
 
-      await TemporalService.eliminarCodigo(correo);
-      
+      // Generar token
       const payload = { 
         id: usuario.id, 
         correo: usuario.correo, 
         rol: usuario.rolid 
       };
-      
+
       const token = jwt.sign(
         payload,
         process.env.JWT_SECRET || "secreto",
@@ -267,7 +108,7 @@ class AutentiService {
       );
 
       return {
-        mensaje: "Usuario validado correctamente",
+        mensaje: "Registro exitoso",
         usuario: {
           id: usuario.id,
           nombre: usuario.nombre,
@@ -275,12 +116,11 @@ class AutentiService {
           correo: usuario.correo,
           rol: usuario.rolid,
           estado: usuario.estado
-        },
-        token
+        }
       };
     } catch (error) {
-      await TemporalService.eliminarCodigo(correo);
-      throw new Error("Error al crear el usuario: " + error.message);
+      console.error('Error en registrarUsuario:', error);
+      throw error;
     }
   }
 
@@ -376,27 +216,12 @@ class AutentiService {
         { expiresIn: "1h" }
       );
 
-      const urlRecuperacion = `${process.env.FRONTEND_URL}/recuperar-contrasena/${token}`;
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: correo,
-        subject: 'Recuperación de contraseña - Popayán Nocturna',
-        html: `
-          <h2>Recuperación de Contraseña</h2>
-          <p>Hola ${usuario.nombre},</p>
-          <p>Hemos recibido una solicitud para recuperar tu contraseña. Haz clic en el siguiente enlace para restablecerla:</p>
-          <a href="${urlRecuperacion}" style="display: inline-block; padding: 10px 20px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Recuperar Contraseña</a>
-          <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
-          <p>Este enlace es válido por 1 hora.</p>
-          <p>Saludos,<br>Equipo de Popayán Nocturna</p>
-        `
+      return {
+        token,
+        mensaje: "Token generado para recuperación de contraseña"
       };
-
-      await transporter.sendMail(mailOptions);
-      return { mensaje: "Correo de recuperación enviado" };
     } catch (error) {
-      throw new Error("Error al enviar el correo de recuperación: " + error.message);
+      throw new Error("Error al generar el token de recuperación: " + error.message);
     }
   }
 

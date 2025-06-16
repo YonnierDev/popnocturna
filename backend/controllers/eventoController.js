@@ -204,16 +204,8 @@ class EventoController {
       const datosEvento = { ...req.body }; // Copiamos req.body para poder modificarlo
       const archivos = req.files || []; // Acceder a los archivos subidos
 
-      console.log('\n=== Inicio actualizarEvento ===');
-      console.log('ID del evento:', id);
-      console.log('ID del usuario:', usuarioid);
-      console.log('Rol del usuario:', rolid);
-      console.log('Datos del body:', req.body); // Log original del body
-      console.log('Archivos recibidos:', archivos.length); // Log de archivos
-
       // Lógica para manejar la subida de nuevas imágenes
       if (archivos.length > 0) {
-        console.log('Procesando nuevas imágenes para actualizar...');
         const urlsPortadaNuevas = [];
         for (const archivo of archivos) {
           try {
@@ -221,7 +213,6 @@ class EventoController {
             const nombreUnico = `evento-${Date.now()}-${Math.floor(Math.random() * 1000)}${path.extname(archivo.originalname)}`;
             const resultadoUpload = await cloudinaryService.subirImagenEvento(archivo.buffer, 'eventos', nombreUnico);
             urlsPortadaNuevas.push(resultadoUpload.secure_url);
-            console.log('Imagen subida a Cloudinary:', resultadoUpload.secure_url);
           } catch (uploadError) {
             console.error("Error al subir imagen a Cloudinary:", uploadError);
             // Considera si devolver un error aquí o continuar sin la imagen
@@ -395,6 +386,53 @@ class EventoController {
     } catch (error) {
       console.error("Error al ver evento público:", error);
       res.status(500).json({ mensaje: "Error en el servicio" });
+    }
+  }
+
+  async listarReservasEvento(req, res) {
+    try {
+      const { eventoId } = req.params;
+      const { rol: rolid, id: usuarioid } = req.usuario;
+      const { page = 1, limit = 10, estado } = req.query;
+
+      // Verificar que el evento existe y el usuario tiene permiso
+      const evento = await eventoService.obtenerEventoPorId(eventoId);
+      
+      if (!evento) {
+        return res.status(404).json({ mensaje: 'Evento no encontrado' });
+      }
+
+      // Verificar permisos
+      if (rolid === 3 && evento.usuarioid !== usuarioid) {
+        return res.status(403).json({ 
+          mensaje: 'No tienes permiso para ver las reservas de este evento' 
+        });
+      }
+
+      const opciones = {
+        offset: (page - 1) * limit,
+        limit: parseInt(limit),
+        estado
+      };
+
+      const { count, rows: reservas } = await eventoService.listarReservasEvento(eventoId, opciones);
+
+      res.json({
+        mensaje: 'Reservas del evento obtenidas correctamente',
+        datos: reservas,
+        metadata: {
+          total: count,
+          pagina: parseInt(page),
+          limite: parseInt(limit),
+          totalPaginas: Math.ceil(count / parseInt(limit))
+        }
+      });
+    } catch (error) {
+      console.error('Error al listar reservas del evento:', error);
+      res.status(500).json({ 
+        mensaje: 'Error al listar reservas del evento',
+        error: error.message 
+      });
     }
   }
 }

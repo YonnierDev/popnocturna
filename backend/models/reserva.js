@@ -43,6 +43,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true
       },
+      cantidad_entradas: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+        validate: {
+          min: 1
+        }
+      },
     },
     {
       sequelize,

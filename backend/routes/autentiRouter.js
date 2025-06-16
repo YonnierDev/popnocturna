@@ -10,8 +10,7 @@ const AutentiController = require('../controllers/autentiController');
 router.post('/login', AutentiController.login);
 router.post('/registrar', AutentiController.registrar);
 router.post('/recuperar-contrasena', AutentiController.enviarRecuperacionCorreo);
-router.post('/validar-codigo', AutentiController.validarCodigo);
-router.post('/reenviar-codigo', AutentiController.reenviarCodigo);
+
 router.patch('/actualizar-contrasena', AutentiController.actualizarContrasena);
 
 module.exports = router;

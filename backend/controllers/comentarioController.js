@@ -4,10 +4,6 @@ class ComentarioController {
     // Crear un nuevo comentario
     async crear(req, res) {
         try {
-            console.log('=== Inicio de crear comentario en controlador ===');
-            console.log('Datos recibidos:', req.body);
-            console.log('Usuario autenticado:', req.usuario);
-
             const { id: usuarioid, rol } = req.usuario;
             if (rol !== 4) {
                 return res.status(403).json({ mensaje: "Solo los usuarios pueden comentar" });
@@ -45,7 +41,6 @@ class ComentarioController {
             // Obtener io para enviar notificaciones
             const io = req.app.get('io');
 
-            // Obtener todos los usuarios que han comentado en este evento
             const usuariosComentarios = await ComentarioService.obtenerUsuariosComentariosEvento(eventoid);
 
             // Notificar solo a los usuarios que han comentado en el mismo evento
@@ -228,6 +223,9 @@ class ComentarioController {
             if (rol === 3) {
                 // Propietarios solo ven comentarios de sus eventos
                 comentarios = await ComentarioService.obtenerPorEventoPropietario(eventoid, usuarioid);
+            } else if (rol === 4) {
+                // Rol 4 ve comentarios pendientes o rechazados
+                comentarios = await ComentarioService.obtenerComentariosPendientesRechazados(eventoid);
             } else {
                 // Otros roles ven todos los comentarios del evento
                 comentarios = await ComentarioService.obtenerPorEvento(eventoid);
