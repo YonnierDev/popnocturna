@@ -29,41 +29,66 @@ const createTransporter = () => {
       throw new Error('Error de configuración del servidor de correo: Faltan credenciales');
     }
 
-    // Configuración del transporte
+        // Configuración base del transporte
     const smtpConfig = {
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true para 465, false para puerto 587
+      // Configuración para Gmail (puede sobrescribirse con variables de entorno)
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      secure: process.env.EMAIL_SECURE === 'true', // Convertir a booleano
       auth: {
         user: emailUser,
         pass: emailPass
       },
-      // Configuración de TLS
+      // Configuración de TLS/SSL
       tls: {
-        // Solo deshabilitar la verificación en desarrollo
-        rejectUnauthorized: nodeEnv !== 'production',
-        // Configuración adicional de TLS
+        // En producción, verificar el certificado. En desarrollo, podemos deshabilitar la verificación
+        rejectUnauthorized: nodeEnv === 'production',
+        // Versión mínima de TLS (1.2 es seguro y ampliamente compatible)
         minVersion: 'TLSv1.2',
-        ciphers: 'SSLv3'
+        // Cifrados permitidos (seguros y compatibles)
+        ciphers: 'TLS_AES_256_GCM_SHA384:ECDHE-ECDSA-AES128-GCM-SHA256'
       },
-      // Configuración de reintentos y timeouts
+      // Configuración de pool para manejar múltiples mensajes
       pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
-      rateDelta: 1000, // 1 segundo entre mensajes
-      rateLimit: 5, // 5 mensajes por rateDelta
-      // Timeouts
-      connectionTimeout: 10000, // 10 segundos
-      greetingTimeout: 10000,    // 10 segundos
-      socketTimeout: 60000,      // 1 minuto
-      // Debugging
+      maxConnections: parseInt(process.env.EMAIL_MAX_CONNECTIONS) || 5,
+      maxMessages: 100, // Máximo de mensajes por conexión
+      // Rate limiting
+      rateDelta: 1000, // 1 segundo entre lotes
+      rateLimit: 10,   // 10 mensajes por lote
+      // Timeouts (en milisegundos)
+      connectionTimeout: 15000,  // 15 segundos para conectar
+      greetingTimeout: 10000,    // 10 segundos para el saludo SMTP
+      socketTimeout: 30000,      // 30 segundos de inactividad
+      // Reintentos
+      retries: 3,               // Número de reintentos por mensaje
+      // Configuración de depuración
       debug: nodeEnv === 'development',
       logger: nodeEnv === 'development',
-      // Manejo de errores
-      disableFileAccess: true,
-      disableUrlAccess: true
+      // Seguridad adicional
+      disableFileAccess: true,   // Prevenir acceso a archivos locales
+      disableUrlAccess: true,    // Prevenir acceso a URLs
+      // Configuración específica para Gmail
+      ...(process.env.EMAIL_SERVICE === 'gmail' && {
+        // Configuraciones específicas para Gmail
+        authMethod: 'LOGIN',
+        // Para Gmail, asegurarse de que el correo tenga habilitado el acceso de aplicaciones menos seguras
+        // o mejor, usar OAuth2 (recomendado para producción)
+      })
     };
+    
+    // Si estamos en producción, forzar configuraciones seguras
+    if (nodeEnv === 'production') {
+      console.log('🔒 Aplicando configuraciones de seguridad para producción');
+      smtpConfig.secure = true; // Forzar SSL/TLS en producción
+      smtpConfig.requireTLS = true; // Requerir TLS
+      smtpConfig.tls.rejectUnauthorized = true; // Verificar certificados
+      
+      // Configuración específica para producción
+      smtpConfig.connectionTimeout = 10000; // 10 segundos
+      smtpConfig.greetingTimeout = 10000;  // 10 segundos
+      smtpConfig.socketTimeout = 60000;    // 1 minuto
+    }
     
     console.log('✅ Configuración SMTP cargada correctamente');
     
@@ -99,56 +124,6 @@ const createTransporter = () => {
     
     throw error; // Relanzar para que el manejador de errores global lo capture
   }
-
-  console.log('\nConfiguración SMTP:');
-  console.log(`- Servidor: ${smtpConfig.host}:${smtpConfig.port}`);
-  console.log(`- Seguridad: ${smtpConfig.secure ? 'SSL/TLS' : 'STARTTLS'}`);
-  console.log(`- Autenticación: ${smtpConfig.auth.user}`);
-  
-  console.log('\nCreando transporte de correo...');
-  const transporter = nodemailer.createTransport(smtpConfig);
-
-  // Manejador de eventos para depuración
-  transporter.on('log', (log) => {
-    if (typeof log === 'object') {
-      log = JSON.stringify(log);
-    }
-    console.log(`[SMTP] ${log}`);
-  });
-
-  // Verificar la conexión
-  console.log('\nVerificando conexión con el servidor SMTP...');
-  return new Promise((resolve, reject) => {
-    transporter.verify((error, success) => {
-      if (error) {
-        console.error('❌ Error al verificar la conexión SMTP:', {
-          code: error.code,
-          command: error.command,
-          message: error.message,
-          stack: nodeEnv === 'development' ? error.stack : undefined
-        });
-        
-        // Mensajes de error comunes
-        if (error.code === 'EAUTH') {
-          console.error('\n⚠️ Error de autenticación:');
-          console.error('- Verifica que el correo y la contraseña sean correctos');
-          console.error('- Asegúrate de haber habilitado "Acceso de aplicaciones menos seguras"');
-          console.error('- O genera una "Contraseña de aplicación" en la configuración de tu cuenta de Google');
-        } else if (error.code === 'ECONNECTION') {
-          console.error('\n⚠️ Error de conexión:');
-          console.error('- Verifica tu conexión a Internet');
-          console.error('- El servidor SMTP podría estar caído');
-          console.error('- Verifica si hay restricciones de firewall');
-        }
-        
-        reject(new Error('No se pudo conectar al servidor de correo'));
-      } else {
-        console.log('✅ Conexión SMTP verificada correctamente');
-        console.log('=== Configuración de correo completada ===\n');
-        resolve(transporter);
-      }
-    });
-  });
 };
 
 // Crear el transporte de correo

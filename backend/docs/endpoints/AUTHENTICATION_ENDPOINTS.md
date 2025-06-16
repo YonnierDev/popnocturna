@@ -27,8 +27,7 @@ POST /api/registrar
   "correo": "juan.perez@ejemplo.com",
   "contrasena": "Contraseña123!",
   "fecha_nacimiento": "1990-01-01",
-  "genero": "Masculino",
-  "rolid": 4
+  "genero": "Masculino"
 }
 ```
 
@@ -40,7 +39,6 @@ POST /api/registrar
    - `contrasena`: Contraseña segura
    - `fecha_nacimiento`: Fecha en formato YYYY-MM-DD
    - `genero`: (Opcional) Género del usuario
-   - `rolid`: (Opcional, por defecto: 4 - Usuario Estándar)
 
 2. **Validaciones de formato**:
    - Correo electrónico válido
