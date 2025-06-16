@@ -4,24 +4,9 @@ const AutentiService = require("../service/autentiService");
 
 class AutentiController {
   static async registrar(req, res) {
-    const startTime = Date.now();
-    const logContext = {
-      correo: req.body.correo,
-      nombre: req.body.nombre,
-      timestamp: new Date().toISOString(),
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-      body: JSON.stringify(req.body),
-      headers: JSON.stringify(req.headers)
-    };
-
     try {
-      console.log('\n=== Inicio de registro ===');
-      console.log('Contexto:', JSON.stringify(logContext, null, 2));
-      
       // Validar que el body tenga datos
       if (!req.body || Object.keys(req.body).length === 0) {
-        console.error('❌ Error: Cuerpo de la solicitud vacío');
         return res.status(400).json({
           codigo: 'CUERPO_VACIO',
           mensaje: 'El cuerpo de la solicitud está vacío'
@@ -37,27 +22,13 @@ class AutentiController {
         });
       }
 
-      console.log('📥 Datos recibidos:', JSON.stringify(req.body, null, 2));
-      
       const resultado = await AutentiService.registrarUsuario(req.body);
       
-      // Si el registro fue exitoso pero el correo no se pudo enviar
-      if (resultado.requiereReenvio) {
-        console.warn('⚠️ Registro exitoso pero requiere reenvío de código para:', req.body.correo);
-        return res.status(202).json({
-          codigo: 'REQUIERE_REENVIO',
-          mensaje: 'Registro exitoso, pero no se pudo enviar el correo de verificación',
-          correo: req.body.correo,
-          requiereReenvio: true
-        });
-      }
-      
-      console.log('✅ Registro exitoso para:', req.body.correo);
       return res.status(201).json({
         codigo: 'REGISTRO_EXITOSO',
-        mensaje: 'Registro exitoso. Por favor, verifica tu correo electrónico.',
-        correo: req.body.correo,
-        registroExitoso: true
+        mensaje: 'Registro exitoso',
+        registroExitoso: true,
+        usuario: resultado.usuario
       });
       
     } catch (error) {
@@ -150,16 +121,6 @@ class AutentiController {
     }
   }
   
-  static async validarCodigo(req, res) {
-    try {
-      const { correo, codigo } = req.body;
-      await AutentiService.validarCodigoCorreo(correo, codigo);
-      res.json({ mensaje: "Usuario validado correctamente" });
-    } catch (error) {
-      res.status(400).json({ mensaje: error.message });
-    }
-  }
-
   static async login(req, res) {
     try {
       const datos = req.body;
@@ -167,16 +128,6 @@ class AutentiController {
       res.json(resultado);
     } catch (error) {
       res.status(401).json({ mensaje: error.message });
-    }
-  }
-
-  static async enviarCodigo(req, res) {
-    try {
-      const { correo } = req.body;
-      const resultado = await AutentiService.enviarCodigoRecuperacion(correo);
-      res.json(resultado);
-    } catch (error) {
-      res.status(400).json({ mensaje: error.message });
     }
   }
 
@@ -194,7 +145,10 @@ class AutentiController {
     try {
       const { correo } = req.body;
       const resultado = await AutentiService.enviarRecuperacionCorreo(correo);
-      res.json(resultado);
+      res.json({
+        token: resultado.token,
+        mensaje: "Token generado para recuperación de contraseña"
+      });
     } catch (error) {
       res.status(400).json({ mensaje: error.message });
     }

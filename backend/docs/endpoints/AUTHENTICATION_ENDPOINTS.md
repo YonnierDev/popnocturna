@@ -1,53 +1,20 @@
 # Documentación de Endpoints de Autenticación
 
-## Tabla de Contenidos
-1. [Registro de Usuario](#registro-de-usuario)
-2. [Inicio de Sesión](#inicio-de-sesión)
-3. [Reenvío de Código de Verificación](#reenvío-de-código-de-verificación)
-4. [Validación de Código](#validación-de-código)
-5. [Recuperación de Contraseña](#recuperación-de-contraseña)
-6. [Actualización de Contraseña](#actualización-de-contraseña)
-
----
-
-## Registro de Usuario
-
-Crea una nueva cuenta de usuario en el sistema. El proceso de registro incluye la validación de datos, verificación de correo electrónico y generación de un código de verificación.
-
-### Endpoint
-```
-POST /api/registrar
-```
-
-### Cuerpo de la Solicitud
+### Respuesta Exitosa
 ```json
 {
-  "nombre": "Juan",
-  "apellido": "Pérez",
-  "correo": "juan.perez@ejemplo.com",
-  "contrasena": "Contraseña123!",
-  "fecha_nacimiento": "1990-01-01",
-  "genero": "Masculino"
+  "codigo": "REGISTRO_EXITOSO",
+  "mensaje": "Registro exitoso",
+  "registroExitoso": true,
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan",
+    "correo": "juan.perez@ejemplo.com",
+    "rol": "Usuario Estándar",
+    "estado": true
+  }
 }
 ```
-
-### Validaciones
-1. **Campos obligatorios**: 
-   - `nombre`: Nombre del usuario
-   - `apellido`: Apellido del usuario
-   - `correo`: Correo electrónico válido
-   - `contrasena`: Contraseña segura
-   - `fecha_nacimiento`: Fecha en formato YYYY-MM-DD
-   - `genero`: (Opcional) Género del usuario
-
-2. **Validaciones de formato**:
-   - Correo electrónico válido
-   - Contraseña:
-     - Mínimo 8 caracteres, máximo 20
-     - Al menos una letra mayúscula
-     - Al menos una letra minúscula
-     - Al menos un número
-     - Al menos un símbolo
    - Edad mínima: 18 años
    - Formato de fecha: YYYY-MM-DD
 
@@ -122,6 +89,14 @@ POST /api/registrar
 }
 ```
 
+**Error (400 Bad Request) - Datos incompletos**
+```json
+{
+  "codigo": "DATOS_INCOMPLETOS",
+  "mensaje": "Correo y contraseña son obligatorios"
+}
+```
+
 ## Inicio de Sesión
 
 Autentica a un usuario y devuelve un token JWT para acceder a rutas protegidas.
@@ -152,42 +127,11 @@ POST /api/login
 }
 ```
 
-## Reenvío de Código de Verificación
 
-Reenvía el código de verificación al correo electrónico proporcionado.
-
-### Endpoint
-```
-POST /api/reenviar-codigo
-```
-
-### Cuerpo de la Solicitud
-```json
-{
-  "correo": "juan.perez@ejemplo.com"
-}
-```
-
-## Validación de Código
-
-Valida el código de verificación enviado al correo del usuario.
-
-### Endpoint
-```
-POST /api/validar-codigo
-```
-
-### Cuerpo de la Solicitud
-```json
-{
-  "correo": "juan.perez@ejemplo.com",
-  "codigo": "123456"
-}
-```
 
 ## Recuperación de Contraseña
 
-Inicia el proceso de recuperación de contraseña.
+Inicia el proceso de recuperación de contraseña. En lugar de enviar un correo electrónico, devuelve un token de recuperación que puede ser usado para cambiar la contraseña.
 
 ### Endpoint
 ```
@@ -198,6 +142,22 @@ POST /api/recuperar-contrasena
 ```json
 {
   "correo": "juan.perez@ejemplo.com"
+}
+```
+
+### Respuesta Exitosa
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "mensaje": "Token generado para recuperación de contraseña"
+}
+```
+
+### Respuesta de Error
+```json
+{
+  "codigo": "USUARIO_NO_ENCONTRADO",
+  "mensaje": "Usuario no encontrado"
 }
 ```
 
