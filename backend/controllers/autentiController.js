@@ -98,44 +98,7 @@ class AutentiController {
         });
       }
       
-      // Manejar errores de correo duplicado
-      if (error.message.includes('ya está en uso')) {
-        return res.status(409).json({
-          codigo: 'CORREO_DUPLICADO',
-          mensaje: error.message,
-          detalles: "El correo electrónico ya está registrado"
-        });
-      }
-      
-      // Manejar errores de nodemailer
-      if (error.message.includes('Error al enviar correo') || error.code === 'EAUTH') {
-        return res.status(502).json({
-          codigo: 'ERROR_CORREO',
-          mensaje: "Error de autenticación del servidor de correo",
-          detalles: "No se pudo autenticar con el servidor de correo. Por favor, intente más tarde.",
-          error: error.message
-        });
-      }
-      
-      // Manejar errores de tiempo de espera
-      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
-        return res.status(504).json({
-          codigo: 'TIEMPO_AGOTADO',
-          mensaje: "Tiempo de espera agotado",
-          detalles: "El servidor de correo no respondió a tiempo. Por favor, intente nuevamente."
-        });
-      }
-      
-      // Error genérico
-      console.error('❌ Error no manejado:', error);
-      return res.status(500).json({
-        codigo: 'ERROR_INTERNO',
-        mensaje: 'Error interno del servidor',
-        detalles: error.message || 'Ocurrió un error inesperado al procesar la solicitud',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-
-      // Manejar errores de validación
+      // Manejar errores de validación (deben ir primero para capturar errores de validación temprana)
       if (error.message.includes('validación') || error.message.includes('obligatorios')) {
         return res.status(422).json({
           codigo: 'VALIDACION_FALLIDA',
@@ -145,30 +108,36 @@ class AutentiController {
       }
 
       // Manejar errores de correo duplicado
-      if (error.message.includes('ya está en uso')) {
+      if (error.message.includes('ya está en uso') || error.message.includes('ya existe')) {
         return res.status(409).json({
           codigo: 'CORREO_DUPLICADO',
-          mensaje: error.message,
-          detalles: "El correo electrónico ya está registrado"
+          mensaje: "El correo electrónico ya está registrado",
+          detalles: error.message
         });
       }
-
+      
       // Manejar errores de nodemailer
-      if (error.message.includes('Invalid login') || error.code === 'EAUTH') {
+      if (error.message.includes('Error al enviar correo') || 
+          error.message.includes('Invalid login') || 
+          error.code === 'EAUTH') {
         return res.status(502).json({
           codigo: 'ERROR_CORREO',
           mensaje: "Error de autenticación del servidor de correo",
           detalles: "No se pudo autenticar con el servidor de correo. Por favor, intente más tarde.",
-          error: error.message
+          error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
       }
-
+      
       // Manejar errores de tiempo de espera
-      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+      if (error.code === 'ETIMEDOUT' || 
+          error.code === 'ECONNECTION' || 
+          error.message.includes('timeout') ||
+          error.message.includes('ECONNREFUSED')) {
         return res.status(504).json({
           codigo: 'TIEMPO_AGOTADO',
           mensaje: "Tiempo de espera agotado",
-          detalles: "El servidor de correo no respondió a tiempo. Por favor, intente nuevamente."
+          detalles: "El servidor no respondió a tiempo. Por favor, intente nuevamente.",
+          error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
       }
 

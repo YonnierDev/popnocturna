@@ -33,16 +33,29 @@ POST /api/registrar
 ```
 
 ### Validaciones
-1. **Campos obligatorios**: Todos los campos son obligatorios excepto `rolid` (por defecto: 4 - Usuario Estándar).
-2. **Formato de correo**: Debe ser un correo electrónico válido.
-3. **Contraseña**:
-   - Mínimo 8 caracteres, máximo 20
-   - Al menos una letra mayúscula
-   - Al menos una letra minúscula
-   - Al menos un número
-   - Al menos un símbolo
-4. **Edad mínima**: 18 años
-5. **Correo único**: No puede estar registrado previamente
+1. **Campos obligatorios**: 
+   - `nombre`: Nombre del usuario
+   - `apellido`: Apellido del usuario
+   - `correo`: Correo electrónico válido
+   - `contrasena`: Contraseña segura
+   - `fecha_nacimiento`: Fecha en formato YYYY-MM-DD
+   - `genero`: (Opcional) Género del usuario
+   - `rolid`: (Opcional, por defecto: 4 - Usuario Estándar)
+
+2. **Validaciones de formato**:
+   - Correo electrónico válido
+   - Contraseña:
+     - Mínimo 8 caracteres, máximo 20
+     - Al menos una letra mayúscula
+     - Al menos una letra minúscula
+     - Al menos un número
+     - Al menos un símbolo
+   - Edad mínima: 18 años
+   - Formato de fecha: YYYY-MM-DD
+
+3. **Validaciones de negocio**:
+   - El correo no puede estar registrado previamente
+   - El formato de la fecha debe ser válido
 
 ### Flujo de Registro
 1. El cliente envía los datos del formulario al endpoint `/api/registrar`.
@@ -65,28 +78,49 @@ POST /api/registrar
 }
 ```
 
-**Error (400 Bad Request)**
+**Error (422 Unprocessable Entity) - Validación fallida**
 ```json
 {
   "codigo": "VALIDACION_FALLIDA",
-  "mensaje": "Error de validación en los datos",
-  "detalles": "La contraseña debe incluir al menos un símbolo"
+  "mensaje": "Error de validación en los datos del formulario",
+  "detalles": "El campo 'nombre' es obligatorio"
 }
 ```
 
-**Error (409 Conflict)**
+**Error (409 Conflict) - Correo duplicado**
 ```json
 {
-  "codigo": "CORREO_EN_USO",
-  "mensaje": "El correo electrónico ya está registrado"
+  "codigo": "CORREO_DUPLICADO",
+  "mensaje": "El correo electrónico ya está registrado",
+  "detalles": "El correo juan.perez@ejemplo.com ya está en uso"
 }
 ```
 
-**Error (500 Internal Server Error)**
+**Error (502 Bad Gateway) - Error de servidor de correo**
 ```json
 {
-  "codigo": "ERROR_SERVIDOR",
-  "mensaje": "Error interno del servidor al procesar el registro"
+  "codigo": "ERROR_CORREO",
+  "mensaje": "Error de autenticación del servidor de correo",
+  "detalles": "No se pudo autenticar con el servidor de correo. Por favor, intente más tarde.",
+  "error": "Invalid login: 535-5.7.8 Username and Password not accepted"
+}
+```
+
+**Error (504 Gateway Timeout) - Tiempo de espera agotado**
+```json
+{
+  "codigo": "TIEMPO_AGOTADO",
+  "mensaje": "Tiempo de espera agotado",
+  "detalles": "El servidor no respondió a tiempo. Por favor, intente nuevamente."
+}
+```
+
+**Error (500 Internal Server Error) - Error inesperado**
+```json
+{
+  "codigo": "ERROR_INTERNO",
+  "mensaje": "Error interno del servidor",
+  "detalles": "Ocurrió un error inesperado al procesar la solicitud"
 }
 ```
 
