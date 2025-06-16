@@ -6,48 +6,99 @@ const TemporalService = require("./temporalService");
 const UsuarioService = require("./usuarioService");
 require("dotenv").config();
 
-// Configuración mejorada del transporte de correo con más detalles de depuración
+// Configuración mejorada del transporte de correo con manejo de errores y reintentos
 const createTransporter = () => {
-  console.log('\n=== Iniciando configuración del transporte de correo ===');
-  
-  // Verificar variables de entorno
-  const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS;
-  const nodeEnv = process.env.NODE_ENV || 'development';
-  
-  console.log(`Entorno: ${nodeEnv}`);
-  console.log(`Correo configurado: ${emailUser ? 'Sí' : 'No'}`);
-  
-  if (!emailUser || !emailPass) {
-    const errorMsg = 'Error: Las variables de entorno EMAIL_USER y EMAIL_PASS son requeridas';
-    console.error('❌ ' + errorMsg);
-    console.error(`EMAIL_USER: ${emailUser ? 'Configurado' : 'Falta'}`);
-    console.error(`EMAIL_PASS: ${emailPass ? 'Configurado' : 'Falta'}`);
-    throw new Error('Error de configuración del servidor de correo');
-  }
+  try {
+    console.log('\n=== Iniciando configuración del transporte de correo ===');
+    
+    // Verificar variables de entorno
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    
+    console.log(`🔧 Entorno: ${nodeEnv}`);
+    console.log(`📧 Correo configurado: ${emailUser ? 'Sí' : 'No'}`);
+    console.log(`🌐 URL del frontend: ${frontendUrl}`);
+    
+    if (!emailUser || !emailPass) {
+      const errorMsg = '❌ Error: Las variables de entorno EMAIL_USER y EMAIL_PASS son requeridas';
+      console.error(errorMsg);
+      console.error(`📧 EMAIL_USER: ${emailUser ? 'Configurado' : 'Falta'}`);
+      console.error(`🔑 EMAIL_PASS: ${emailPass ? 'Configurado' : 'Falta'}`);
+      throw new Error('Error de configuración del servidor de correo: Faltan credenciales');
+    }
 
-  // Configuración del transporte
-  const smtpConfig = {
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true para 465, false para otros puertos
-    auth: {
-      user: emailUser,
-      pass: emailPass
-    },
-    // Solo deshabilitar la verificación del certificado en desarrollo
-    tls: {
-      rejectUnauthorized: nodeEnv !== 'production'
-    },
-    // Configuración de reintentos
-    pool: true,
-    maxConnections: 1,
-    maxMessages: 5,
-    // Debugging
-    debug: nodeEnv === 'development',
-    logger: nodeEnv === 'development'
-  };
+    // Configuración del transporte
+    const smtpConfig = {
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // true para 465, false para puerto 587
+      auth: {
+        user: emailUser,
+        pass: emailPass
+      },
+      // Configuración de TLS
+      tls: {
+        // Solo deshabilitar la verificación en desarrollo
+        rejectUnauthorized: nodeEnv !== 'production',
+        // Configuración adicional de TLS
+        minVersion: 'TLSv1.2',
+        ciphers: 'SSLv3'
+      },
+      // Configuración de reintentos y timeouts
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
+      rateDelta: 1000, // 1 segundo entre mensajes
+      rateLimit: 5, // 5 mensajes por rateDelta
+      // Timeouts
+      connectionTimeout: 10000, // 10 segundos
+      greetingTimeout: 10000,    // 10 segundos
+      socketTimeout: 60000,      // 1 minuto
+      // Debugging
+      debug: nodeEnv === 'development',
+      logger: nodeEnv === 'development',
+      // Manejo de errores
+      disableFileAccess: true,
+      disableUrlAccess: true
+    };
+    
+    console.log('✅ Configuración SMTP cargada correctamente');
+    
+    // Crear el transporte
+    const transporter = nodemailer.createTransport(smtpConfig);
+    
+    // Verificar la conexión
+    transporter.verify((error, success) => {
+      if (error) {
+        console.error('❌ Error al verificar la conexión SMTP:', error);
+      } else {
+        console.log('✅ Servidor SMTP listo para enviar mensajes');
+      }
+    });
+    
+    return transporter;
+    
+  } catch (error) {
+    console.error('❌ Error crítico al configurar el transporte de correo:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      syscall: error.syscall,
+      address: error.address,
+      port: error.port
+    });
+    
+    // En producción, podrías querer notificar a los administradores
+    if (process.env.NODE_ENV === 'production') {
+      // Aquí podrías enviar una notificación a tu sistema de monitoreo
+      console.error('🚨 Se requiere atención: El servicio de correo no está disponible');
+    }
+    
+    throw error; // Relanzar para que el manejador de errores global lo capture
+  }
 
   console.log('\nConfiguración SMTP:');
   console.log(`- Servidor: ${smtpConfig.host}:${smtpConfig.port}`);
@@ -102,42 +153,152 @@ const createTransporter = () => {
 
 // Crear el transporte de correo
 let transporter;
+let isTransporterInitialized = false;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 segundos
 
-// Función para inicializar el transporte de correo
-const inicializarTransporter = async () => {
+/**
+ * Función para inicializar el transporte de correo con reintentos
+ * @param {number} retryCount - Número de intentos realizados
+ * @returns {Promise<nodemailer.Transporter>} - Transporte de correo configurado
+ */
+const inicializarTransporter = async (retryCount = 0) => {
   try {
-    console.log('Inicializando transporte de correo...');
-    return await createTransporter();
-  } catch (error) {
-    console.error('❌ Error crítico al configurar el transporte de correo:', error.message);
-    console.error('El servidor continuará ejecutándose, pero el envío de correos no funcionará');
+    console.log(`\n🔧 [${new Date().toISOString()}] Inicializando transporte de correo... (Intento ${retryCount + 1}/${MAX_RETRIES})`);
     
-    // Devolver un transporte simulado que falla cuando se usa
-    return {
-      sendMail: async () => {
-        throw new Error('El transporte de correo no se configuró correctamente: ' + error.message);
-      },
-      verify: async () => {
-        throw new Error('El transporte de correo no se configuró correctamente: ' + error.message);
-      }
-    };
+    const t = createTransporter();
+    
+    // Verificar la conexión
+    await new Promise((resolve, reject) => {
+      t.verify((error, success) => {
+        if (error) {
+          console.error(`❌ Error en la verificación SMTP (Intento ${retryCount + 1}):`, error.message);
+          return reject(error);
+        }
+        console.log(`✅ [${new Date().toISOString()}] Verificación SMTP exitosa`);
+        resolve(success);
+      });
+    });
+    
+    isTransporterInitialized = true;
+    console.log(`✅ [${new Date().toISOString()}] Transporte de correo inicializado correctamente`);
+    return t;
+    
+  } catch (error) {
+    console.error(`❌ [${new Date().toISOString()}] Error al inicializar el transporte de correo (Intento ${retryCount + 1}):`, {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    
+    // Reintentar si no hemos alcanzado el número máximo de reintentos
+    if (retryCount < MAX_RETRIES - 1) {
+      console.log(`🔄 [${new Date().toISOString()}] Reintentando en ${RETRY_DELAY/1000} segundos...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return inicializarTransporter(retryCount + 1);
+    }
+    
+    // Si llegamos aquí, todos los reintentos fallaron
+    console.error(`❌ [${new Date().toISOString()}] Se agotaron los ${MAX_RETRIES} intentos de inicializar el transporte de correo`);
+    isTransporterInitialized = false;
+    return null;
   }
 };
 
-// Inicializar el transporte de inmediato y manejar cualquier error
+// Objeto para manejar el transporte de correo de forma segura
+const mailer = {
+  isReady: () => isTransporterInitialized,
+  
+  sendMail: async (mailOptions) => {
+    if (!transporter || !isTransporterInitialized) {
+      console.error('❌ Intento de enviar correo sin transporte inicializado');
+      throw new Error('El servicio de correo no está disponible en este momento. Por favor, intente más tarde.');
+    }
+    
+    try {
+      // Agregar información de seguimiento
+      const mailId = `mail_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log(`📤 [${new Date().toISOString()}] Enviando correo [${mailId}] a: ${mailOptions.to}`);
+      
+      // Configurar opciones de correo
+      const mailWithDefaults = {
+        from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
+        ...mailOptions,
+        headers: {
+          'X-Mailer': 'Popayán Nocturna Mailer',
+          'X-Mail-ID': mailId,
+          'X-Auto-Response-Suppress': 'OOF, AutoReply',
+          'X-Priority': '1',
+          'X-MSMail-Priority': 'High',
+          ...(mailOptions.headers || {})
+        }
+      };
+      
+      // Enviar el correo con timeout
+      const sendMailPromise = transporter.sendMail(mailWithDefaults);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tiempo de espera agotado al enviar el correo')), 30000)
+      );
+      
+      const info = await Promise.race([sendMailPromise, timeoutPromise]);
+      
+      console.log(`✅ [${new Date().toISOString()}] Correo [${mailId}] enviado exitosamente a: ${mailOptions.to}`);
+      return info;
+      
+    } catch (error) {
+      console.error(`❌ [${new Date().toISOString()}] Error al enviar correo a ${mailOptions.to}:`, {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response
+      });
+      throw new Error(`Error al enviar el correo: ${error.message}`);
+    }
+  },
+  
+  verify: async () => {
+    if (!transporter || !isTransporterInitialized) {
+      return false;
+    }
+    try {
+      await transporter.verify();
+      return true;
+    } catch (error) {
+      console.error('Error al verificar la conexión SMTP:', error);
+      return false;
+    }
+  }
+};
+
+// Inicializar el transporte al arrancar
 inicializarTransporter()
-  .then(t => { transporter = t; })
+  .then(t => { 
+    if (t) {
+      transporter = t;
+      console.log('✅ [INICIO] Transporte de correo listo para usar');
+    } else {
+      console.error('❌ [INICIO] No se pudo inicializar el transporte de correo');
+    }
+  })
   .catch(err => {
-    console.error('Error al inicializar el transporte de correo:', err);
-    transporter = {
-      sendMail: async () => {
-        throw new Error('Error al inicializar el transporte de correo: ' + err.message);
-      },
-      verify: async () => {
-        throw new Error('Error al inicializar el transporte de correo: ' + err.message);
-      }
-    };
+    console.error('❌ [INICIO] Error no manejado al inicializar el transporte de correo:', {
+      message: err.message,
+      stack: err.stack
+    });
+    transporter = null;
+    isTransporterInitialized = false;
   });
+
+// Función para verificar el estado del transporte
+const checkTransporterStatus = () => ({
+  isInitialized: isTransporterInitialized,
+  lastCheck: new Date().toISOString(),
+  service: 'smtp.gmail.com',
+  status: isTransporterInitialized ? 'active' : 'inactive'
+});
+
+// Exportar la función de verificación de estado
+mailer.getStatus = checkTransporterStatus;
 
 class AutentiService {
   static generarCodigo() {
@@ -208,77 +369,95 @@ class AutentiService {
 
   static async enviarCorreoVerificacion(correo, codigo) {
     const startTime = Date.now();
-    const logContext = { correo, codigo, timestamp: new Date().toISOString() };
+    const logContext = { 
+      correo, 
+      codigo, 
+      timestamp: new Date().toISOString(),
+      env: process.env.NODE_ENV || 'development'
+    };
     
     try {
       console.log('\n=== Inicio envío de correo de verificación ===');
       console.log('Contexto:', JSON.stringify(logContext, null, 2));
       
-      // Verificar que el transporte esté configurado
-      if (!transporter) {
-        const errorMsg = 'El servicio de correo no está configurado correctamente';
-        console.error('❌ ' + errorMsg);
-        throw new Error(errorMsg);
+      // Verificar que el servicio de correo esté listo
+      if (!mailer.isReady()) {
+        const status = mailer.getStatus ? mailer.getStatus() : { status: 'not_initialized' };
+        console.error('❌ Error: El servicio de correo no está disponible', status);
+        throw new Error('El servicio de correo no está disponible en este momento. Por favor, intente más tarde.');
       }
-
-      // Verificar parámetros de entrada
+      
+      // Validar parámetros
       if (!correo || !codigo) {
         const errorMsg = 'Correo y código son requeridos';
-        console.error('❌ ' + errorMsg);
+        console.error('❌ Error de validación:', errorMsg);
         throw new Error(errorMsg);
       }
-
+      
+      // Validar formato de correo
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(correo)) {
+        const errorMsg = 'El formato del correo electrónico no es válido';
+        console.error('❌ Error de validación:', errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      // Plantilla de correo mejorada
+      const emailTemplate = `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; line-height: 1.6;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h1 style="color: #2c3e50; margin: 0 0 10px 0;">¡Bienvenido a Popayán Nocturna!</h1>
+              <p style="color: #6c757d; margin: 0; font-size: 16px;">Tu código de verificación está listo</p>
+            </div>
+            
+            <div style="background-color: #e9f7fe; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border: 1px dashed #4dabf7;">
+              <p style="margin: 0 0 15px 0; color: #1864ab; font-weight: 500;">Utiliza el siguiente código para verificar tu correo:</p>
+              <div style="display: inline-block; background: white; padding: 10px 25px; border-radius: 6px; border: 1px solid #dee2e6;">
+                <span style="font-size: 28px; font-weight: bold; letter-spacing: 3px; color: #228be6;">${codigo}</span>
+              </div>
+              <p style="margin: 15px 0 0 0; color: #495057; font-size: 14px;">Este código expirará en 5 minutos</p>
+            </div>
+            
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #e9ecef; text-align: center;">
+              <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 14px;">Si no has solicitado este código, puedes ignorar este mensaje.</p>
+              <p style="margin: 0; color: #6c757d; font-size: 12px;">© ${new Date().getFullYear()} Popayán Nocturna. Todos los derechos reservados.</p>
+            </div>
+          </div>
+          
+          <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #adb5bd;">
+            <p style="margin: 5px 0;">Este es un correo automático, por favor no respondas a este mensaje.</p>
+            <p style="margin: 5px 0;">Para cualquier consulta, contáctanos a soporte@popayannocturna.com</p>
+          </div>
+        </div>
+      `;
+      
       // Configurar opciones del correo
       const mailOptions = {
-        from: `"Popayán Nocturna" <${process.env.EMAIL_USER}>`,
         to: correo,
         subject: 'Verificación de correo - Popayán Nocturna',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #4a4a4a;">Bienvenido a Popayán Nocturna</h2>
-            <p>Para verificar tu correo electrónico, por favor ingresa el siguiente código en la aplicación:</p>
-            <div style="background: #f5f5f5; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-              <h3 style="font-size: 24px; color: #2196F3; margin: 0; letter-spacing: 2px;">${codigo}</h3>
-            </div>
-            <p>Este código expirará en 5 minutos. Si no solicitaste esta verificación, puedes ignorar este correo.</p>
-            <p>Gracias por registrarte en Popayán Nocturna.</p>
-            <p style="font-size: 12px; color: #888; margin-top: 30px;">
-              Este es un correo automático, por favor no respondas a este mensaje.
-            </p>
-          </div>
-        `,
-        // Añadir encabezados para seguimiento
+        html: emailTemplate,
         headers: {
           'X-Auto-Response-Suppress': 'OOF, AutoReply',
           'X-Priority': '1',
           'X-MSMail-Priority': 'High',
-          'X-Mailer': 'Popayán Nocturna Mailer'
+          'X-Mailer': 'Popayán Nocturna Mailer',
+          'X-Application': 'Popayán Nocturna API',
+          'X-Environment': process.env.NODE_ENV || 'development'
         }
       };
-
-      console.log(`\n📤 Enviando correo de verificación a: ${correo}`);
-      console.log('Opciones de correo:', JSON.stringify({
-        from: mailOptions.from,
-        to: mailOptions.to,
-        subject: mailOptions.subject
-      }, null, 2));
-
-      // Enviar el correo con timeout
-      const sendMailPromise = transporter.sendMail(mailOptions);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tiempo de espera agotado al enviar el correo')), 30000)
-      );
-
-      const info = await Promise.race([sendMailPromise, timeoutPromise]);
+      
+      console.log('📤 Enviando correo de verificación...');
+      
+      // Usar el mailer para enviar el correo
+      const info = await mailer.sendMail(mailOptions);
       
       const endTime = Date.now();
       const duration = endTime - startTime;
       
-      console.log('✅ Correo enviado exitosamente');
-      console.log('- ID del mensaje:', info.messageId);
-      console.log('- Destinatario:', info.envelope.to);
-      console.log('- Tiempo de envío:', duration + 'ms');
-      console.log('=== Fin envío de correo de verificación ===\n');
+      console.log(`✅ Correo enviado exitosamente en ${duration}ms`);
+      console.log(`- ID del mensaje: ${info.messageId}`);
+      console.log(`- Destinatario: ${correo}`);
       
       return info;
       
@@ -287,39 +466,48 @@ class AutentiService {
       const duration = endTime - startTime;
       
       const errorInfo = {
-        error: {
-          name: error.name,
-          message: error.message,
-          code: error.code,
-          command: error.command,
-          responseCode: error.responseCode,
-          response: error.response,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        },
-        context: logContext,
-        duration: duration + 'ms'
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString()
       };
       
       console.error('❌ Error al enviar correo de verificación:', JSON.stringify(errorInfo, null, 2));
       
-      // Mensajes de error más amigables
-      let mensajeError = 'Error al enviar el correo de verificación. Por favor, intente nuevamente.';
-      
-      if (error.code === 'EAUTH') {
-        mensajeError = 'Error de autenticación con el servidor de correo. Por favor, contacta al soporte.';
-      } else if (error.code === 'ECONNECTION') {
-        mensajeError = 'No se pudo conectar al servidor de correo. Verifica tu conexión a internet.';
-      } else if (error.message.includes('Tiempo de espera agotado')) {
-        mensajeError = 'El servidor de correo no respondió a tiempo. Por favor, inténtalo de nuevo.';
-      } else if (error.responseCode === 550) {
-        mensajeError = 'No se pudo entregar el correo. Verifica que la dirección de correo sea correcta.';
+      // Mapear errores conocidos a mensajes más amigables
+      if (error.code === 'EAUTH' || error.command === 'AUTH') {
+        throw new Error('Error de autenticación con el servidor de correo. Por favor, verifica las credenciales.');
       }
       
-      const errorParaLanzar = new Error(mensajeError);
-      errorParaLanzar.originalError = error;
-      errorParaLanzar.code = error.code || 'EMAIL_SEND_ERROR';
+      if (error.code === 'ECONNECTION' || error.message.includes('ECONNREFUSED')) {
+        throw new Error('No se pudo conectar al servidor de correo. Por favor, verifica tu conexión a internet.');
+      }
       
-      throw errorParaLanzar;
+      if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKET') {
+        throw new Error('El servidor de correo no respondió a tiempo. Por favor, inténtalo de nuevo más tarde.');
+      }
+      
+      if (error.message.includes('No recipients defined')) {
+        throw new Error('No se especificó un destinatario para el correo.');
+      }
+      
+      // Si es un error de rate limiting de Gmail
+      if (error.responseCode === 550 && error.response?.includes('Daily user sending quota exceeded')) {
+        throw new Error('Se ha excedido el límite de envíos diarios. Por favor, inténtalo de nuevo mañana.');
+      }
+      
+      // Si el error es de autenticación pero no se capturó antes
+      if (error.message.toLowerCase().includes('invalid login') || 
+          error.message.toLowerCase().includes('authentication failed')) {
+        throw new Error('Error de autenticación con el servidor de correo. Verifica las credenciales.');
+      }
+      
+      // Para otros errores, devolver un mensaje genérico
+      throw new Error('Error al enviar el correo de verificación. Por favor, inténtalo de nuevo más tarde.');
     }
   }
 
