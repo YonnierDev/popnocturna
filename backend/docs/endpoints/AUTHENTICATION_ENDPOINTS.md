@@ -16,7 +16,7 @@ Crea una nueva cuenta de usuario en el sistema. El proceso de registro incluye l
 
 ### Endpoint
 ```
-POST /api/auth/registrar
+POST /api/registrar
 ```
 
 ### Cuerpo de la Solicitud
@@ -45,7 +45,7 @@ POST /api/auth/registrar
 5. **Correo único**: No puede estar registrado previamente
 
 ### Flujo de Registro
-1. El cliente envía los datos del formulario al endpoint `/api/auth/registrar`.
+1. El cliente envía los datos del formulario al endpoint `/api/registrar`.
 2. El servidor valida los datos recibidos.
 3. Se verifica que el correo no esté registrado.
 4. Se genera un código de verificación de 6 dígitos.
@@ -96,7 +96,7 @@ Autentica a un usuario y devuelve un token JWT para acceder a rutas protegidas.
 
 ### Endpoint
 ```
-POST /api/auth/login
+POST /api/login
 ```
 
 ### Cuerpo de la Solicitud
@@ -126,7 +126,7 @@ Reenvía el código de verificación al correo electrónico proporcionado.
 
 ### Endpoint
 ```
-POST /api/auth/reenviar-codigo
+POST /api/reenviar-codigo
 ```
 
 ### Cuerpo de la Solicitud
@@ -142,7 +142,7 @@ Valida el código de verificación enviado al correo del usuario.
 
 ### Endpoint
 ```
-POST /api/auth/validar-codigo
+POST /api/validar-codigo
 ```
 
 ### Cuerpo de la Solicitud
@@ -159,7 +159,7 @@ Inicia el proceso de recuperación de contraseña.
 
 ### Endpoint
 ```
-POST /api/auth/recuperar-contrasena
+POST /api/recuperar-contrasena
 ```
 
 ### Cuerpo de la Solicitud
@@ -175,7 +175,7 @@ Actualiza la contraseña del usuario.
 
 ### Endpoint
 ```
-PATCH /api/auth/actualizar-contrasena
+PATCH /api/actualizar-contrasena
 ```
 
 ### Cuerpo de la Solicitud
