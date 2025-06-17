@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const {
   Usuario,
   Rol,
@@ -11,6 +12,7 @@ const {
 class UsuarioService {
   async listarUsuarios() {
     return await Usuario.findAll({
+      where: { rolid: { [Op.ne]: 1 } },
       include: [{ model: Rol, as: "rol", attributes: ["id", "nombre"] }],
     });
   }
