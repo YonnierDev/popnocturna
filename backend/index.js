@@ -16,49 +16,27 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración de CORS dinámica según el entorno
-const corsOptions = process.env.NODE_ENV === 'production'
-  ? {
-      // Configuración para Producción
-      origin: ["https://frontendpopa.vercel.app"],
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
-      exposedHeaders: ["Content-Range", "X-Content-Range", "Access-Control-Allow-Credentials"],
-      maxAge: 600, // Tiempo de caché para las opciones preflight (en segundos)
-      preflightContinue: false,
-      optionsSuccessStatus: 204
-    }
-  : {
-      // Configuración para Desarrollo
-      origin: function (origin, callback) {
-        // Permitir solicitudes sin 'origin' (como apps móviles o curl)
-        if (!origin) return callback(null, true);
-        
-        // Lista de orígenes permitidos en desarrollo
-        const allowedOrigins = [
-          /^https?:\/\/localhost(:[0-9]+)?$/, // Cualquier puerto en localhost
-          /^https?:\/\/127.0.0.1(:[0-9]+)?$/, // Cualquier puerto en 127.0.0.1
-          /^https?:\/\/0.0.0.0(:[0-9]+)?$/, // Cualquier puerto en 0.0.0.0
-          /^https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:[0-9]+)?$/, // Cualquier IP local
-        ];
-
-        // Verificar si el origen está permitido
-        if (allowedOrigins.some(regex => origin.match(regex))) {
-          return callback(null, true);
-        }
-
-        // Si el origen no está permitido
-        return callback(new Error('Not allowed by CORS'));
-      },
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      credentials: true,
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
-      exposedHeaders: ['Content-Range', 'X-Content-Range', 'Access-Control-Allow-Credentials'],
-      maxAge: 600,
-      preflightContinue: false,
-      optionsSuccessStatus: 204
-    };
+// Configuración CORS global - Permite cualquier origen
+const corsOptions = {
+  origin: true, // Permite cualquier origen
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Access-Control-Allow-Credentials",
+    "X-Requested-With",
+    "X-CSRF-Token"
+  ],
+  exposedHeaders: [
+    "Content-Range",
+    "X-Content-Range",
+    "Access-Control-Allow-Credentials"
+  ],
+  maxAge: 600, // Tiempo de caché para las opciones preflight (en segundos)
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
 
 app.use(cors(corsOptions));
 
