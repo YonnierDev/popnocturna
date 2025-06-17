@@ -54,10 +54,11 @@ class UsuarioController {
       }
 
       // Verificar si el rol existe
-      console.log(`Verificando rol con ID: ${rolid || 'no especificado'}`);
-      const rolExistente = await UsuarioService.verificarRol(rolid || 3); // Rol 3 por defecto (propietario)
+      const rolId = rolid || 2; // Rol 2 por defecto
+      console.log(`Verificando rol con ID: ${rolId}`);
+      const rolExistente = await UsuarioService.verificarRol(rolId);
       if (!rolExistente) {
-        console.log(`El rol con ID ${rolid} no existe`);
+        console.log(`El rol con ID ${rolId} no existe`);
         return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
       }
 
