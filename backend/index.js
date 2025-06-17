@@ -16,13 +16,33 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración de CORS para Express
-app.use(cors({
-  origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
-  methods: ["GET", "POST", "PUT", "DELETE", 
-    "PATCH", "OPTIONS"],
-  credentials: true
-}));
+// Configuración de CORS dinámica según el entorno
+const corsOptions = process.env.NODE_ENV === 'production'
+  ? {
+      // Configuración para Producción
+      origin: [
+        'https://frontendpopa.vercel.app',
+        // Agrega aquí otros dominios de producción permitidos
+      ],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      exposedHeaders: ['Content-Range', 'X-Content-Range']
+    }
+  : {
+      // Configuración para Desarrollo
+      origin: true, // Permite cualquier origen
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      exposedHeaders: ['Content-Range', 'X-Content-Range']
+    };
+
+app.use(cors(corsOptions));
+
+// Mostrar configuración de CORS en consola
+console.log(`Modo: ${process.env.NODE_ENV || 'development'}`);
+console.log('Configuración CORS:', corsOptions.origin);
 
 // Servir archivos estáticos desde la carpeta public
 app.use('/static', express.static(path.join(__dirname, 'public')));
