@@ -36,7 +36,7 @@ class AutentiService {
     }
 
     if (!datos.rolid) {
-      datos.rolid = 4;
+      datos.rolid = 3; // Establecer rol propietario (3) por defecto
     }
 
     const rolExistente = await UsuarioService.verificarRol(datos.rolid);

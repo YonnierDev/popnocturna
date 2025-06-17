@@ -33,44 +33,60 @@ class UsuarioController {
         genero,
         rolid,
       } = req.body;
-      const estado = true;
-      let imagenUrl = null;
-
-      if (!req.file) {
-        console.log("No se recibió imagen");
-        return res.status(400).json({ mensaje: "La imagen es requerida" });
+      
+      // Validar campos requeridos
+      if (!nombre || !apellido || !correo || !fecha_nacimiento || !contrasena || !genero) {
+        return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
       }
 
-      console.log("Imagen recibida:", req.file);
-
-      // Subir la imagen a Cloudinary
-      const uploadResponse = await cloudinaryService.subirImagen(
-        req.file.buffer,
-        `usuario-${Date.now()}`
-      );
-
-      if (!uploadResponse) {
-        console.log("Error al subir la imagen");
-        return res.status(500).json({ mensaje: "Error al subir la imagen" });
+      // Validar formato de correo
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(correo)) {
+        return res.status(400).json({ mensaje: "Formato de correo no válido" });
       }
 
-      imagenUrl = uploadResponse.secure_url;
-      console.log("Imagen subida:", imagenUrl);
-
+      // Verificar si el correo ya existe
+      console.log(`Verificando si el correo ${correo} ya existe...`);
       const usuarioExistente = await UsuarioService.buscarPorCorreo(correo);
       if (usuarioExistente) {
-        return res
-          .status(400)
-          .json({ mensaje: "El correo ya está registrado" });
+        console.log(`El correo ${correo} ya está registrado`);
+        return res.status(400).json({ mensaje: `El correo ${correo} ya está registrado` });
       }
 
-      const rolExistente = await UsuarioService.verificarRol(rolid);
+      // Verificar si el rol existe
+      console.log(`Verificando rol con ID: ${rolid || 'no especificado'}`);
+      const rolExistente = await UsuarioService.verificarRol(rolid || 3); // Rol 3 por defecto (propietario)
       if (!rolExistente) {
-        return res
-          .status(400)
-          .json({ mensaje: "El rol seleccionado no existe" });
+        console.log(`El rol con ID ${rolid} no existe`);
+        return res.status(400).json({ mensaje: "El rol seleccionado no existe" });
       }
 
+      // Manejo de imagen (opcional)
+      let imagenUrl = null;
+      
+      if (req.file) {
+        console.log("Subiendo imagen a Cloudinary...");
+        try {
+          const uploadResponse = await cloudinaryService.subirImagenUsuario(
+            req.file.buffer,
+            `perfil-${Date.now()}-${nombre.toLowerCase().replace(/\s+/g, '-')}`
+          );
+          
+          if (uploadResponse?.secure_url) {
+            console.log("Imagen subida exitosamente:", uploadResponse.secure_url);
+            imagenUrl = uploadResponse.secure_url;
+          } else {
+            console.log("No se pudo obtener la URL de la imagen subida");
+          }
+        } catch (uploadError) {
+          console.error("Error al subir la imagen:", uploadError);
+          // Continuamos sin la imagen en caso de error
+        }
+      } else {
+        console.log("No se proporcionó imagen, continuando sin ella");
+      }
+      
+      // Encriptar contraseña
       const salt = await bcrypt.genSalt(10);
       const contrasenaEncriptada = await bcrypt.hash(contrasena, salt);
 
@@ -81,9 +97,9 @@ class UsuarioController {
         fecha_nacimiento,
         contrasena: contrasenaEncriptada,
         genero,
-        estado,
-        rolid,
-        imagen: imagenUrl,
+        estado: true, // Usuario activo por defecto
+        rolid: rolid || 3, // Rol por defecto 3 (propietario) si no se especifica
+        imagen: imagenUrl, // Puede ser null si no se subió imagen
       });
       res.status(201).json(nuevoUsuario);
     } catch (error) {
