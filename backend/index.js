@@ -29,11 +29,15 @@ const corsOptions = {
     'X-Requested-With', 
     'Accept',
     'Pragma',
-    'Cache-Control'
+    'Cache-Control',
+    'Expires',
+    'If-Modified-Since',
+    'Origin'
   ],
   exposedHeaders: ['Authorization', 'Set-Cookie'],
   preflightContinue: false,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
+  maxAge: 86400
 };
 
 app.use(cors(corsOptions));
