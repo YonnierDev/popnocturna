@@ -7,7 +7,7 @@ module.exports = {
       {
         tipo: 'Bar',
         descripcion: 'Establecimiento que sirve bebidas alcohólicas y aperitivos',
-        imagen: null,
+        imagen: 'https://res.cloudinary.com/popaimagen/image/upload/v1748095030/categoria-1748095030173.png',
         estado: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -15,7 +15,7 @@ module.exports = {
       {
         tipo: 'Discoteca',
         descripcion: 'Local de baile con música en vivo o grabada',
-        imagen: null,
+        imagen: 'https://res.cloudinary.com/popaimagen/image/upload/v1748097870/categoria-1748097870453.jpg',
         estado: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -23,7 +23,7 @@ module.exports = {
       {
         tipo: 'Restaurante',
         descripcion: 'Establecimiento que sirve comidas y bebidas',
-        imagen: null,
+        imagen: 'https://res.cloudinary.com/popaimagen/image/upload/v1748097881/categoria-1748097881384.png',
         estado: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -31,7 +31,7 @@ module.exports = {
       {
         tipo: 'Canchas sinteticas',
         descripcion: 'El deporte nocturno es lo mejor',
-        imagen: null,
+        imagen: 'https://res.cloudinary.com/popaimagen/image/upload/v1748097950/categoria-1748097950070.png',
         estado: true,
         createdAt: new Date(),
         updatedAt: new Date(),

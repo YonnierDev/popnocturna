@@ -6,31 +6,38 @@ module.exports = {
     await queryInterface.bulkInsert('reservas', [
       {
         usuarioid: 4, // Usuario Final
-        eventoid: 1, // Noche de Karaoke
-        fecha_hora: new Date('2024-04-15T20:00:00'),
+        eventoid: 1, // Noche de Vinos
+        fecha_hora: new Date('2024-06-25T20:00:00'),
         aprobacion: 'aprobada',
         estado: true,
         numero_reserva: 'RES-001',
+        cantidad_personas: 2,
+        monto_total: 60.00,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         usuarioid: 4, // Usuario Final
-        eventoid: 2, // Fiesta Retro
-        fecha_hora: new Date('2024-04-20T22:00:00'),
+        eventoid: 2, // Fiesta Blanca
+        fecha_hora: new Date('2024-06-28T23:00:00'),
         aprobacion: 'pendiente',
         estado: true,
         numero_reserva: 'RES-002',
+        cantidad_personas: 4,
+        monto_total: 160.00,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         usuarioid: 4, // Usuario Final
-        eventoid: 3, // Cena Degustación
-        fecha_hora: new Date('2024-04-25T19:00:00'),
+        eventoid: 3, // Torneo Relámpago
+        fecha_hora: new Date('2024-06-22T19:00:00'),
         aprobacion: 'rechazada',
         estado: false,
         numero_reserva: 'RES-003',
+        cantidad_personas: 5,
+        monto_total: 100.00,
+        motivo_rechazo: 'Cupo completo',
         createdAt: new Date(),
         updatedAt: new Date(),
       }

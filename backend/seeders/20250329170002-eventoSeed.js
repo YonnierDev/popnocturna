@@ -5,38 +5,41 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.bulkInsert('eventos', [
       {
-        lugarid: 1, // Bar Central
+        lugarid: 1, // El Rincón del Vino
         usuarioid: 3, // Propietario
-        nombre: 'Noche de Karaoke',
-        capacidad: 100,
-        precio: 25.00,
-        descripcion: 'Noche especial de karaoke con premios',
-        fecha_hora: new Date('2024-04-15T20:00:00'),
-        estado: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        lugarid: 2, // Club Nocturno
-        usuarioid: 3, // Propietario
-        nombre: 'Fiesta Retro',
-        capacidad: 200,
-        precio: 35.00,
-        descripcion: 'Fiesta con música de los 80s y 90s',
-        fecha_hora: new Date('2024-04-20T22:00:00'),
-        estado: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        lugarid: 3, // Restaurante Gourmet
-        usuarioid: 3, // Propietario
-        nombre: 'Cena Degustación',
+        nombre: 'Noche de Vinos',
         capacidad: 50,
-        precio: 75.00,
-        descripcion: 'Menú degustación con maridaje de vinos',
-        fecha_hora: new Date('2024-04-25T19:00:00'),
+        precio: 30.00,
+        descripcion: 'Degustación de vinos nacionales e internacionales',
+        fecha_hora: new Date('2024-06-25T20:00:00'),
         estado: true,
+        portada: JSON.stringify(['https://res.cloudinary.com/popaimagen/image/upload/sample1.jpg']),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        lugarid: 2, // Pachá Night Club
+        usuarioid: 3, // Propietario
+        nombre: 'Fiesta Blanca',
+        capacidad: 300,
+        precio: 40.00,
+        descripcion: 'La mejor fiesta temática de la ciudad, vestimenta blanca obligatoria',
+        fecha_hora: new Date('2024-06-28T23:00:00'),
+        estado: true,
+        portada: JSON.stringify(['https://res.cloudinary.com/popaimagen/image/upload/sample2.jpg']),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        lugarid: 3, // Fútbol Nocturno Premium
+        usuarioid: 3, // Propietario
+        nombre: 'Torneo Relámpago',
+        capacidad: 16,
+        precio: 20.00,
+        descripcion: 'Torneo de fútbol 5 con premios en efectivo',
+        fecha_hora: new Date('2024-06-22T19:00:00'),
+        estado: true,
+        portada: JSON.stringify(['https://res.cloudinary.com/popaimagen/image/upload/sample3.jpg']),
         createdAt: new Date(),
         updatedAt: new Date(),
       }
