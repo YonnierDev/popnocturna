@@ -16,21 +16,36 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración CORS global - Permite cualquier origen
+// Configuración CORS global - Permite orígenes específicos
 const corsOptions = {
-  origin: true, // Permite cualquier origen
+  origin: function(origin, callback) {
+    // Lista de orígenes permitidos
+    const allowedOrigins = [
+      'https://frontendpopa.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:7000'
+    ];
+    
+    // Si no hay origen (caso de peticiones desde el mismo dominio)
+    if (!origin) return callback(null, true);
+    
+    // Verificar si el origen está permitido
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error('No permitido por CORS'));
+    }
+    return callback(null, true);
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true,
   allowedHeaders: [
     "Content-Type",
     "Authorization",
-    "Access-Control-Allow-Credentials",
     "X-Requested-With",
-    "X-CSRF-Token"
+    "Accept"
   ],
   exposedHeaders: [
-    "Content-Range",
-    "X-Content-Range",
+    "Authorization",
     "Access-Control-Allow-Credentials"
   ],
   maxAge: 600, // Tiempo de caché para las opciones preflight (en segundos)
