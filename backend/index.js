@@ -16,48 +16,18 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración CORS global - Permite orígenes específicos
-const corsOptions = {
-  origin: function(origin, callback) {
-    // Lista de orígenes permitidos
-    const allowedOrigins = [
-      'https://frontendpopa.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://localhost:7000'
-    ];
-    
-    // Si no hay origen (caso de peticiones desde el mismo dominio)
-    if (!origin) return callback(null, true);
-    
-    // Verificar si el origen está permitido
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error('No permitido por CORS'));
-    }
-    return callback(null, true);
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  credentials: true,
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept"
-  ],
-  exposedHeaders: [
-    "Authorization",
-    "Access-Control-Allow-Credentials"
-  ],
-  maxAge: 600, // Tiempo de caché para las opciones preflight (en segundos)
+// Configuración CORS más permisiva
+app.use(cors({
+  origin: '*',  // Permite cualquier origen
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Authorization'],
+  maxAge: 3600,  // 1 hora
   preflightContinue: false,
   optionsSuccessStatus: 204
-};
+}));
 
-app.use(cors(corsOptions));
-
-// Mostrar configuración de CORS en consola
-console.log(`Modo: ${process.env.NODE_ENV || 'development'}`);
-console.log('Configuración CORS:', corsOptions.origin);
+console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
 
 // Servir archivos estáticos desde la carpeta public
 app.use('/static', express.static(path.join(__dirname, 'public')));
