@@ -3,48 +3,71 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.bulkInsert('reservas', [
-      {
-        usuarioid: 4, // Usuario Final
-        eventoid: 1, // Noche de Vinos
-        fecha_hora: new Date('2024-06-25T20:00:00'),
-        aprobacion: 'aprobada',
-        estado: true,
-        numero_reserva: 'RES-001',
-        cantidad_personas: 2,
-        monto_total: 60.00,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        usuarioid: 4, // Usuario Final
-        eventoid: 2, // Fiesta Blanca
-        fecha_hora: new Date('2024-06-28T23:00:00'),
-        aprobacion: 'pendiente',
-        estado: true,
-        numero_reserva: 'RES-002',
-        cantidad_personas: 4,
-        monto_total: 160.00,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        usuarioid: 4, // Usuario Final
-        eventoid: 3, // Torneo Relámpago
-        fecha_hora: new Date('2024-06-22T19:00:00'),
-        aprobacion: 'rechazada',
-        estado: false,
-        numero_reserva: 'RES-003',
-        cantidad_personas: 5,
-        monto_total: 100.00,
-        motivo_rechazo: 'Cupo completo',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+    try {
+      // Verificar si ya existen reservas
+      const count = await queryInterface.sequelize.query(
+        'SELECT COUNT(*) as count FROM reservas',
+        { type: queryInterface.sequelize.QueryTypes.SELECT }
+      );
+
+      if (count[0].count === 0) {
+        // Obtener un usuario y un evento existentes
+        const [usuario] = await queryInterface.sequelize.query(
+          'SELECT id FROM usuarios WHERE correo = ? LIMIT 1',
+          {
+            replacements: ['usuario@example.com'],
+            type: queryInterface.sequelize.QueryTypes.SELECT
+          }
+        );
+
+        const [evento] = await queryInterface.sequelize.query(
+          'SELECT id FROM eventos LIMIT 1',
+          { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+
+        if (usuario && evento) {
+          await queryInterface.bulkInsert('reservas', [
+            {
+              usuarioid: usuario.id,
+              eventoid: evento.id,
+              fecha_hora: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Una semana desde ahora
+              aprobacion: 'aprobada',
+              estado: true,
+              numero_reserva: 'RES-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+              cantidad_entradas: 2,
+              monto_total: 60.00,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            {
+              usuarioid: usuario.id,
+              eventoid: evento.id,
+              fecha_hora: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 días desde ahora
+              aprobacion: 'pendiente',
+              estado: true,
+              numero_reserva: 'RES-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+              cantidad_entradas: 4,
+              monto_total: 120.00,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }
+          ], {});
+        } else {
+          console.log('No se encontró un usuario o evento para crear reservas de prueba');
+        }
       }
-    ], {});
+    } catch (error) {
+      console.error('Error en el seeder de reservas:', error);
+      throw error;
+    }
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('reservas', null, {});
+    // Eliminar solo las reservas de prueba (las que empiezan con 'RES-')
+    await queryInterface.bulkDelete('reservas', {
+      numero_reserva: {
+        [Sequelize.Op.like]: 'RES-%'
+      }
+    }, {});
   }
-}; 
+};

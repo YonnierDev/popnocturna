@@ -1,87 +1,124 @@
 "use strict";
 const bcrypt = require("bcrypt");
-/** @type {import('sequelize-cli').Migration} */
+const { Op } = require('sequelize');
+
 module.exports = {
   async up(queryInterface, Sequelize) {
-    /**
-     * Add seed commands here.
-     *
-     * Example:
-     * await queryInterface.bulkInsert('Usuarios', [{
-     *   nombre: 'John Doe',
-     * apellido: 'Doe',
-     * correo: '',
-     * fecha_nacimiento: '2023-03-29',
-     * contrasena: 'hashed_password',
-     *  genero: 'M',
-     * estado: 'activo',
-     * rolid: 1,
-     * }], {});
-     */
+    try {
+      // Verificar si ya existen usuarios
+      const userCount = await queryInterface.sequelize.query(
+        'SELECT COUNT(*) as count FROM usuarios',
+        { type: queryInterface.sequelize.QueryTypes.SELECT }
+      );
 
-    await queryInterface.bulkInsert(
-      "usuarios",
-      [
-        {
-          nombre: "Super",
-          apellido: "Admin",
-          correo: "superadmin@gmail.com",
-          fecha_nacimiento: "1990-01-01",
-          contrasena: await bcrypt.hash("Super-123", 10),
-          genero: "Masculino",
-          estado: true,
-          rolid: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          nombre: "Admin",
-          apellido: "Sistema",
-          correo: "admin@gmail.com",
-          fecha_nacimiento: "1990-01-01",
-          contrasena: await bcrypt.hash("Admin-123", 10),
-          genero: "Masculino",
-          estado: true,
-          rolid: 2,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          nombre: "Propietario",
-          apellido: "Negocio",
-          correo: "propietario@gmail.com",
-          fecha_nacimiento: "1990-01-01",
-          contrasena: await bcrypt.hash("Prop-123", 10),
-          genero: "Masculino",
-          estado: true,
-          rolid: 3,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          nombre: "Usuario",
-          apellido: "Final",
-          correo: "usuario@gmail.com",
-          fecha_nacimiento: "1990-01-01",
-          contrasena: await bcrypt.hash("User-123", 10),
-          genero: "Masculino",
-          estado: true,
-          rolid: 4,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ],
-      {}
-    );
+      if (userCount[0].count === 0) {
+        // Crear roles si no existen
+        const rolesToCreate = [
+          { nombre: 'Super Administrador', estado: true },
+          { nombre: 'Administrador', estado: true },
+          { nombre: 'Propietario', estado: true }
+        ];
+
+        // Insertar roles si no existen
+        for (const rol of rolesToCreate) {
+          const [existingRole] = await queryInterface.sequelize.query(
+            'SELECT id FROM rols WHERE nombre = :nombre',
+            {
+              replacements: { nombre: rol.nombre },
+              type: queryInterface.sequelize.QueryTypes.SELECT
+            }
+          );
+
+          if (!existingRole) {
+            await queryInterface.bulkInsert('rols', [{
+              ...rol,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }]);
+          }
+        }
+
+        // Obtener los roles
+        const roles = await queryInterface.sequelize.query(
+          `SELECT id, nombre FROM rols WHERE nombre IN (:roles) ORDER BY 
+           CASE nombre 
+             WHEN 'Super Administrador' THEN 1 
+             WHEN 'Administrador' THEN 2 
+             WHEN 'Propietario' THEN 3 
+             ELSE 4 
+           END`,
+          {
+            replacements: { roles: ['Super Administrador', 'Administrador', 'Propietario'] },
+            type: queryInterface.sequelize.QueryTypes.SELECT
+          }
+        );
+
+        if (roles && roles.length >= 3) {
+          const superAdminRol = roles.find(r => r.nombre === 'Super Administrador');
+          const adminRol = roles.find(r => r.nombre === 'Administrador');
+          const propietarioRol = roles.find(r => r.nombre === 'Propietario');
+          
+          await queryInterface.bulkInsert('usuarios', [
+            {
+              nombre: "Super",
+              apellido: "Admin",
+              correo: "superadmin@example.com",
+              fecha_nacimiento: new Date("1990-01-01"),
+              contrasena: await bcrypt.hash("Super-123", 10),
+              genero: "Masculino",
+              estado: true,
+              rolid: superAdminRol.id,
+              imagen: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            {
+              nombre: "Admin",
+              apellido: "Sistema",
+              correo: "admin@example.com",
+              fecha_nacimiento: new Date("1990-01-01"),
+              contrasena: await bcrypt.hash("Admin-123", 10),
+              genero: "Masculino",
+              estado: true,
+              rolid: adminRol.id,
+              imagen: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            {
+              nombre: "Propietario",
+              apellido: "Negocio",
+              correo: "propietario@example.com",
+              fecha_nacimiento: new Date("1990-01-01"),
+              contrasena: await bcrypt.hash("Propietario-123", 10),
+              genero: "Masculino",
+              estado: true,
+              rolid: propietarioRol.id,
+              imagen: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }
+          ], {});
+        } else {
+          console.log('No se encontraron todos los roles necesarios');
+        }
+      }
+    } catch (error) {
+      console.error('Error en el seeder de usuarios:', error);
+      throw error;
+    }
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("usuarios", null, {});
-    /**
-     * Add commands to revert seed here.
-     *
-     * Example:
-     * await queryInterface.bulkDelete('People', null, {});
-     */
-  },
+    // Eliminar solo los usuarios de prueba
+    await queryInterface.bulkDelete('usuarios', {
+      correo: {
+        [Op.in]: [
+          'superadmin@example.com',
+          'admin@example.com',
+          'propietario@example.com'
+        ]
+      }
+    }, {});
+  }
 };
