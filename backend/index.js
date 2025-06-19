@@ -16,12 +16,13 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración CORS más permisiva
+// Configuración CORS simplificada
 app.use(cors({
   origin: '*',  // Permite cualquier origen
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['Authorization'],
+  credentials: false,  // Deshabilitar credenciales
   maxAge: 3600,  // 1 hora
   preflightContinue: false,
   optionsSuccessStatus: 204
