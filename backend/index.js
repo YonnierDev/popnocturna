@@ -6,35 +6,27 @@ const { Server } = require('socket.io');
 const path = require('path');
 const db = require("./models");
 const { sequelize } = require('./models');
-const usuarioRoutes = require('./routes/usuarioRoutes');
-const perfilRouter = require('./routes/perfilRouter');
 
 const app = express();
 const server = http.createServer(app);
 
-// Middleware para CORS
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Verificar si el origen está permitido
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  // Configuración de CORS
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, cache-control');
-  res.header('Access-Control-Expose-Headers', 'Authorization, Set-Cookie');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '3600');
-  
-  // Manejar solicitudes OPTIONS (preflight)
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  
-  next();
-});
+// Middleware básico
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Configuración CORS
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://frontendpopa.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Authorization', 'Set-Cookie']
+};
+
+app.use(cors(corsOptions));
 
 console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
 
@@ -58,8 +50,6 @@ app.get("/", (req, res) => {
 // Rutas
 // Rutas de autenticación y usuarios
 app.use("/api", require("./routes/autentiRouter"));
-app.use("/api", usuarioRoutes);
-app.use("/api", perfilRouter);
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
 
@@ -77,10 +67,6 @@ app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
 // Rutas de propietario
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 
-// Rutas de reservas de propietario
-const reservaUsuarioEventoRouter = require("./routes/propietarioRouters/reservaUsuarioEventoLugarRouter");
-app.use("/api/propietario", reservaUsuarioEventoRouter);
-console.log('Rutas de reservas de propietario montadas en /api/propietario');
 
 app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRouter"));
 app.use("/api", require("./routes/propietarioRouters/propietarioReservaEventoLugarRouter"));
