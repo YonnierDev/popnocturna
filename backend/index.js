@@ -6,23 +6,43 @@ const { Server } = require('socket.io');
 const path = require('path');
 const db = require("./models");
 const { sequelize } = require('./models');
-const usuarioRoutes = require('./routes/usuarioRoutes');
-const perfilRouter = require('./routes/perfilRouter');
 
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
+// Middleware básico
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración de CORS para Express
-app.use(cors({
-  origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
-  methods: ["GET", "POST", "PUT", "DELETE", 
-    "PATCH", "OPTIONS"],
-  credentials: true
-}));
+// Configuración CORS
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://frontendpopa.vercel.app',
+    'http://localhost:5173'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept',
+    'Pragma',
+    'Cache-Control',
+    'Expires',
+    'If-Modified-Since',
+    'Origin'
+  ],
+  exposedHeaders: ['Authorization', 'Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  maxAge: 86400
+};
+
+app.use(cors(corsOptions));
+
+console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
 
 // Servir archivos estáticos desde la carpeta public
 app.use('/static', express.static(path.join(__dirname, 'public')));
@@ -44,8 +64,6 @@ app.get("/", (req, res) => {
 // Rutas
 // Rutas de autenticación y usuarios
 app.use("/api", require("./routes/autentiRouter"));
-app.use("/api", usuarioRoutes);
-app.use("/api", perfilRouter);
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
 
@@ -63,10 +81,6 @@ app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
 // Rutas de propietario
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
 
-// Rutas de reservas de propietario
-const reservaUsuarioEventoRouter = require("./routes/propietarioRouters/reservaUsuarioEventoLugarRouter");
-app.use("/api/propietario", reservaUsuarioEventoRouter);
-console.log('Rutas de reservas de propietario montadas en /api/propietario');
 
 app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRouter"));
 app.use("/api", require("./routes/propietarioRouters/propietarioReservaEventoLugarRouter"));

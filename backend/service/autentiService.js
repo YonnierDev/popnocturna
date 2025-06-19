@@ -36,7 +36,7 @@ class AutentiService {
     }
 
     if (!datos.rolid) {
-      datos.rolid = 4;
+      datos.rolid = 3; // Establecer rol propietario (3) por defecto
     }
 
     const rolExistente = await UsuarioService.verificarRol(datos.rolid);
@@ -126,8 +126,11 @@ class AutentiService {
 
   static async login({ correo, contrasena }) {
     const usuario = await UsuarioService.buscarPorCorreo(correo);
-    if (!usuario || !usuario.estado) {
-      throw new Error("Usuario no validado o no existe");
+    if (!usuario) {
+      throw new Error("Usuario no existe");
+    }
+    if (!usuario.estado) {
+      throw new Error("Usuario bloqueado");
     }
 
     const esValido = await bcrypt.compare(contrasena, usuario.contrasena);

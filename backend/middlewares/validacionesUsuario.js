@@ -61,8 +61,10 @@ const validarUsuario = [
       if (!/\d/.test(value)) {
         errores.push("Debe incluir al menos un número");
       }
+      // Acepta cualquier carácter que no sea letra ni número como símbolo
+      // Incluye guiones, signos de puntuación, símbolos especiales, etc.
       if (!/[^A-Za-z\d]/.test(value)) {
-        errores.push("Debe incluir al menos un símbolo (como !@#$%^&*)");
+        errores.push("Debe incluir al menos un símbolo (como !@#$%^&*-_)");
       }
       if (errores.length > 0) {
         throw new Error(errores.join(" | "));

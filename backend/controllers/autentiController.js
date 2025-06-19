@@ -3,6 +3,76 @@ const bcrypt = require("bcrypt");
 const AutentiService = require("../service/autentiService");
 
 class AutentiController {
+  static async registrarUsuario(req, res) {
+    try {
+      // Validar que el body tenga datos
+      if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({
+          codigo: 'CUERPO_VACIO',
+          mensaje: 'El cuerpo de la solicitud está vacío'
+        });
+      }
+
+      // Validar datos básicos
+      if (!req.body.correo || !req.body.contrasena) {
+        return res.status(400).json({
+          codigo: 'DATOS_INCOMPLETOS',
+          mensaje: 'Correo y contraseña son obligatorios',
+          detalles: 'Faltan campos requeridos en la solicitud'
+        });
+      }
+
+      // Forzar el rol 4 (usuario) para este endpoint
+      req.body.rolid = 4;
+
+      const resultado = await AutentiService.registrarUsuario(req.body);
+      
+      return res.status(201).json({
+        codigo: 'REGISTRO_EXITOSO',
+        mensaje: 'Registro de usuario exitoso',
+        registroExitoso: true,
+        usuario: resultado.usuario
+      });
+      
+    } catch (error) {
+      // Manejar errores específicos
+      if (error.message.includes('foreign key constraint fails')) {
+        return res.status(400).json({
+          codigo: 'ROL_INVALIDO',
+          mensaje: 'Error al crear el usuario: Rol no válido',
+          detalles: 'El rol especificado no existe en la base de datos',
+          rolid: 4
+        });
+      }
+      
+      // Manejar errores de validación
+      if (error.message.includes('validación') || error.message.includes('obligatorios')) {
+        return res.status(422).json({
+          codigo: 'VALIDACION_FALLIDA',
+          mensaje: error.message,
+          detalles: "Error de validación en los datos del formulario"
+        });
+      }
+
+      // Manejar errores de correo duplicado
+      if (error.message.includes('ya está en uso') || error.message.includes('ya existe')) {
+        return res.status(409).json({
+          codigo: 'CORREO_DUPLICADO',
+          mensaje: "El correo electrónico ya está registrado",
+          detalles: error.message
+        });
+      }
+
+      // Error genérico
+      console.error('Error en registrarUsuario:', error);
+      res.status(500).json({
+        codigo: 'ERROR_INTERNO',
+        mensaje: error.message || "Error interno del servidor",
+        detalles: "Ocurrió un error inesperado al procesar la solicitud"
+      });
+    }
+  }
+
   static async registrar(req, res) {
     try {
       // Validar que el body tenga datos

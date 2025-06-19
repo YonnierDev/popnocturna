@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const {
   Usuario,
   Rol,
@@ -11,6 +12,7 @@ const {
 class UsuarioService {
   async listarUsuarios() {
     return await Usuario.findAll({
+      where: { rolid: { [Op.ne]: 1 } },
       include: [{ model: Rol, as: "rol", attributes: ["id", "nombre"] }],
     });
   }
@@ -147,7 +149,19 @@ class UsuarioService {
   }
 
   async crearUsuario(datos) {
-    return await Usuario.create(datos);
+    try {
+      // Verificar si el correo ya está en uso
+      const usuarioExistente = await this.buscarPorCorreo(datos.correo);
+      if (usuarioExistente) {
+        throw new Error(`El correo ${datos.correo} ya está registrado`);
+      }
+      
+      // Crear el usuario si el correo no existe
+      return await Usuario.create(datos);
+    } catch (error) {
+      console.error('[crearUsuario] Error al crear usuario:', error);
+      throw error;
+    }
   }
 
   async activarUsuario(correo) {

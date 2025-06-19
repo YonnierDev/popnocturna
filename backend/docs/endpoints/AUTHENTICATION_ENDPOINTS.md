@@ -1,23 +1,35 @@
 # Documentación de Endpoints de Autenticación
 
 ## Tabla de Contenidos
-1. [Registro de Usuario](#registro-de-usuario)
-2. [Inicio de Sesión](#inicio-de-sesión)
-3. [Recuperación de Contraseña](#recuperación-de-contraseña)
-4. [Actualización de Contraseña](#actualización-de-contraseña)
+1. [Registro de Propietario](#registro-de-propietario)
+2. [Registro de Usuario](#registro-de-usuario)
+3. [Inicio de Sesión](#inicio-de-sesión)
+4. [Recuperación de Contraseña](#recuperación-de-contraseña)
+5. [Actualización de Contraseña](#actualización-de-contraseña)
 
 ---
 
+## Registro de Propietario
+
+Crea una nueva cuenta de propietario en el sistema. Este endpoint asigna automáticamente el rol de propietario (rolid: 3) al nuevo usuario. El proceso de registro es inmediato y no requiere validación de correo electrónico.
+
 ## Registro de Usuario
 
-Crea una nueva cuenta de usuario en el sistema. El proceso de registro es inmediato y no requiere validación de correo electrónico.
+Crea una nueva cuenta de usuario estándar en el sistema. Este endpoint asigna automáticamente el rol de usuario (rolid: 4). El proceso de registro es inmediato y no requiere validación de correo electrónico.
 
-### Endpoint
+### Endpoint para Propietario
 ```
 POST /api/registrar
 ```
 
+### Endpoint para Usuario
+```
+POST /api/registrar-usuario
+```
+
 ### Cuerpo de la Solicitud
+Ambos endpoints aceptan el mismo formato de solicitud:
+
 ```json
 {
   "nombre": "Juan",
@@ -28,6 +40,8 @@ POST /api/registrar
   "genero": "Masculino"
 }
 ```
+
+**Nota**: El campo `rolid` es ignorado si se envía, ya que se asigna automáticamente según el endpoint utilizado (3 para propietario, 4 para usuario).
 
 ### Validaciones
 1. **Campos obligatorios**: 
@@ -54,7 +68,7 @@ POST /api/registrar
 
 ### Respuestas
 
-**Éxito (201 Created)**
+**Éxito (201 Created) - Registro de Propietario**
 ```json
 {
   "codigo": "REGISTRO_EXITOSO",
@@ -63,8 +77,26 @@ POST /api/registrar
   "usuario": {
     "id": 1,
     "nombre": "Juan",
+    "apellido": "Pérez",
     "correo": "juan.perez@ejemplo.com",
-    "rol": "Usuario Estándar",
+    "rol": 3,
+    "estado": true
+  }
+}
+```
+
+**Éxito (201 Created) - Registro de Usuario**
+```json
+{
+  "codigo": "REGISTRO_EXITOSO",
+  "mensaje": "Registro de usuario exitoso",
+  "registroExitoso": true,
+  "usuario": {
+    "id": 2,
+    "nombre": "María",
+    "apellido": "González",
+    "correo": "maria.gonzalez@ejemplo.com",
+    "rol": 4,
     "estado": true
   }
 }

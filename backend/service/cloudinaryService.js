@@ -47,6 +47,40 @@ class CloudinaryService {
     }
   }
 
+  // Método para subir imágenes de perfil de usuario
+  async subirImagenUsuario(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "image",
+            folder: "usuarios",
+            public_id: nombre,
+            transformation: [
+              { width: 400, height: 400, gravity: "face", crop: "thumb" }, // Recorte cuadrado centrado en la cara
+              { quality: "auto:good" },
+              { fetch_format: "auto" } // Optimización automática del formato
+            ]
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir imagen de usuario:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+        
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      console.error("Error en subirImagenUsuario:", error);
+      throw error;
+    }
+  }
+
   // Método para subir imágenes de lugares (existente)
   async subirImagenLugar(buffer, nombre) {
     try {
