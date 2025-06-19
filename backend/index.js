@@ -12,21 +12,29 @@ const perfilRouter = require('./routes/perfilRouter');
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Configuración CORS simplificada
-app.use(cors({
-  origin: '*',  // Permite cualquier origen
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Authorization'],
-  credentials: false,  // Deshabilitar credenciales
-  maxAge: 3600,  // 1 hora
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+// Middleware para CORS
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Verificar si el origen está permitido
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  // Configuración de CORS
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, cache-control');
+  res.header('Access-Control-Expose-Headers', 'Authorization, Set-Cookie');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '3600');
+  
+  // Manejar solicitudes OPTIONS (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  
+  next();
+});
 
 console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
 
