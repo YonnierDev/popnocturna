@@ -28,7 +28,7 @@ router.delete(
 router.patch(
   "/reserva/estado/:id(\\d+)",
   autentiMiddleare,
-  validarRol(1, 2, 3),
+  validarRol(1, 2),
   ReservaController.actualizarEstado
 );
 
