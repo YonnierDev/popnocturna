@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { Sequelize } = require("sequelize");
 const process = require("process");
+const config = require("../config/config")[process.env.NODE_ENV || "development"];
 const basename = path.basename(__filename);
 require("dotenv").config();
 
@@ -45,35 +46,7 @@ Object.entries(requiredEnvVars).forEach(([key, value]) => {
   }
 });
 
-sequelize = new Sequelize(
-  requiredEnvVars.DB_NAME,
-  requiredEnvVars.DB_USERNAME,
-  requiredEnvVars.DB_PASSWORD,
-  {
-    host: requiredEnvVars.DB_HOST,
-    port: parseInt(requiredEnvVars.DB_PORT),
-    dialect: "mysql",
-    dialectModule: require("mysql2"),
-    logging: process.env.NODE_ENV === "development",
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    },
-    pool: {
-      max: 30,
-      min: 1,
-      acquire: 60000,
-      idle: 60000,
-    },
-    define: {
-      timestamps: true,
-      underscored: true,
-      underscoredAll: true
-    }
-  }
-);
+sequelize = new Sequelize(config);
 
 const db = {};
 

@@ -4,10 +4,21 @@ const CategoriaService = require('../service/categoriaService');
 class CategoriaController {
     async listarCategorias(req, res) {
         try {
+            console.log("🔍 Intentando listar categorías");
             const listaCategorias = await CategoriaService.listarCategorias();
-            res.json(listaCategorias);
+            console.log("✅ Categorías encontradas:", listaCategorias);
+            res.json({
+                success: true,
+                data: listaCategorias
+            });
         } catch (e) {
-            res.status(500).json({ mensaje: "Error en el servicio", error: e.message });
+            console.error("❌ Error al listar categorías:", e);
+            res.status(500).json({ 
+                success: false,
+                message: "Error al obtener categorías",
+                error: e.message,
+                details: e.stack
+            });
         }
     }
 

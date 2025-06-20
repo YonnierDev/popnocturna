@@ -9,7 +9,7 @@ const commonConfig = {
   port: process.env.DB_PORT,
   dialect: 'mysql',
   dialectModule: require('mysql2'),
-  logging: process.env.NODE_ENV === 'production' ? console.log : false,
+  logging: process.env.NODE_ENV === 'production' ? console.log : true,
   dialectOptions: {
     ssl: {
       require: true,
@@ -18,10 +18,10 @@ const commonConfig = {
     connectTimeout: 60000  // Aumenta el tiempo de espera de conexión
   },
   pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
+    max: 30,
+    min: 1,
+    acquire: 60000,
+    idle: 60000
   },
   retry: {
     max: 3,  // Número de intentos de reconexión

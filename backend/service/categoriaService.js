@@ -3,6 +3,10 @@ const { Categoria, Lugar } = require('../models');
 class CategoriaService {
     async listarCategorias() {
         return await Categoria.findAll({
+            attributes: ['id', 'tipo', 'descripcion', 'imagen', 'estado'],
+            where: {
+                estado: true
+            }
         });
     }
 
