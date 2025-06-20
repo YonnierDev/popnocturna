@@ -6,11 +6,40 @@ const { Sequelize } = require("sequelize");
 const process = require("process");
 const basename = path.basename(__filename);
 require("dotenv").config();
-const config = require("../config/config")[process.env.NODE_ENV || "development"];
+
+let sequelize;
 
 console.log("🔧 Iniciando conexión a base de datos...");
 
-sequelize = new Sequelize(config);
+sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USERNAME,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT),
+    dialect: "mysql",
+    dialectModule: require("mysql2"),
+    logging: process.env.NODE_ENV === "development",
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
+    pool: {
+      max: 30,
+      min: 1,
+      acquire: 60000,
+      idle: 60000,
+    },
+    define: {
+      timestamps: true,
+      underscored: true,
+      underscoredAll: true
+    }
+  }
+);
 
 const db = {};
 
