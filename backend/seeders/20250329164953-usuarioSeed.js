@@ -45,10 +45,11 @@ module.exports = {
              WHEN 'Super Administrador' THEN 1 
              WHEN 'Administrador' THEN 2 
              WHEN 'Propietario' THEN 3 
-             ELSE 4 
+             WHEN 'Admin' THEN 4
+             ELSE 5 
            END`,
           {
-            replacements: { roles: ['Super Administrador', 'Administrador', 'Propietario'] },
+            replacements: { roles: ['Super Administrador', 'Administrador', 'Propietario', 'Admin'] },
             type: queryInterface.sequelize.QueryTypes.SELECT
           }
         );
@@ -57,6 +58,7 @@ module.exports = {
           const superAdminRol = roles.find(r => r.nombre === 'Super Administrador');
           const adminRol = roles.find(r => r.nombre === 'Administrador');
           const propietarioRol = roles.find(r => r.nombre === 'Propietario');
+          const adminSimpleRol = roles.find(r => r.nombre === 'Admin');
           
           await queryInterface.bulkInsert('usuarios', [
             {
@@ -94,6 +96,19 @@ module.exports = {
               genero: "Masculino",
               estado: true,
               rolid: propietarioRol.id,
+              imagen: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            {
+              nombre: "Admin",
+              apellido: "Simple",
+              correo: "admin.simple@example.com",
+              fecha_nacimiento: new Date("1990-01-01"),
+              contrasena: await bcrypt.hash("AdminSimple-123", 10),
+              genero: "Femenino",
+              estado: true,
+              rolid: adminSimpleRol.id,
               imagen: null,
               createdAt: new Date(),
               updatedAt: new Date(),

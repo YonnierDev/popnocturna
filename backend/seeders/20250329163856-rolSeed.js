@@ -28,6 +28,12 @@ module.exports = {
           estado: true,
           createdAt: new Date(),
           updatedAt: new Date(),
+        },
+        {
+          nombre: 'Admin',
+          estado: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         }
       ], {});
     }

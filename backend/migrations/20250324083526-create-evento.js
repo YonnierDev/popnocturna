@@ -50,9 +50,16 @@ module.exports = {
         allowNull: false,
       },
       portada: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: Sequelize.TEXT,
         allowNull: true,
-        defaultValue: [],
+        defaultValue: '[]',
+        get() {
+          const rawValue = this.getDataValue('portada');
+          return rawValue ? JSON.parse(rawValue) : [];
+        },
+        set(value) {
+          this.setDataValue('portada', Array.isArray(value) ? JSON.stringify(value) : '[]');
+        }
       },
       estado: {
         type: Sequelize.BOOLEAN,

@@ -40,9 +40,9 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
       fotos_lugar: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: Sequelize.TEXT,
         allowNull: true,
-        defaultValue: []
+        defaultValue: '[]'
       },
       carta_pdf: {
         type: Sequelize.STRING,
