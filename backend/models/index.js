@@ -10,13 +10,20 @@ require("dotenv").config();
 let sequelize;
 
 console.log("🔧 Iniciando servidor...");
+console.log("🔧 Configuración de base de datos:");
+console.log("🔌 Host:", process.env.DB_HOST);
+console.log("🔌 Puerto:", process.env.DB_PORT);
+console.log("🔌 Base de datos:", process.env.DB_NAME);
+console.log("🔌 Usuario:", process.env.DB_USERNAME);
+console.log("🔒 SSL:", process.env.DB_SSL === "true" ? "Habilitado" : "Deshabilitado");
+
 sequelize = new Sequelize(
-  process.env.DB_NAME || "railway",
-  process.env.DB_USERNAME || "root",
+  process.env.DB_NAME,
+  process.env.DB_USERNAME,
   process.env.DB_PASSWORD,
   {
-    host: process.env.DB_HOST || "gondola.proxy.rlwy.net",
-    port: process.env.DB_PORT || "30422",
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT),
     dialect: "mysql",
     dialectModule: require("mysql2"),
     logging: process.env.NODE_ENV === "development",
