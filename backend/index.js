@@ -64,6 +64,7 @@ app.get("/", (req, res) => {
 // Rutas
 // Rutas de autenticación y usuarios
 app.use("/api", require("./routes/autentiRouter"));
+app.use("/api", require("./routes/usuarioRoutes"));
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
 
