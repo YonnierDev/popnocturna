@@ -16,9 +16,43 @@ class UsuarioController {
   async listarUsuarios(req, res) {
     try {
       const listaUsuarios = await UsuarioService.listarUsuarios();
-      res.status(200).json(listaUsuarios);
+      res.status(200).json({
+        success: true,
+        data: listaUsuarios
+      });
     } catch (error) {
-      res.status(500).json({ mensaje: "Error al listar usuarios" });
+      console.error(error);
+      res.status(500).json({ 
+        success: false,
+        message: "Error al listar usuarios",
+        error: error.message
+      });
+    }
+  }
+
+  async obtenerUsuario(req, res) {
+    try {
+      const { id } = req.params;
+      const usuario = await UsuarioService.obtenerUsuario(id);
+      
+      if (!usuario) {
+        return res.status(404).json({
+          success: false,
+          message: "Usuario no encontrado"
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: usuario
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ 
+        success: false,
+        message: "Error al obtener usuario",
+        error: error.message
+      });
     }
   }
 

@@ -6,10 +6,22 @@ class CategoriaController {
         try {
             console.log("🔍 Intentando listar categorías");
             const listaCategorias = await CategoriaService.listarCategorias();
-            console.log("✅ Categorías encontradas:", listaCategorias);
+            
+            // Formatear la respuesta para el rol 1 (Super Admin)
+            const categoriasFormateadas = listaCategorias.map(categoria => ({
+                id: categoria.id,
+                tipo: categoria.tipo,
+                descripcion: categoria.descripcion,
+                imagen: categoria.imagen,
+                estado: categoria.estado,
+                createdAt: categoria.createdAt,
+                updatedAt: categoria.updatedAt
+            }));
+
+            console.log("✅ Categorías encontradas:", categoriasFormateadas);
             res.json({
                 success: true,
-                data: listaCategorias
+                data: categoriasFormateadas
             });
         } catch (e) {
             console.error("❌ Error al listar categorías:", e);
