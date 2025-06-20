@@ -78,11 +78,11 @@ sequelize
     console.log("⏰ Hora del servidor:", new Date().toLocaleString());
     
     console.log("\n=== ✅ CONEXIÓN A BASE DE DATOS ===");
-    console.log("🔌 Host:", sequelize.config.host);
-    console.log("🗄️ Base de datos:", sequelize.config.database);
-    console.log("🔑 Usuario:", sequelize.config.username);
-    console.log("🔒 SSL:", sequelize.config.dialectOptions?.ssl ? "✅ Habilitado" : "❌ Deshabilitado");
-    console.log("🌐 Puerto:", sequelize.config.port);
+    console.log("🔌 Host:", requiredEnvVars.DB_HOST);
+    console.log("🗄️ Base de datos:", requiredEnvVars.DB_NAME);
+    console.log("🔑 Usuario:", requiredEnvVars.DB_USERNAME);
+    console.log("🔒 SSL:", "✅ Habilitado");
+    console.log("🌐 Puerto:", requiredEnvVars.DB_PORT);
     
     console.log("\n=== ⚙️ CONFIGURACIÓN DE CONEXIONES ===");
     console.log("📊 Pool de conexiones:");
