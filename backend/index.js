@@ -7,6 +7,11 @@ const path = require('path');
 const db = require("./models");
 const { sequelize } = require('./models');
 
+console.log("🔧 Iniciando servidor...");
+console.log("🔧 Configuración de entorno:");
+console.log("🌍 Entorno:", process.env.NODE_ENV);
+console.log("🔒 SSL:", "Habilitado");
+
 const app = express();
 const server = http.createServer(app);
 

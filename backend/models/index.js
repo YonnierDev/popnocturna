@@ -20,6 +20,23 @@ const requiredEnvVars = {
   DB_PASSWORD: process.env.DB_PASSWORD
 };
 
+// Mostrar valores de entorno
+console.log("=== 🚀 CONFIGURACIÓN DE BASE DE DATOS ===");
+console.log("🔌 Host:", requiredEnvVars.DB_HOST);
+console.log("🔌 Puerto:", requiredEnvVars.DB_PORT);
+console.log("🗄️ Base de datos:", requiredEnvVars.DB_NAME);
+console.log("🔑 Usuario:", requiredEnvVars.DB_USERNAME);
+console.log("🔒 SSL: Habilitado");
+console.log("🔄 Dialecto: mysql");
+console.log("=== ⚙️ POOL DE CONEXIONES ===");
+console.log("   ├─ Máximo:", 30);
+console.log("   ├─ Mínimo:", 1);
+console.log("   ├─ Tiempo de adquisición:", 60000, "ms");
+console.log("   └─ Tiempo de inactividad:", 60000, "ms");
+console.log("🔧 Opciones de conexión:");
+console.log("   ├─ Logging:", process.env.NODE_ENV === "development");
+console.log("   └─ Timeout de conexión:", 60000, "ms");
+
 // Verificar cada variable
 Object.entries(requiredEnvVars).forEach(([key, value]) => {
   if (!value || value === '') {
@@ -27,14 +44,6 @@ Object.entries(requiredEnvVars).forEach(([key, value]) => {
     process.exit(1);
   }
 });
-
-// Mostrar valores de entorno
-console.log("🔧 Variables de entorno de base de datos:");
-console.log("🔌 DB_HOST:", requiredEnvVars.DB_HOST);
-console.log("🔌 DB_PORT:", requiredEnvVars.DB_PORT);
-console.log("🔌 DB_NAME:", requiredEnvVars.DB_NAME);
-console.log("🔌 DB_USERNAME:", requiredEnvVars.DB_USERNAME);
-console.log("🔒 DB_PASSWORD:", requiredEnvVars.DB_PASSWORD ? "***" : "No definida");
 
 sequelize = new Sequelize(
   requiredEnvVars.DB_NAME,
