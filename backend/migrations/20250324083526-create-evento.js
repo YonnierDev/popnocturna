@@ -52,14 +52,7 @@ module.exports = {
       portada: {
         type: Sequelize.TEXT,
         allowNull: true,
-        defaultValue: '[]',
-        get() {
-          const rawValue = this.getDataValue('portada');
-          return rawValue ? JSON.parse(rawValue) : [];
-        },
-        set(value) {
-          this.setDataValue('portada', Array.isArray(value) ? JSON.stringify(value) : '[]');
-        }
+        defaultValue: '[]'
       },
       estado: {
         type: Sequelize.BOOLEAN,

@@ -42,9 +42,10 @@ module.exports = {
         defaultValue: true
       },
       aprobacion: {
-        type: Sequelize.BOOLEAN,
+        type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: true
+        defaultValue: 0,
+        comment: '0 = pendiente, 1 = aceptado, 2 = rechazado'
       },
       motivo_reporte: {
         type: Sequelize.STRING,

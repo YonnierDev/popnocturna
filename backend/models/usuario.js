@@ -39,6 +39,11 @@ module.exports = (sequelize, DataTypes) => {
 
   Usuario.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+      },
       nombre: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -86,8 +91,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Rol",
-          key: "rolid",
+          model: "rols",
+          key: "id",
         },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
@@ -97,6 +102,10 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Usuario",
       tableName: "usuarios",
+      timestamps: true,
+      underscored: false,
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt'
     }
   );
 

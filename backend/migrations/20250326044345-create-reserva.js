@@ -16,17 +16,21 @@ module.exports = {
       },
       usuarioid: {
         type: Sequelize.INTEGER,
-        reference:{
+        references: {
           model: 'usuarios',
           key: 'id'
-        }
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
       eventoid: {
         type: Sequelize.INTEGER,
-        reference:{
+        references: {
           model: 'eventos',
           key: 'id'
-        }
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
       fecha_hora: {
         type: Sequelize.DATE,

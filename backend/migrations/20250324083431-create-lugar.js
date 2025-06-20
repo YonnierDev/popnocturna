@@ -39,6 +39,10 @@ module.exports = {
       estado: {
         type: Sequelize.BOOLEAN
       },
+      imagen: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
       fotos_lugar: {
         type: Sequelize.TEXT,
         allowNull: true,

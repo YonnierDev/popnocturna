@@ -105,3 +105,8 @@ config.local.js
 config.dev.js
 .qodo
 .env
+
+
+#test
+test-connection.js
+test-config.js

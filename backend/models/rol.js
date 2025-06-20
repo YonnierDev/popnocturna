@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   Rol.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+      },
       nombre: {
         type: DataTypes.STRING,
         unique: true,
@@ -28,6 +33,10 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Rol",
       tableName: "rols",
+      timestamps: true,
+      underscored: false,
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt'
     }
   );
   return Rol;
