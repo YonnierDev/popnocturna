@@ -416,7 +416,7 @@ class ReservaService {
       // Verificar que haya datos para actualizar
       if (!datosActualizar || Object.keys(datosActualizar).length === 0) {
         await t.rollback();
-        return reserva;
+        return reservaJson;
       }
 
       // Actualizar la reserva
