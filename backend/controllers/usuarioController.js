@@ -16,10 +16,7 @@ class UsuarioController {
   async listarUsuarios(req, res) {
     try {
       const listaUsuarios = await UsuarioService.listarUsuarios();
-      res.status(200).json({
-        success: true,
-        data: listaUsuarios
-      });
+      res.status(200).json(listaUsuarios);
     } catch (error) {
       console.error(error);
       res.status(500).json({ 
