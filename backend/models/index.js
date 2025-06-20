@@ -11,13 +11,38 @@ let sequelize;
 
 console.log("🔧 Iniciando conexión a base de datos...");
 
+// Validar que todas las variables de entorno estén definidas y no sean vacías
+const requiredEnvVars = {
+  DB_HOST: process.env.DB_HOST,
+  DB_PORT: process.env.DB_PORT,
+  DB_NAME: process.env.DB_NAME,
+  DB_USERNAME: process.env.DB_USERNAME,
+  DB_PASSWORD: process.env.DB_PASSWORD
+};
+
+// Verificar cada variable
+Object.entries(requiredEnvVars).forEach(([key, value]) => {
+  if (!value || value === '') {
+    console.error(`❌ Variable de entorno requerida no definida: ${key}`);
+    process.exit(1);
+  }
+});
+
+// Mostrar valores de entorno
+console.log("🔧 Variables de entorno de base de datos:");
+console.log("🔌 DB_HOST:", requiredEnvVars.DB_HOST);
+console.log("🔌 DB_PORT:", requiredEnvVars.DB_PORT);
+console.log("🔌 DB_NAME:", requiredEnvVars.DB_NAME);
+console.log("🔌 DB_USERNAME:", requiredEnvVars.DB_USERNAME);
+console.log("🔒 DB_PASSWORD:", requiredEnvVars.DB_PASSWORD ? "***" : "No definida");
+
 sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USERNAME,
-  process.env.DB_PASSWORD,
+  requiredEnvVars.DB_NAME,
+  requiredEnvVars.DB_USERNAME,
+  requiredEnvVars.DB_PASSWORD,
   {
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT),
+    host: requiredEnvVars.DB_HOST,
+    port: parseInt(requiredEnvVars.DB_PORT),
     dialect: "mysql",
     dialectModule: require("mysql2"),
     logging: process.env.NODE_ENV === "development",
