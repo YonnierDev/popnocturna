@@ -19,7 +19,7 @@ sequelize = new Sequelize(
     port: process.env.DB_PORT || "30422",
     dialect: "mysql",
     dialectModule: require("mysql2"),
-    logging: false,
+    logging: process.env.NODE_ENV === "development",
     dialectOptions: {
       ssl: {
         require: true,
@@ -32,6 +32,11 @@ sequelize = new Sequelize(
       acquire: 60000,
       idle: 60000,
     },
+    define: {
+      timestamps: true,
+      underscored: true,
+      underscoredAll: true
+    }
   }
 );
 
