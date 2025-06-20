@@ -82,11 +82,11 @@ sequelize
     console.error("\n❌ ERROR DE CONEXIÓN A MYSQL");
     console.error("📝 Mensaje:", error.message);
     console.error("🔍 Configuración actual:", {
-      host: sequelize.config.host,
-      database: sequelize.config.database,
-      port: sequelize.config.port,
-      dialect: sequelize.config.dialect,
-      ssl: sequelize.config.dialectOptions?.ssl ? "Habilitado" : "Deshabilitado"
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT,
+      dialect: "mysql",
+      ssl: "Habilitado"
     });
   });
 
