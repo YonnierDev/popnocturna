@@ -15,8 +15,8 @@ sequelize = new Sequelize(
   process.env.DB_USERNAME || "root",
   process.env.DB_PASSWORD,
   {
-    host: process.env.DB_HOST || "turntable.proxy.rlwy.net",
-    port: process.env.DB_PORT || "45692",
+    host: process.env.DB_HOST || "gondola.proxy.rlwy.net",
+    port: process.env.DB_PORT || "30422",
     dialect: "mysql",
     dialectModule: require("mysql2"),
     logging: false,
