@@ -98,15 +98,14 @@ sequelize
     console.log("================================\n");
   })
   .catch((error) => {
-    console.error("\n❌ ERROR DE CONEXIÓN A MYSQL");
+    console.error("❌ ERROR DE CONEXIÓN A MYSQL");
     console.error("📝 Mensaje:", error.message);
-    console.error("🔍 Configuración actual:", {
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      port: process.env.DB_PORT,
-      dialect: "mysql",
-      ssl: "Habilitado"
-    });
+    console.error("🔍 Configuración de conexión:");
+    console.error("🔌 Host:", process.env.DB_HOST);
+    console.error("🔌 Puerto:", process.env.DB_PORT);
+    console.error("🔌 Base de datos:", process.env.DB_NAME);
+    console.error("🔌 Usuario:", process.env.DB_USERNAME);
+    console.error("🔒 SSL:", "Habilitado");
   });
 
 fs.readdirSync(__dirname)
