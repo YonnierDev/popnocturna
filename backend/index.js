@@ -7,6 +7,25 @@ const path = require('path');
 const db = require("./models");
 const { sequelize } = require('./models');
 
+// Validar variables de entorno y mostrar configuración
+console.log("🔧 Iniciando servidor...");
+console.log("🔧 Configuración de entorno:");
+console.log("🔌 Host DB:", process.env.DB_HOST);
+console.log("🔌 Puerto DB:", process.env.DB_PORT);
+console.log("🔌 Base de datos:", process.env.DB_NAME);
+console.log("🔌 Usuario DB:", process.env.DB_USERNAME);
+console.log("🌍 Entorno:", process.env.NODE_ENV);
+
+if (!process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_NAME || !process.env.DB_USERNAME || !process.env.DB_PASSWORD) {
+  console.error("❌ Variables de entorno faltantes:");
+  console.error("DB_HOST:", process.env.DB_HOST);
+  console.error("DB_PORT:", process.env.DB_PORT);
+  console.error("DB_NAME:", process.env.DB_NAME);
+  console.error("DB_USERNAME:", process.env.DB_USERNAME);
+  console.error("DB_PASSWORD:", process.env.DB_PASSWORD ? "***" : "No definida");
+  process.exit(1);
+}
+
 const app = express();
 const server = http.createServer(app);
 

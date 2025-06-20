@@ -9,13 +9,7 @@ require("dotenv").config();
 
 let sequelize;
 
-console.log("🔧 Iniciando servidor...");
-console.log("🔧 Configuración de base de datos:");
-console.log("🔌 Host:", process.env.DB_HOST);
-console.log("🔌 Puerto:", process.env.DB_PORT);
-console.log("🔌 Base de datos:", process.env.DB_NAME);
-console.log("🔌 Usuario:", process.env.DB_USERNAME);
-console.log("🔒 SSL:", process.env.DB_SSL === "true" ? "Habilitado" : "Deshabilitado");
+console.log("🔧 Iniciando conexión a base de datos...");
 
 sequelize = new Sequelize(
   process.env.DB_NAME,
