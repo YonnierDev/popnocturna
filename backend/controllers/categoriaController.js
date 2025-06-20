@@ -19,10 +19,7 @@ class CategoriaController {
             }));
 
             console.log("✅ Categorías encontradas:", categoriasFormateadas);
-            res.json({
-                success: true,
-                data: categoriasFormateadas
-            });
+            res.json(categoriasFormateadas);
         } catch (e) {
             console.error("❌ Error al listar categorías:", e);
             res.status(500).json({ 
