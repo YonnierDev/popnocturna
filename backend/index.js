@@ -23,8 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 const corsOptions = {
   origin: [
     'http://localhost:3000',
-    'https://frontendpopa.vercel.app',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://frontendpopa.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -98,7 +98,7 @@ app.use("/api", require("./routes/reporteRoutes"));
 // Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["https://frontendpopa.vercel.app", "http://localhost:5173"],
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
   }
