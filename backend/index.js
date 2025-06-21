@@ -19,43 +19,18 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración CORS - Permitir cualquier origen
+// Configuración CORS - Simple y funcional
 const corsOptions = {
-  origin: true, // Permite cualquier origen
-  credentials: true,
+  origin: true,  // Permite cualquier origen
+  credentials: true,  // Permite cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Accept',
-    'Pragma',
-    'Cache-Control',
-    'Expires',
-    'If-Modified-Since',
-    'Origin'
-  ],
-  exposedHeaders: ['Authorization', 'Set-Cookie'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-  maxAge: 86400
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-// Middleware CORS personalizado para manejar preflight
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
-
+// Middleware CORS
 app.use(cors(corsOptions));
+
+console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
 
 console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
 
