@@ -1,4 +1,4 @@
-const { Lugar, Evento, Reserva, Usuario } = require("../../models");
+const { Lugar, Evento, Reserva, Usuario, Categoria } = require("../../models");
 
 class PropietarioEventoReservaService {
   async obtenerLugaresConEventos(usuarioid) {
@@ -24,6 +24,17 @@ class PropietarioEventoReservaService {
       console.error('Error en obtenerLugaresConEventos:', error);
       throw new Error('Error al obtener los lugares con eventos');
     }
+  }
+
+  // Este método ya no es necesario ya que movimos la lógica al controlador
+  // Se mantiene por compatibilidad con otras partes del código
+  async obtenerEventosActivosLugar(usuarioid, lugarId) {
+    // La lógica se movió al controlador
+    return {
+      success: false,
+      message: 'Este método está obsoleto. Usa el controlador directamente.',
+      eventos: []
+    };
   }
   async obtenerReservasEventoLugar(usuarioid) {
     try {

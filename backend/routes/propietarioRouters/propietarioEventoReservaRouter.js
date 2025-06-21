@@ -11,4 +11,12 @@ router.get(
   propietarioEventoReservaController.listarLugaresConEventos 
 );
 
+// Endpoint para obtener eventos activos de un lugar específico
+router.get(
+  "/propietario/lugares/:lugarId/eventos-activos",
+  autentiMiddleware,
+  validarRol(3),
+  propietarioEventoReservaController.obtenerEventosActivosLugar
+);
+
 module.exports = router;
