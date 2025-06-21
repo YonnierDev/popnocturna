@@ -184,12 +184,25 @@ class EventoService {
     console.log(`[eventoService.crearEventoPropietario] Iniciando para propietarioId: ${propietarioId}`);
     console.log('[eventoService.crearEventoPropietario] Datos recibidos:', JSON.stringify(datos, null, 2));
 
-    const lugar = await Lugar.findOne({ where: { usuarioid: propietarioId } });
-    if (!lugar) {
-      console.error(`[eventoService.crearEventoPropietario] No se encontró lugar para propietarioId: ${propietarioId}`);
-      throw new Error("No tienes lugares asociados");
+    // Verificar si se proporcionó un lugarId en los datos
+    const lugarId = datos.lugarid;
+    if (!lugarId) {
+      throw new Error("Se requiere el ID del lugar");
     }
-    console.log(`[eventoService.crearEventoPropietario] Lugar encontrado: ${lugar.id} para propietarioId: ${propietarioId}`);
+
+    // Verificar que el lugar pertenezca al propietario
+    const lugar = await Lugar.findOne({ 
+      where: { 
+        id: lugarId,
+        usuarioid: propietarioId 
+      } 
+    });
+
+    if (!lugar) {
+      throw new Error("No tienes permiso para crear eventos en este lugar o el lugar no existe");
+    }
+
+    console.log(`[eventoService.crearEventoPropietario] Lugar validado: ${lugar.id} para propietarioId: ${propietarioId}`);
 
     const datosParaCrear = {
       ...datos,
