@@ -44,21 +44,23 @@ const uploadImages = multer({
   storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
-    files: 5 // Máximo 5 archivos
+    files: 6 // Máximo 6 archivos (1 imagen principal + 5 fotos)
   },
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'carta_pdf') {
-      if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-      } else {
-        cb(new Error('Solo se pueden subir PDFs para el campo carta_pdf'));
-      }
-    } else {
+    console.log('=== FILTRANDO ARCHIVO ===');
+    console.log('Campo:', file.fieldname);
+    console.log('Tipo MIME:', file.mimetype);
+    console.log('Tamaño:', file.size);
+    
+    // Solo permitir imágenes para los campos imagen y fotos_lugar
+    if (file.fieldname === 'imagen' || file.fieldname === 'fotos_lugar') {
       if (file.mimetype.startsWith('image/')) {
         cb(null, true);
       } else {
         cb(new Error('Solo se pueden subir imágenes para los campos imagen y fotos_lugar'));
       }
+    } else {
+      cb(new Error(`Campo de archivo no permitido: ${file.fieldname}. Solo se permiten 'imagen' y 'fotos_lugar'`));
     }
   }
 });

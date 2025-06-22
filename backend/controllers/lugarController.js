@@ -133,27 +133,60 @@ class LugarController {
         });
       }
 
-      if (!req.file) {
+      // Verificar que al menos se envió la imagen principal
+      if (!req.files?.imagen) {
         return res.status(400).json({ 
           mensaje: "Error de validación",
-          error: "La imagen es requerida",
-          detalles: "Debe proporcionar una imagen para el lugar"
+          error: "La imagen principal es requerida",
+          detalles: "Debe subir una imagen principal para el lugar"
         });
       }
-    
-      const uploadResponse = await cloudinaryService.subirImagen(
-        req.file.buffer,
-        `lugar-${Date.now()}`
+
+      // Validar que la imagen principal sea una imagen
+      if (!req.files.imagen[0].mimetype.startsWith('image/')) {
+        return res.status(400).json({
+          mensaje: "Error de validación",
+          error: "Tipo de archivo no válido",
+          detalles: "La imagen principal debe ser un archivo de imagen (jpg, png, etc.)"
+        });
+      }
+
+      // Subir imagen principal
+      const imagenUpload = await cloudinaryService.subirImagenLugar(
+        req.files.imagen[0].buffer,
+        `lugar-${Date.now()}-principal`
       );
-  
-      if (!uploadResponse) {
-        return res.status(500).json({ 
-          mensaje: "Error al subir la imagen",
-          error: "No se pudo procesar la imagen",
-          detalles: "Error en el servicio de almacenamiento de imágenes"
-        });
+
+      // Procesar fotos adicionales
+      let fotosUrls = [];
+      if (req.files?.fotos_lugar?.length > 0) {
+        const uploadPromises = req.files.fotos_lugar.map((file, index) => 
+          cloudinaryService.subirImagenLugar(
+            file.buffer,
+            `lugar-${Date.now()}-foto-${index}`
+          )
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+        fotosUrls = uploadResults.map(result => result.secure_url);
       }
-  
+
+      // Procesar PDF
+      let pdfUrl = null;
+      if (req.files?.carta_pdf?.length > 0) {
+        try {
+          const pdfUpload = await cloudinaryService.subirPDF(
+            req.files.carta_pdf[0].buffer,
+            `carta-${Date.now()}`
+          );
+          if (pdfUpload) {
+            pdfUrl = pdfUpload.secure_url;
+          }
+        } catch (error) {
+          console.error('Error al subir PDF:', error);
+          // No retornamos error si falla el PDF, ya que es opcional
+        }
+      }
+
       const dataLugar = {
         usuarioid,
         categoriaid,
@@ -162,7 +195,9 @@ class LugarController {
         ubicacion,
         estado: false,
         aprobacion: false,
-        imagen: uploadResponse.secure_url,
+        imagen: imagenUpload.secure_url,
+        fotos_lugar: JSON.stringify(fotosUrls),
+        carta_pdf: pdfUrl
       };
   
       const nuevoLugar = await LugarService.crearLugar(dataLugar);

@@ -47,6 +47,71 @@ class CloudinaryService {
     }
   }
 
+  // Método para subir PDFs
+  async subirPDF(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "raw", // Para archivos PDF
+            folder: "pdfs", // Carpeta específica para PDFs
+            public_id: nombre,
+            format: "pdf"
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir PDF:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+        
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      console.error("Error en subirPDF:", error);
+      throw error;
+    }
+  }
+
+  // Método para subir imágenes de lugares
+  async subirImagenLugar(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "image",
+            folder: "lugares", // Carpeta específica para imágenes de lugares
+            public_id: nombre,
+            format: "jpg",
+            quality: "auto:good",
+            transformation: [
+              { width: 1200, crop: "limit" },
+              { quality: "auto:good" }
+            ]
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir imagen de lugar:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+        
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      console.error("Error en subirImagenLugar:", error);
+      throw error;
+    }
+  }
+
   // Método para subir imágenes de perfil de usuario
   async subirImagenUsuario(buffer, nombre) {
     try {
