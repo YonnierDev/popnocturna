@@ -219,12 +219,38 @@ class CloudinaryService {
     }
   }
 
-  // Método para eliminar múltiples imágenes
-  async eliminarImagenes(publicIds) {
+  // Método para eliminar imágenes de portada de un evento
+  async eliminarPortada(evento) {
     try {
-      return await cloudinary.api.delete_resources(publicIds);
+      if (!evento || !evento.portada || !Array.isArray(evento.portada)) {
+        console.log('No hay imágenes de portada para eliminar');
+        return;
+      }
+
+      console.log(`Eliminando ${evento.portada.length} imágenes de portada...`);
+      
+      // Eliminar cada imagen de la portada
+      for (const url of evento.portada) {
+        if (url) {
+          try {
+            // Extraer el public_id de la URL (última parte sin extensión)
+            const publicId = url.split('/').pop().split('.')[0];
+            const folder = 'eventos';
+            const fullPublicId = `${folder}/${publicId}`;
+            
+            console.log(`Eliminando imagen: ${fullPublicId}`);
+            await cloudinary.uploader.destroy(fullPublicId);
+            console.log(`Imagen eliminada: ${fullPublicId}`);
+          } catch (error) {
+            console.error(`Error al eliminar imagen ${url}:`, error);
+            // Continuar con las demás imágenes aunque falle una
+          }
+        }
+      }
+      
+      console.log('Eliminación de imágenes completada');
     } catch (error) {
-      console.error("Error al eliminar imágenes:", error);
+      console.error('Error en eliminarPortada:', error);
       throw error;
     }
   }

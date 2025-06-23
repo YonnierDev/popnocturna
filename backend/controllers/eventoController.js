@@ -202,49 +202,90 @@ class EventoController {
       const { id } = req.params;
       const { rol: rolid, id: usuarioid } = req.usuario;
       const datosEvento = { ...req.body }; // Copiamos req.body para poder modificarlo
-      const archivos = req.files || []; // Acceder a los archivos subidos
+      const archivos = req.files || []; // Archivos subidos en la petición
 
-      // Lógica para manejar la subida de nuevas imágenes
+      // 1. Obtener el evento actual para manejar las imágenes existentes
+      let eventoActual;
+      if (rolid === 1 || rolid === 2) {
+        eventoActual = await eventoService.obtenerEventoAdmin(id);
+      } else if (rolid === 3) {
+        eventoActual = await eventoService.obtenerEventoPropietario(id, usuarioid);
+      } else {
+        return res.status(403).json({ mensaje: "No tienes permiso para actualizar eventos" });
+      }
+
+      if (!eventoActual) {
+        return res.status(404).json({ mensaje: "Evento no encontrado o no tienes permisos" });
+      }
+
+      // 2. Si se están subiendo nuevas imágenes
       if (archivos.length > 0) {
+        // 2.1 Eliminar las imágenes antiguas de Cloudinary
+        if (eventoActual.portada && eventoActual.portada.length > 0) {
+          try {
+            await cloudinaryService.eliminarPortada(eventoActual);
+            console.log('Imágenes antiguas eliminadas de Cloudinary');
+          } catch (error) {
+            console.error('Error al eliminar imágenes antiguas:', error);
+            // No detenemos el proceso si falla la eliminación
+          }
+        }
+
+        // 2.2 Subir las nuevas imágenes
         const urlsPortadaNuevas = [];
         for (const archivo of archivos) {
           try {
-            // Asumiendo que tienes cloudinaryService.subirImagen que acepta buffer, folder y nombre
             const nombreUnico = `evento-${Date.now()}-${Math.floor(Math.random() * 1000)}${path.extname(archivo.originalname)}`;
-            const resultadoUpload = await cloudinaryService.subirImagenEvento(archivo.buffer, 'eventos', nombreUnico);
+            const resultadoUpload = await cloudinaryService.subirImagenEvento(archivo.buffer, nombreUnico);
             urlsPortadaNuevas.push(resultadoUpload.secure_url);
           } catch (uploadError) {
             console.error("Error al subir imagen a Cloudinary:", uploadError);
-            // Considera si devolver un error aquí o continuar sin la imagen
-             return res.status(500).json({ mensaje: "Error al subir una de las imágenes a Cloudinary", error: uploadError.message });
+            return res.status(500).json({ 
+              mensaje: "Error al subir una de las imágenes a Cloudinary", 
+              error: uploadError.message 
+            });
           }
         }
-        datosEvento.portada = urlsPortadaNuevas; // Reemplaza/añade las nuevas URLs de portada
-        console.log('Nuevas URLs de portada:', datosEvento.portada);
-      } else {
-        // Si no se envían archivos nuevos, pero sí se envía un campo 'portada' en el body (ej. un string JSON de URLs existentes)
-        if (req.body.portada && typeof req.body.portada === 'string') {
-            try {
-                datosEvento.portada = JSON.parse(req.body.portada);
-            } catch (parseError) {
-                console.error("Error al parsear 'portada' desde el body:", parseError);
-                return res.status(400).json({ mensaje: "El campo 'portada' enviado en el body no es un JSON array válido." });
-            }
-        } else if (req.body.portada && Array.isArray(req.body.portada)) {
-            datosEvento.portada = req.body.portada; // Ya es un array
+        datosEvento.portada = urlsPortadaNuevas;
+      } 
+      // 3. Si se envía un array de URLs en el body
+      else if (req.body.portada) {
+        try {
+          // Asegurarse de que sea un array
+          datosEvento.portada = Array.isArray(req.body.portada) 
+            ? req.body.portada 
+            : JSON.parse(req.body.portada);
+          
+          // Validar que sea un array de strings
+          if (!Array.isArray(datosEvento.portada) || !datosEvento.portada.every(url => typeof url === 'string')) {
+            return res.status(400).json({ 
+              mensaje: "El campo 'portada' debe ser un array de URLs de imágenes" 
+            });
+          }
+        } catch (error) {
+          console.error("Error al procesar campo 'portada':", error);
+          return res.status(400).json({ 
+            mensaje: "Formato inválido para el campo 'portada'. Debe ser un array de URLs o un string JSON válido" 
+          });
         }
-        // Si no hay req.files y no hay req.body.portada, datosEvento.portada será undefined.
-        // El servicio (con la modificación propuesta) manejará esto para no borrar las imágenes existentes.
+      }
+      // 4. Si no se envía portada, mantener las existentes (no hacer nada)
+
+
+      // 4.1 Eliminar campos vacíos que podrían causar errores
+      if (datosEvento.lugarid === '') {
+        delete datosEvento.lugarid;
+      }
+      if (datosEvento.categoriaid === '') {
+        delete datosEvento.categoriaid;
       }
 
+      // 5. Actualizar el evento con los nuevos datos
       let eventoActualizado;
-
       if (rolid === 1 || rolid === 2) {
         eventoActualizado = await eventoService.actualizarEventoAdmin(id, datosEvento);
-      } else if (rolid === 3) {
-        eventoActualizado = await eventoService.actualizarEventoPropietario(id, datosEvento, usuarioid);
       } else {
-        return res.status(403).json({ mensaje: "No tienes permiso para actualizar eventos" });
+        eventoActualizado = await eventoService.actualizarEventoPropietario(id, datosEvento, usuarioid);
       }
 
       if (!eventoActualizado) {

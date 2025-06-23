@@ -413,6 +413,78 @@ class EventoService {
     });
   }
 
+  // Obtener un evento por ID (solo para administradores)
+  async obtenerEventoAdmin(id) {
+    try {
+      return await Evento.findByPk(id, {
+        include: [
+          {
+            model: Lugar,
+            as: 'lugar',
+            attributes: ['id', 'nombre', 'usuarioid'],
+            include: [
+              {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre', 'correo']
+              }
+            ]
+          },
+          {
+            model: Comentario,
+            as: 'comentarios',
+            where: { estado: true },
+            required: false,
+            include: [
+              {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre']
+              }
+            ]
+          }
+        ]
+      });
+    } catch (error) {
+      console.error('Error en obtenerEventoAdmin:', error);
+      throw error;
+    }
+  }
+
+  // Obtener un evento por ID validando que pertenezca al propietario
+  async obtenerEventoPropietario(id, propietarioId) {
+    try {
+      return await Evento.findOne({
+        where: { id },
+        include: [
+          {
+            model: Lugar,
+            as: 'lugar',
+            where: { usuarioid: propietarioId },
+            attributes: ['id', 'nombre', 'usuarioid'],
+            required: true
+          },
+          {
+            model: Comentario,
+            as: 'comentarios',
+            where: { estado: true },
+            required: false,
+            include: [
+              {
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['id', 'nombre']
+              }
+            ]
+          }
+        ]
+      });
+    } catch (error) {
+      console.error('Error en obtenerEventoPropietario:', error);
+      throw error;
+    }
+  }
+
   async obtenerEventoPorId(eventoId) {
     return await Evento.findByPk(eventoId, {
       include: [
