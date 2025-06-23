@@ -147,14 +147,23 @@ Crea un nuevo lugar en el sistema.
 - Admin (2)
 - SuperAdmin (1)
 
-#### FormData
-- `nombre`: (string, requerido) Nombre del lugar
-- `descripcion`: (string, requerido) Descripción detallada
-- `ubicacion`: (string, requerido) Dirección física
-- `categoriaid`: (number, requerido) ID de la categoría
-- `imagen`: (file, opcional) Imagen principal (máx. 10MB)
-- `fotos_lugar`: (file[], opcional) Hasta 5 fotos adicionales
-- `carta_pdf`: (file, opcional) Documento PDF (máx. 10MB)
+#### Headers
+```
+Content-Type: multipart/form-data
+Authorization: Bearer [token]
+```
+
+#### Campos de Form-Data
+
+| Campo | Tipo | Requerido | Descripción |
+|-------|------|-----------|-------------|
+| nombre | string | Sí | Nombre del lugar |
+| descripcion | string | Sí | Descripción detallada |
+| ubicacion | string | Sí | Dirección física |
+| categoriaid | number | Sí | ID de la categoría |
+| imagen | file | No | Imagen principal (máx. 10MB, formato: jpg, png) |
+| fotos_lugar | file[] | No | Hasta 5 fotos adicionales (máx. 10MB cada una, formato: jpg, png) |
+| carta_pdf | file | No | Documento PDF (máx. 10MB) |
 
 #### Ejemplo de Body (form-data)
 ```
@@ -181,13 +190,22 @@ carta_pdf: [documento.pdf]
 }
 ```
 
+#### Errores de Subida de Archivos
+
+| Código | Error | Descripción |
+|--------|-------|-------------|
+| 400 | LIMIT_FILE_SIZE | Archivo excede el tamaño máximo (10MB) |
+| 400 | LIMIT_FILE_COUNT | Se superó el número máximo de archivos permitidos |
+| 400 | LIMIT_UNEXPECTED_FILE | Campo de archivo no permitido |
+| 415 | UNSUPPORTED_MEDIA_TYPE | Tipo de archivo no soportado |
+
 ---
 
 ## Actualizar Lugar
 
 ### `PUT /api/lugar/:id`
 
-Actualiza la información de un lugar existente.
+Actualiza la información de un lugar existente. Los campos de archivo son opcionales y se pueden actualizar individualmente.
 
 #### Autenticación
 - Requiere token de autenticación
@@ -200,8 +218,31 @@ Actualiza la información de un lugar existente.
 #### Parámetros de Ruta
 - `id`: ID del lugar a actualizar (requerido)
 
-#### FormData
-Mismos campos que en la creación, todos opcionales.
+#### Headers
+```
+Content-Type: multipart/form-data
+Authorization: Bearer [token]
+```
+
+#### Campos de Form-Data
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| nombre | string | Nombre del lugar |
+| descripcion | string | Descripción detallada |
+| ubicacion | string | Dirección física |
+| categoriaid | number | ID de la categoría |
+| imagen | file | Imagen principal (máx. 10MB, formato: jpg, png) |
+| fotos_lugar | file[] | Hasta 5 fotos adicionales (máx. 10MB cada una, formato: jpg, png) |
+| carta_pdf | file | Documento PDF (máx. 10MB) |
+
+#### Ejemplo de Actualización Parcial (form-data)
+```
+// Solo actualizando la imagen y descripción
+nombre: Mi Restaurante Actualizado
+descripcion: Nueva descripción del lugar
+imagen: [nueva-imagen.jpg]
+```
 
 #### Respuesta Exitosa (200)
 ```json
