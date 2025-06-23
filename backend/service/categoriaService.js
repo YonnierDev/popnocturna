@@ -67,6 +67,14 @@ class CategoriaService {
         });
     }
 
+    async buscarCategoriaPorTipo(tipo) {
+        if (!tipo) return null;
+        return await Categoria.findOne({
+            where: { tipo },
+            paranoid: false // Incluye registros eliminados lógicamente
+        });
+    }
+
     async actualizarEstado(id, estado) {
         return await Categoria.update({ estado }, { where: { id } });
     }

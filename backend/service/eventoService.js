@@ -518,6 +518,45 @@ class EventoService {
       order: [['fecha_hora', 'DESC']]
     });
   }
+
+  /**
+   * Elimina un evento verificando que pertenezca al propietario
+   * @param {number} id - ID del evento a eliminar
+   * @param {number} propietarioId - ID del propietario que realiza la acción
+   * @returns {Promise<boolean>} - True si se eliminó correctamente
+   * @throws {Error} Si el evento no existe o no pertenece al propietario
+   */
+  async eliminarEventoPropietario(id, propietarioId) {
+    // Primero verificamos que el evento exista y pertenezca al propietario
+    const evento = await Evento.findOne({
+      where: { id },
+      include: [{
+        model: Lugar,
+        as: 'lugar',
+        where: { usuarioid: propietarioId },
+        required: true
+      }]
+    });
+
+    if (!evento) {
+      throw new Error('Evento no encontrado o no tienes permisos para eliminarlo');
+    }
+
+    // Eliminar imágenes de portada de Cloudinary si existen
+    if (evento.portada && evento.portada.length > 0) {
+      try {
+        const cloudinaryService = require('./cloudinaryService');
+        await cloudinaryService.eliminarPortada(evento);
+      } catch (error) {
+        console.error('Error al eliminar imágenes de Cloudinary:', error);
+        // Continuamos con la eliminación aunque falle la eliminación de imágenes
+      }
+    }
+
+    // Eliminar el evento
+    await evento.destroy();
+    return true;
+  }
 }
 
 module.exports = new EventoService();

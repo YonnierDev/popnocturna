@@ -219,6 +219,76 @@ class CloudinaryService {
     }
   }
 
+  /**
+   * Sube una imagen de categoría a Cloudinary
+   * @param {Buffer} buffer - Buffer de la imagen a subir
+   * @param {string} nombre - Nombre único para la imagen
+   * @returns {Promise<Object>} - Resultado de la subida a Cloudinary
+   */
+  async subirImagenCategoria(buffer, nombre) {
+    try {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "image",
+            folder: "categorias", // Carpeta específica para imágenes de categorías
+            public_id: nombre,
+            format: "jpg",
+            quality: "auto:good",
+            transformation: [
+              { width: 800, height: 800, crop: "fill" }, // Ajuste cuadrado para categorías
+              { quality: "auto:good" }
+            ]
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Error al subir imagen de categoría:", error);
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+
+        const readableStream = require('stream').Readable.from(buffer);
+        readableStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      console.error("Error en subirImagenCategoria:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Elimina una imagen de categoría de Cloudinary
+   * @param {string} publicId - ID público de la imagen en Cloudinary
+   * @returns {Promise<Object>} - Resultado de la eliminación
+   */
+  async eliminarImagenCategoria(publicId) {
+    try {
+      if (!publicId) return null;
+      
+      // Extraer solo el public_id de la URL completa si es necesario
+      const publicIdToDelete = publicId.includes('/') 
+        ? publicId.split('/').slice(-2).join('/').split('.')[0]
+        : publicId;
+      
+      console.log(`Eliminando imagen de categoría: ${publicIdToDelete}`);
+      
+      const result = await cloudinary.uploader.destroy(publicIdToDelete, {
+        resource_type: 'image',
+        invalidate: true
+      });
+      
+      console.log('Resultado eliminación:', result);
+      return result;
+    } catch (error) {
+      console.error('Error al eliminar imagen de categoría:', error);
+      // No lanzamos el error para no romper el flujo si falla la eliminación
+      return { result: 'error', error: error.message };
+    }
+  }
+
   // Método para eliminar imágenes de portada de un evento
   async eliminarPortada(evento) {
     try {
