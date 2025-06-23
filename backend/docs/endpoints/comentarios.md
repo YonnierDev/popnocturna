@@ -1,13 +1,215 @@
 # Documentación de Endpoints - Comentarios
 
 ## Tabla de Contenidos
-- [Obtener Comentarios](#obtener-comentarios)
-- [Obtener Comentarios por Evento](#obtener-comentarios-por-evento)
-- [Crear Comentario](#crear-comentario)
-- [Actualizar Comentario](#actualizar-comentario)
-- [Eliminar Comentario](#eliminar-comentario)
-- [Listar Comentarios Reportados](#listar-comentarios-reportados)
-- [Actualizar Estado de Comentario Reportado](#actualizar-estado-de-comentario-reportado)
+- [Endpoints para Aplicación Móvil (Rol 4)](#endpoints-para-aplicacion-movil)
+- [Endpoints Administrativos](#endpoints-administrativos)
+
+## Endpoints para Aplicación Móvil (Rol 4)
+
+### `GET /api/comentarios`
+**Obtener Comentarios**
+
+- **Rol**: 4 (Aplicación Móvil)
+- **Descripción**: Obtiene la lista de comentarios del usuario autenticado
+- **Respuesta**: Lista de comentarios con detalles del evento y usuario
+
+```json
+{
+  "mensaje": "Tus comentarios obtenidos exitosamente (Vista de Usuario)",
+  "comentarios": [
+    {
+      "id": 1,
+      "contenido": "Comentario de ejemplo",
+      "estado": true,
+      "aprobacion": 1,
+      "fecha_hora": "2025-06-15T12:00:00.000Z",
+      "usuario": {
+        "id": 1,
+        "nombre": "Usuario Ejemplo",
+        "correo": "usuario@ejemplo.com"
+      },
+      "evento": {
+        "id": 1,
+        "nombre": "Evento de ejemplo"
+      }
+    }
+  ]
+}
+```
+
+### `GET /api/comentarios/evento/:eventoid`
+**Obtener Comentarios por Evento**
+
+- **Rol**: 4 (Aplicación Móvil)
+- **Descripción**: Obtiene comentarios de un evento específico
+- **Filtros**: Solo comentarios con `estado: true` y `aprobacion: [0, 2]`
+- **Respuesta**: Lista de comentarios con estado y fecha
+
+```json
+{
+  "mensaje": "Comentarios obtenidos exitosamente",
+  "comentarios": [
+    {
+      "id": 1,
+      "contenido": "Comentario de ejemplo",
+      "estado": true,
+      "aprobacion": 0,
+      "fecha_hora": "2025-06-15T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+### `POST /api/comentario`
+**Crear Comentario**
+
+- **Rol**: 4 (Aplicación Móvil)
+- **Descripción**: Permite crear nuevos comentarios
+- **Requerido**: Token de autenticación
+- **Cuerpo**: `contenido`, `eventoid`
+- **Respuesta**: Comentario creado con ID y estado
+
+```json
+{
+  "mensaje": "Comentario creado exitosamente",
+  "comentario": {
+    "id": 1,
+    "usuarioid": 1,
+    "eventoid": 1,
+    "contenido": "Nuevo comentario",
+    "fecha_hora": "2025-06-15T12:00:00.000Z",
+    "estado": true,
+    "aprobacion": 1
+  }
+}
+```
+
+### `PATCH /api/comentario/:id`
+**Actualizar Comentario**
+
+- **Rol**: 4 (Aplicación Móvil)
+- **Descripción**: Actualiza el contenido de un comentario propio
+- **Requerido**: Token de autenticación
+- **Cuerpo**: `contenido`
+- **Respuesta**: Comentario actualizado
+
+```json
+{
+  "mensaje": "Comentario actualizado exitosamente",
+  "comentario": {
+    "id": 1,
+    "contenido": "Nuevo contenido actualizado",
+    "fechaActualizacion": "2025-06-15T12:00:00.000Z",
+    "eventoid": 1
+  }
+}
+```
+
+### `DELETE /api/comentario/:id`
+**Eliminar Comentario**
+
+- **Rol**: 4 (Aplicación Móvil)
+- **Descripción**: Elimina un comentario propio
+- **Requerido**: Token de autenticación
+- **Respuesta**: Mensaje de confirmación
+
+```json
+{
+  "mensaje": "Comentario eliminado exitosamente"
+}
+```
+
+## Endpoints Administrativos
+
+### `GET /api/comentario/reportados`
+**Listar Comentarios Reportados**
+
+- **Rol**: 1, 2 (Admin/SuperAdmin)
+- **Descripción**: Lista comentarios reportados pendientes de revisión
+- **Respuesta**: Lista de comentarios reportados con detalles
+
+```json
+{
+  "mensaje": "Comentarios reportados obtenidos exitosamente",
+  "comentarios": [
+    {
+      "id": 1,
+      "contenido": "Comentario reportado",
+      "estado": true,
+      "aprobacion": 0,
+      "fecha_hora": "2025-06-15T12:00:00.000Z",
+      "usuario": {
+        "id": 1,
+        "nombre": "Usuario Ejemplo",
+        "correo": "usuario@ejemplo.com"
+      },
+      "evento": {
+        "id": 1,
+        "nombre": "Evento de ejemplo"
+      }
+    }
+  ]
+}
+```
+
+### `PUT /api/comentario/:id/estado`
+**Actualizar Estado de Comentario Reportado**
+
+- **Rol**: 1, 2 (Admin/SuperAdmin)
+- **Descripción**: Actualiza el estado de aprobación de un comentario reportado
+- **Cuerpo**: `aprobacion` (0: pendiente, 1: aceptado, 2: rechazado)
+- **Respuesta**: Comentario actualizado con nuevo estado
+
+```json
+{
+  "mensaje": "Estado del comentario actualizado exitosamente",
+  "detalle": "El comentario ha sido aceptado y desactivado",
+  "comentario": {
+    "id": 1,
+    "estado": false,
+    "aprobacion": 1
+  }
+}
+```
+
+---
+
+## Errores Comunes
+
+```json
+// Error de autenticación
+{
+  "mensaje": "No tienes permiso para ver los comentarios",
+  "error": "Token inválido o expirado"
+}
+
+// Error de validación
+{
+  "mensaje": "Faltan datos requeridos",
+  "detalles": {
+    "eventoid": "El ID del evento es requerido",
+    "contenido": "El contenido del comentario es requerido"
+  }
+}
+
+// Error de longitud
+{
+  "mensaje": "El contenido del comentario excede el límite de caracteres",
+  "maximo": 500,
+  "actual": 550
+}
+
+// Error de permisos
+{
+  "mensaje": "No tienes permiso para actualizar el estado del comentario",
+  "detalle": "Solo administradores pueden actualizar estados de reportes"
+}
+
+// Error de recurso no encontrado
+{
+  "mensaje": "Comentario no encontrado"
+}
+```
 
 ---
 

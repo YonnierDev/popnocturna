@@ -27,7 +27,7 @@ router.put("/evento/:id",
 );
 
 // 
-router.get("/evento/:eventoId/reservas",
+router.get("/evento/:eventoId/reservas", autentiMiddleware,
   EventoController.listarReservasEvento
 );
 
