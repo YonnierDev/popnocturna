@@ -12,21 +12,37 @@ router.get('/lugares', autentiMiddleware, LugarController.listarLugares);
 router.get('/lugar/:id', autentiMiddleware, LugarController.buscarLugar);
 
 router.post('/lugar', 
-  autentiMiddleware, 
-  handleMulterError, // Mover handleMulterError al principio
-  uploadImages.fields([ // Usa fields para manejar múltiples campos de archivo
-    { name: 'imagen', maxCount: 1 },
-    { name: 'fotos_lugar', maxCount: 5 },
-    { name: 'carta_pdf', maxCount: 1 }
-  ]),
+  autentiMiddleware,
+  (req, res, next) => {
+    uploadImages.fields([
+      { name: 'imagen', maxCount: 1 },
+      { name: 'fotos_lugar', maxCount: 5 },
+      { name: 'carta_pdf', maxCount: 1 }
+    ])(req, res, (err) => {
+      if (err) {
+        return handleMulterError(err, req, res, next);
+      }
+      next();
+    });
+  },
   LugarController.crearLugar
 );
 
 router.put('/lugar/:id', 
-  autentiMiddleware, 
-  uploadImages.array('fotos_lugar', 5),
-  uploadPDF.single('carta_pdf'),
-  handleMulterError,
+  autentiMiddleware,
+  (req, res, next) => {
+    // Usamos un solo middleware para manejar múltiples archivos
+    uploadImages.fields([
+      { name: 'imagen', maxCount: 1 },
+      { name: 'fotos_lugar', maxCount: 5 },
+      { name: 'carta_pdf', maxCount: 1 }
+    ])(req, res, (err) => {
+      if (err) {
+        return handleMulterError(err, req, res, next);
+      }
+      next();
+    });
+  },
   LugarController.actualizarLugar
 );
 router.delete('/lugar/:id', autentiMiddleware, LugarController.eliminarLugar);

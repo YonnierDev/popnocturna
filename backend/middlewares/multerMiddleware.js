@@ -10,7 +10,7 @@ const handleMulterError = (error, req, res, next) => {
       return res.status(400).json({
         mensaje: "Error al subir archivo",
         error: "El archivo es demasiado grande",
-        detalles: `El tamaño máximo permitido es ${10}MB`,
+        detalles: `El tamaño máximo permitido es 10MB`,
         codigo: error.code
       });
     }
@@ -39,29 +39,55 @@ const handleMulterError = (error, req, res, next) => {
   next(error);
 };
 
-// Middleware para subir imágenes
-const uploadImages = multer({
+// Configuración común para subir archivos
+const uploadConfig = {
   storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
     files: 6 // Máximo 6 archivos (1 imagen principal + 5 fotos)
   },
   fileFilter: (req, file, cb) => {
-    console.log('=== FILTRANDO ARCHIVO ===');
+    console.log('\n=== FILTRANDO ARCHIVO ===');
     console.log('Campo:', file.fieldname);
     console.log('Tipo MIME:', file.mimetype);
-    console.log('Tamaño:', file.size);
     
-    // Solo permitir imágenes para los campos imagen y fotos_lugar
+    if (!file) {
+      console.log('Archivo no encontrado');
+      cb(new Error('Archivo no encontrado'));
+      return;
+    }
+
     if (file.fieldname === 'imagen' || file.fieldname === 'fotos_lugar') {
       if (file.mimetype.startsWith('image/')) {
+        console.log('Archivo de imagen válido');
         cb(null, true);
       } else {
-        cb(new Error('Solo se pueden subir imágenes para los campos imagen y fotos_lugar'));
+        console.log('Error: Tipo de archivo no válido para imagen');
+        cb(new Error('Solo se permiten archivos de imagen'));
+      }
+    } else if (file.fieldname === 'carta_pdf') {
+      if (file.mimetype === 'application/pdf') {
+        console.log('Archivo PDF válido');
+        cb(null, true);
+      } else {
+        console.log('Error: Tipo de archivo no válido para PDF');
+        cb(new Error('Solo se permiten archivos PDF'));
       }
     } else {
-      cb(new Error(`Campo de archivo no permitido: ${file.fieldname}. Solo se permiten 'imagen' y 'fotos_lugar'`));
+      console.log('Error: Campo no permitido');
+      cb(new Error('Campo de archivo no permitido'));
     }
+  }
+};
+
+// Middleware para subir imágenes
+const uploadImages = multer({
+  ...uploadConfig,
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'carta_pdf') {
+      return cb(new Error('No se permiten archivos PDF en este campo'));
+    }
+    return uploadConfig.fileFilter(req, file, cb);
   }
 });
 
