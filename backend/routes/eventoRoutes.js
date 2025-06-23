@@ -13,13 +13,13 @@ router.use(autentiMiddleware);
 router.get("/eventos", EventoController.listarEventos);
 router.get("/evento/:id", EventoController.verEvento);
 
-router.post("/evento", 
+router.post("/evento",
   autentiMiddleware,
-  uploadImages.array('portada', 3), 
+  uploadImages.array('portada', 3),
   EventoController.crearEvento
 );
 
-router.put("/evento/:id", 
+router.put("/evento/:id",
   autentiMiddleware,
   uploadImages.array('portada', 3),
   handleMulterError,

@@ -5,7 +5,7 @@ class PerfilService {
   async obtenerPerfilUsuario(id) {
     console.log("🔍 Buscando usuario con ID:", id);
     const usuario = await Usuario.findByPk(id, {
-      attributes: ['id', 'nombre', 'apellido', 'correo', 'imagen', 'fecha_nacimiento','genero'],  // Incluye la imagen en la consulta
+      attributes: ['id', 'nombre', 'apellido', 'correo', 'imagen', 'fecha_nacimiento', 'genero'],  // Incluye la imagen en la consulta
     });
     console.log("🧠 Usuario encontrado:", usuario);
     return usuario;
@@ -20,7 +20,7 @@ class PerfilService {
         throw new Error("Usuario no encontrado");
       }
 
-    
+
       const usuarioActualizado = await usuario.update(perfilData);
       return usuarioActualizado;
     } catch (error) {

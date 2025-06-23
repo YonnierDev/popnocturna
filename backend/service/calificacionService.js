@@ -107,7 +107,7 @@ class CalificacionService {
       // Extraer y devolver solo los usuarios únicos
       const usuariosUnicos = [];
       const usuariosMap = new Map();
-      
+
       calificaciones.forEach(calificacion => {
         if (calificacion.usuario && !usuariosMap.has(calificacion.usuario.id)) {
           usuariosMap.set(calificacion.usuario.id, true);
@@ -126,7 +126,7 @@ class CalificacionService {
   async listarCalificacionesPorPropietario(usuarioid, { page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
-      
+
       // Primero obtener los IDs de los lugares del propietario
       const lugares = await Lugar.findAll({
         where: { usuarioid },
@@ -175,7 +175,7 @@ class CalificacionService {
   async listarCalificacionesPorLugar(lugarid, { page = 1, limit = 10 }) {
     try {
       const offset = (page - 1) * limit;
-      
+
       const result = await Calificacion.findAndCountAll({
         include: [
           {
@@ -249,7 +249,7 @@ class CalificacionService {
         console.log('Evento no encontrado en la inclusión, buscando por separado...');
         const evento = await Evento.findByPk(calificacion.eventoid);
         console.log('Evento encontrado por separado:', evento);
-        
+
         if (!evento) {
           console.log('Advertencia: El evento asociado a esta calificación no existe');
           // En lugar de lanzar error, devolvemos la calificación sin evento
@@ -481,8 +481,8 @@ class CalificacionService {
 
       // Verificar si ya existe una calificación activa del usuario para este evento
       const calificacionExistente = await Calificacion.findOne({
-        where: { 
-          usuarioid, 
+        where: {
+          usuarioid,
           eventoid,
           estado: true // Solo verificar calificaciones activas
         }

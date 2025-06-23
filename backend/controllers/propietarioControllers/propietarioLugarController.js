@@ -304,6 +304,87 @@ class PropietarioLugarController {
       });
     }
   }
+
+  async propietarioActualizarImagenesFotos(req, res) {
+    try {
+      const { id } = req.params;
+      const usuarioid = req.usuario.id;
+
+      // Verificar si el lugar existe y pertenece al usuario
+      const lugar = await Lugar.findOne({
+        where: {
+          id,
+          usuarioid
+        }
+      });
+
+      if (!lugar) {
+        return res.status(404).json({
+          mensaje: "Lugar no encontrado",
+          error: "No tienes un lugar con este ID"
+        });
+      }
+
+      // Procesar la imagen principal si se envía
+      let imagenUrl = lugar.imagen; // Mantener la imagen actual si no se envía nueva
+      if (req.files && req.files['imagen']) {
+        const uploadResponse = await cloudinaryService.subirImagenLugar(
+          req.files['imagen'][0].buffer,
+          `lugar-${Date.now()}`
+        );
+        if (uploadResponse) {
+          // Eliminar la imagen anterior si existe
+          if (lugar.imagen) {
+            await cloudinaryService.eliminarImagen(lugar.imagen);
+          }
+          imagenUrl = uploadResponse.secure_url;
+        }
+      }
+
+      // Procesar las fotos adicionales
+      let fotosUrls = lugar.fotos_lugar || [];
+      if (req.files && req.files['fotos_lugar']) {
+        // Eliminar fotos anteriores si existen
+        if (lugar.fotos_lugar && lugar.fotos_lugar.length > 0) {
+          await Promise.all(
+            lugar.fotos_lugar.map(url => cloudinaryService.eliminarImagen(url))
+          );
+        }
+        
+        // Subir nuevas fotos
+        const uploadPromises = req.files['fotos_lugar'].map(file => 
+          cloudinaryService.subirImagenLugar(file.buffer, `lugar-${Date.now()}-${Math.random()}`)
+        );
+        
+        const uploadResults = await Promise.all(uploadPromises);
+        fotosUrls = uploadResults.map(result => result.secure_url);
+      }
+
+      // Actualizar el lugar
+      await lugar.update({
+        imagen: imagenUrl,
+        fotos_lugar: fotosUrls
+      });
+
+      // Aseguramos que fotos_lugar sea un array en la respuesta
+      const lugarResponse = lugar.toJSON();
+      if (lugarResponse.fotos_lugar && typeof lugarResponse.fotos_lugar === 'string') {
+        lugarResponse.fotos_lugar = lugarResponse.fotos_lugar.split(',');
+      }
+
+      return res.status(200).json({
+        mensaje: "Imágenes actualizadas exitosamente",
+        lugar: lugarResponse
+      });
+    } catch (error) {
+      console.error("Error al actualizar imágenes:", error);
+      return res.status(500).json({ 
+        mensaje: "Error al actualizar imágenes", 
+        error: error.message 
+      });
+    }
+  }
+
 }
 
 module.exports = new PropietarioLugarController();

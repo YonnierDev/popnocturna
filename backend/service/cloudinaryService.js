@@ -36,7 +36,7 @@ class CloudinaryService {
             }
           }
         );
-        
+
         // Usar el buffer directamente
         const readableStream = require('stream').Readable.from(buffer);
         readableStream.pipe(uploadStream);
@@ -67,7 +67,7 @@ class CloudinaryService {
             }
           }
         );
-        
+
         const readableStream = require('stream').Readable.from(buffer);
         readableStream.pipe(uploadStream);
       });
@@ -102,7 +102,7 @@ class CloudinaryService {
             }
           }
         );
-        
+
         const readableStream = require('stream').Readable.from(buffer);
         readableStream.pipe(uploadStream);
       });
@@ -136,7 +136,7 @@ class CloudinaryService {
             }
           }
         );
-        
+
         const readableStream = require('stream').Readable.from(buffer);
         readableStream.pipe(uploadStream);
       });
@@ -169,7 +169,7 @@ class CloudinaryService {
             }
           }
         );
-        
+
         const readableStream = require('stream').Readable.from(buffer);
         readableStream.pipe(uploadStream);
       });
@@ -199,7 +199,7 @@ class CloudinaryService {
             }
           }
         );
-        
+
         const readableStream = require('stream').Readable.from(buffer);
         readableStream.pipe(uploadStream);
       });

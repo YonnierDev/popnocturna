@@ -5,11 +5,11 @@ const autentiMiddleware = require("../middlewares/autentiMiddleware");
 const validarUsuario = require("../middlewares/validacionesUsuario");
 const { uploadImages } = require("../middlewares/multerMiddleware");
 
-router.get("/usuarios",UsuarioController.listarUsuarios);
+router.get("/usuarios", UsuarioController.listarUsuarios);
 router.get("/usuario/:id", UsuarioController.buscarUsuario);
-router.post("/usuario", 
-  uploadImages.single("imagen"), 
-  validarUsuario, 
+router.post("/usuario",
+  uploadImages.single("imagen"),
+  validarUsuario,
   UsuarioController.crearUsuario
 );
 router.put("/usuario/:id", UsuarioController.actualizarUsuario);

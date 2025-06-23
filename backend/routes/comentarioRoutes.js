@@ -11,13 +11,13 @@ router.get('/comentarios',
 );
 
 // Ruta para listar comentarios por evento
-router.get('/comentarios/evento/:eventoid', 
+router.get('/comentarios/evento/:eventoid',
   autentiMiddleware,
   comentarioController.obtenerPorEvento
 );
 
 // Ruta para crear un nuevo comentario (solo usuarios con rol 4)
-router.post('/comentario', 
+router.post('/comentario',
   autentiMiddleware,
   verificarRol([4]),
   comentarioController.crear
@@ -25,15 +25,15 @@ router.post('/comentario',
 
 // Ruta para actualizar un comentario (solo el usuario dueño del comentario o admin)
 // Actualizar un comentario (solo el autor con rol 4 puede actualizar sus comentarios)
-router.patch('/comentario/:id', 
-  autentiMiddleware, 
+router.patch('/comentario/:id',
+  autentiMiddleware,
   verificarRol([4]),
   comentarioController.actualizar
 );
 
 // Ruta para eliminar un comentario (admin/superadmin pueden eliminar cualquier comentario,
 // usuarios pueden eliminar sus propios comentarios)
-router.delete('/comentario/:id', 
+router.delete('/comentario/:id',
   autentiMiddleware,
   verificarRol([1, 2, 4]),
   comentarioController.eliminar

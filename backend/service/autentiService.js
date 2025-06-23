@@ -51,7 +51,7 @@ class AutentiService {
 
     const validacionContrasena = this.validarContrasena(contrasena);
     if (validacionContrasena !== true) {
-      throw new Error(validacionContrasena); 
+      throw new Error(validacionContrasena);
     }
 
     const generosPermitidos = ["Masculino", "Femenino", "Otro"];
@@ -95,10 +95,10 @@ class AutentiService {
       });
 
       // Generar token
-      const payload = { 
-        id: usuario.id, 
-        correo: usuario.correo, 
-        rol: usuario.rolid 
+      const payload = {
+        id: usuario.id,
+        correo: usuario.correo,
+        rol: usuario.rolid
       };
 
       const token = jwt.sign(
@@ -138,14 +138,14 @@ class AutentiService {
       throw new Error("Contraseña incorrecta");
     }
 
-    const payload = { 
-      id: usuario.id, 
-      correo: usuario.correo, 
-      rol: usuario.rolid 
+    const payload = {
+      id: usuario.id,
+      correo: usuario.correo,
+      rol: usuario.rolid
     };
-    
+
     const secret = process.env.JWT_SECRET || "secreto";
-    
+
     const token = jwt.sign(
       payload,
       secret,
@@ -230,12 +230,12 @@ class AutentiService {
 
   static async verificarTokenRecuperacion(token) {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET); 
+      return jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       throw new Error("Token inválido o expirado");
     }
   }
-  
+
   static async actualizarContrasena(id, nuevaContrasenaHash) {
     await UsuarioService.actualizarContrasenaPorId(id, nuevaContrasenaHash);
     return { mensaje: "Contraseña actualizada correctamente" };

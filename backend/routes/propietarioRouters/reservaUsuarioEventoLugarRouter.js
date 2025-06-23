@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const reservaUsuarioEventoLugarController = require('../../controllers/propietarioControllers/reservaUsuarioEventoLugarController');
-const autentiMiddleware = require("../../middlewares/autentiMiddleware"); 
+const autentiMiddleware = require("../../middlewares/autentiMiddleware");
 const validarRol = require("../../middlewares/validarRol");
 
 // Middleware de depuración

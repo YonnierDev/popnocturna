@@ -200,6 +200,14 @@ class PropietarioLugarService {
     });
   }
 
+  async propietarioActualizarImagenesFotos(){
+    try {
+      
+    } catch (error) {
+      
+    }
+  }
+
 
 }
 

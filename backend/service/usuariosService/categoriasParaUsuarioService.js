@@ -4,8 +4,8 @@ class CategoriasParaUsuarioService {
   // obtener todas las categorías con sus lugares
   async categoriasConLugares() {
     const categorias = await Categoria.findAll({
-      where: { estado: true },  
-      attributes: ['tipo'],  
+      where: { estado: true },
+      attributes: ['tipo'],
       include: [
         {
           model: Lugar,
@@ -37,14 +37,14 @@ class CategoriasParaUsuarioService {
     }
 
     const categoria = await Categoria.findOne({
-      where: { id: categoriaid, estado: true }, 
-      attributes: ['tipo'], 
+      where: { id: categoriaid, estado: true },
+      attributes: ['tipo'],
       include: [
         {
           model: Lugar,
           as: 'lugares',
           attributes: ['imagen', 'nombre', 'descripcion', 'ubicacion'],
-          where: { estado: true } 
+          where: { estado: true }
         },
       ],
     });

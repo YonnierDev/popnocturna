@@ -43,7 +43,7 @@ router.get(
 router.patch(
   "/reserva/aprobar/:numero_reserva",
   autentiMiddleare,
-  validarRol(1, 2, 3), 
+  validarRol(1, 2, 3),
   ReservaController.aprobarReserva
 );
 

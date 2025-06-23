@@ -19,17 +19,17 @@ class UsuarioService {
 
   async listarRelacionesUsuarios() {
     return await Usuario.findAll({
-      attributes: ['nombre', 'apellido', 'correo'], 
+      attributes: ['nombre', 'apellido', 'correo'],
       include: [
         {
           model: Rol,
           as: "rol",
-          attributes: ["nombre"] 
+          attributes: ["nombre"]
         },
         {
           model: Lugar,
           as: "lugares",
-          attributes: ["descripcion", "ubicacion"], 
+          attributes: ["descripcion", "ubicacion"],
         },
         {
           model: Reserva,
@@ -70,7 +70,7 @@ class UsuarioService {
       ]
     });
   }
-  
+
 
   async buscarUsuario(id) {
     return await Usuario.findByPk(id, {
@@ -125,12 +125,12 @@ class UsuarioService {
       ]
     });
   }
-  
+
 
   async buscarPorCorreo(correo) {
     console.log('\n[buscarPorCorreo] Iniciando búsqueda de usuario');
     console.log('[buscarPorCorreo] Correo a buscar:', correo);
-    
+
     try {
       const usuario = await Usuario.findOne({ where: { correo } });
       console.log('[buscarPorCorreo] Resultado de la búsqueda:', usuario ? 'Usuario encontrado' : 'Usuario no encontrado');
@@ -155,7 +155,7 @@ class UsuarioService {
       if (usuarioExistente) {
         throw new Error(`El correo ${datos.correo} ya está registrado`);
       }
-      
+
       // Crear el usuario si el correo no existe
       return await Usuario.create(datos);
     } catch (error) {
@@ -187,7 +187,7 @@ class UsuarioService {
     if (!usuario) throw new Error("Usuario no encontrado");
     await Usuario.update(datos, { where: { id } });
     return await this.buscarUsuario(id);
-  }  
+  }
 
   async eliminarUsuario(id) {
     const usuario = await this.buscarUsuario(id);
@@ -195,7 +195,7 @@ class UsuarioService {
     await Usuario.destroy({ where: { id } });
     return { mensaje: "Usuario eliminado correctamente", usuarioEliminado: usuario };
   }
-  
+
 
   async verificarRol(rolid) {
     return await Rol.findByPk(rolid);

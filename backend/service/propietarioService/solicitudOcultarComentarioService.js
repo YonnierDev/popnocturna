@@ -87,7 +87,7 @@ class SolicitudOcultarComentarioService {
   // Admin lista comentarios para revisar
   async listarComentariosPendientes() {
     return await Comentario.findAll({
-      where: { 
+      where: {
       },
       include: [
         {
@@ -113,7 +113,7 @@ class SolicitudOcultarComentarioService {
         'contenido',
         'fecha_hora',
         'estado',
-        'motivo_reporte'  
+        'motivo_reporte'
       ]
     });
   }
@@ -121,76 +121,76 @@ class SolicitudOcultarComentarioService {
 
   async obtenerDetallesComentario(comentarioid) {
     try {
-        console.log(`Buscando comentario con ID: ${comentarioid}`);  // Agregar log para ver qué comentario se busca
+      console.log(`Buscando comentario con ID: ${comentarioid}`);  // Agregar log para ver qué comentario se busca
 
-        const comentario = await Comentario.findOne({
-          where: { id: comentarioid },
-          attributes: ['id', 'contenido', 'estado', 'createdAt', 'updatedAt'],
-          include: [
-              {
-                  model: Usuario,
-                  as: 'usuario', 
-                  attributes: ['nombre']
-              }
-          ]
+      const comentario = await Comentario.findOne({
+        where: { id: comentarioid },
+        attributes: ['id', 'contenido', 'estado', 'createdAt', 'updatedAt'],
+        include: [
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['nombre']
+          }
+        ]
       });
-      
 
-        console.log('Comentario encontrado:', comentario);  
 
-        if (!comentario) {
-            throw new Error('Comentario no encontrado');
-        }
+      console.log('Comentario encontrado:', comentario);
 
-        return comentario;  
+      if (!comentario) {
+        throw new Error('Comentario no encontrado');
+      }
+
+      return comentario;
     } catch (error) {
-        console.error('Error en obtenerDetallesComentario:', error.message); 
-        throw error; 
+      console.error('Error en obtenerDetallesComentario:', error.message);
+      throw error;
     }
-}
-
-
-async procesarSolicitud(comentarioid, decision, usuarioid) {
-  try {
-   
-    const comentario = await Comentario.findOne({
-      where: { id: comentarioid },
-      include: [
-        { model: Usuario, as: 'usuario', attributes: ['nombre', 'correo'] }
-      ]
-    });
-
-    if (!comentario) {
-      throw new Error("Comentario no encontrado");
-    }
-
-    if (!["ocultar", "mantener"].includes(decision)) {
-      throw new Error('La decisión debe ser "ocultar" o "mantener"');
-    }
-
-    if (decision === "ocultar") {
-      comentario.estado = false;  
-    } else if (decision === "mantener") {
-      comentario.estado = true;   
-    }
-
-    await comentario.save();
-
-    // Retornar los detalles actualizados del comentario
-    return {
-      id: comentario.id,
-      contenido: comentario.contenido,
-      estado: comentario.estado ? 'activo' : 'inactivo',  
-      createdAt: comentario.createdAt,
-      updatedAt: comentario.updatedAt,
-      usuario: comentario.usuario ? comentario.usuario.nombre : 'Desconocido',  
-      correo: comentario.usuario ? comentario.usuario.correo : 'No disponible', 
-    };
-  } catch (error) {
-    console.error("Error en el servicio:", error.message); 
-    throw new Error(`Error al procesar la solicitud: ${error.message}`);  
   }
-}
+
+
+  async procesarSolicitud(comentarioid, decision, usuarioid) {
+    try {
+
+      const comentario = await Comentario.findOne({
+        where: { id: comentarioid },
+        include: [
+          { model: Usuario, as: 'usuario', attributes: ['nombre', 'correo'] }
+        ]
+      });
+
+      if (!comentario) {
+        throw new Error("Comentario no encontrado");
+      }
+
+      if (!["ocultar", "mantener"].includes(decision)) {
+        throw new Error('La decisión debe ser "ocultar" o "mantener"');
+      }
+
+      if (decision === "ocultar") {
+        comentario.estado = false;
+      } else if (decision === "mantener") {
+        comentario.estado = true;
+      }
+
+      await comentario.save();
+
+      // Retornar los detalles actualizados del comentario
+      return {
+        id: comentario.id,
+        contenido: comentario.contenido,
+        estado: comentario.estado ? 'activo' : 'inactivo',
+        createdAt: comentario.createdAt,
+        updatedAt: comentario.updatedAt,
+        usuario: comentario.usuario ? comentario.usuario.nombre : 'Desconocido',
+        correo: comentario.usuario ? comentario.usuario.correo : 'No disponible',
+      };
+    } catch (error) {
+      console.error("Error en el servicio:", error.message);
+      throw new Error(`Error al procesar la solicitud: ${error.message}`);
+    }
+  }
 
 
 }

@@ -7,8 +7,8 @@ const propietarioEventoReservaController = require("../../controllers/propietari
 router.get(
   "/propietario/lugares-eventos",
   autentiMiddleware,
-  validarRol(3), 
-  propietarioEventoReservaController.listarLugaresConEventos 
+  validarRol(3),
+  propietarioEventoReservaController.listarLugaresConEventos
 );
 
 // Endpoint para obtener eventos activos de un lugar específico

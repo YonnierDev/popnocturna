@@ -11,30 +11,30 @@ router.get('/categoria/:id', CategoriaController.buscarCategoria);
 router.get('/categoria/:id/lugares', CategoriaController.obtenerLugaresPorCategoria);
 
 // Rutas protegidas (solo admin)
-router.post('/categoria', 
-  autentiMiddleware, 
-  validarRol(1), 
+router.post('/categoria',
+  autentiMiddleware,
+  validarRol(1),
   uploadImages.single("imagen"),
   CategoriaController.crearCategoria
 );
 
-router.put('/categoria/:id', 
-  autentiMiddleware, 
-  validarRol(1), 
+router.put('/categoria/:id',
+  autentiMiddleware,
+  validarRol(1),
   uploadImages.single("imagen"),
   CategoriaController.actualizarCategoria
 );
 
-router.delete('/categoria/:id', 
-  autentiMiddleware, 
-  validarRol(1), 
+router.delete('/categoria/:id',
+  autentiMiddleware,
+  validarRol(1),
   CategoriaController.eliminarCategoria
 );
 
 router.patch(
-  '/categoria/estado/:id', 
+  '/categoria/estado/:id',
   autentiMiddleware,
-  validarRol(1, 2), 
+  validarRol(1, 2),
   CategoriaController.actualizarEstado
 );
 

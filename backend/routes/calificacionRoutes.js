@@ -4,43 +4,43 @@ const CalificacionController = require('../controllers/calificacionController');
 const autentiMiddleware = require('../middlewares/autentiMiddleware');
 
 // Listar calificaciones (todos los roles)
-router.get('/calificaciones', 
+router.get('/calificaciones',
   autentiMiddleware,
   CalificacionController.listarCalificaciones
 );
 
 // Listar calificaciones por lugar (solo propietarios)
-router.get('/calificaciones/lugar/:lugarid', 
+router.get('/calificaciones/lugar/:lugarid',
   autentiMiddleware,
   CalificacionController.listarCalificacionesPorLugar
 );
 
 // Ver calificación por ID (todos los roles)
-router.get('/calificacion/:id', 
+router.get('/calificacion/:id',
   autentiMiddleware,
   CalificacionController.verCalificacion
 );
 
 // Crear calificación (todos los roles excepto propietario)
-router.post('/calificacion', 
+router.post('/calificacion',
   autentiMiddleware,
   CalificacionController.crearCalificacion
 );
 
 // Actualizar calificación (todos los roles excepto propietario)
-router.put('/calificacion/:id', 
+router.put('/calificacion/:id',
   autentiMiddleware,
   CalificacionController.actualizarCalificacion
 );
 
 // Eliminar calificación (admin, super admin y usuario que la creó)
-router.delete('/calificacion/:id', 
+router.delete('/calificacion/:id',
   autentiMiddleware,
   CalificacionController.eliminarCalificacion
 );
 
 // Cambiar estado de calificación (solo admin y super admin)
-router.patch('/calificacion/estado/:id', 
+router.patch('/calificacion/estado/:id',
   autentiMiddleware,
   CalificacionController.cambiarEstadoCalificacion
 );

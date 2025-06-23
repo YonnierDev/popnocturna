@@ -9,7 +9,7 @@ class LugarController {
       let lugares;
 
       if (!rol) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           mensaje: "Error de autenticación",
           error: "Rol no definido en el token"
         });
@@ -30,7 +30,7 @@ class LugarController {
       }
 
       if (!lugares || lugares.length === 0) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           mensaje: "No se encontraron lugares registrados",
           detalles: "No hay lugares que coincidan con los criterios de búsqueda"
         });
@@ -39,8 +39,8 @@ class LugarController {
       res.status(200).json(lugares);
     } catch (e) {
       console.error('Error en listarLugares:', e);
-      res.status(500).json({ 
-        mensaje: "Error al listar lugares", 
+      res.status(500).json({
+        mensaje: "Error al listar lugares",
         error: e.message,
         tipo: e.name,
         detalles: "Error interno del servidor al procesar la solicitud"
@@ -61,7 +61,7 @@ class LugarController {
       }
 
       if (!rol) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           mensaje: "Error de autenticación",
           error: "Rol no definido en el token"
         });
@@ -83,7 +83,7 @@ class LugarController {
       }
 
       if (!lugar) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           mensaje: "Lugar no encontrado",
           detalles: "No existe un lugar con el ID proporcionado o no tiene permisos para verlo"
         });
@@ -92,8 +92,8 @@ class LugarController {
       res.status(200).json(lugar);
     } catch (error) {
       console.error('Error en buscarLugar:', error);
-      res.status(500).json({ 
-        mensaje: "Error al buscar el lugar", 
+      res.status(500).json({
+        mensaje: "Error al buscar el lugar",
         error: error.message,
         tipo: error.name,
         detalles: "Error interno del servidor al procesar la solicitud"
@@ -104,16 +104,16 @@ class LugarController {
   async crearLugar(req, res) {
     try {
       const { rol } = req.usuario;
-      
+
       if (!rol) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           mensaje: "Error de autenticación",
           error: "Rol no definido en el token"
         });
       }
 
       if (rol !== 1 && rol !== 2) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           mensaje: "Acceso denegado",
           error: "No tiene permisos para crear lugares",
           detalles: "Solo los administradores pueden crear lugares"
@@ -125,7 +125,7 @@ class LugarController {
       // Validación de campos requeridos
       const camposRequeridos = ['usuarioid', 'categoriaid', 'nombre', 'descripcion', 'ubicacion'];
       const camposFaltantes = camposRequeridos.filter(campo => !req.body[campo]);
-      
+
       if (camposFaltantes.length > 0) {
         return res.status(400).json({
           mensaje: "Error de validación",
@@ -136,7 +136,7 @@ class LugarController {
 
       // Verificar que al menos se envió la imagen principal
       if (!req.files?.imagen) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           mensaje: "Error de validación",
           error: "La imagen principal es requerida",
           detalles: "Debe subir una imagen principal para el lugar"
@@ -161,7 +161,7 @@ class LugarController {
       // Procesar fotos adicionales
       let fotosUrls = [];
       if (req.files?.fotos_lugar?.length > 0) {
-        const uploadPromises = req.files.fotos_lugar.map((file, index) => 
+        const uploadPromises = req.files.fotos_lugar.map((file, index) =>
           cloudinaryService.subirImagenLugar(
             file.buffer,
             `lugar-${Date.now()}-foto-${index}`
@@ -200,7 +200,7 @@ class LugarController {
         fotos_lugar: JSON.stringify(fotosUrls),
         carta_pdf: pdfUrl
       };
-  
+
       const nuevoLugar = await LugarService.crearLugar(dataLugar);
 
       res.status(201).json({
@@ -217,8 +217,8 @@ class LugarController {
           detalles: error.errors.map(e => e.message)
         });
       }
-      res.status(500).json({ 
-        mensaje: "Error al crear lugar", 
+      res.status(500).json({
+        mensaje: "Error al crear lugar",
         error: error.message,
         tipo: error.name,
         detalles: "Error interno del servidor al procesar la solicitud"
@@ -228,26 +228,18 @@ class LugarController {
 
   async actualizarLugar(req, res) {
     try {
-      console.log('\n=== INICIO DE ACTUALIZACIÓN ===\n');
-      console.log('Headers:', req.headers);
-      console.log('Content-Type:', req.headers['content-type']);
-      console.log('Body:', typeof req.body, JSON.stringify(req.body));
-      console.log('Archivos:', typeof req.files, JSON.stringify(req.files));
-      console.log('Usuario:', req.usuario);
-      console.log('Parametros:', req.params);
-
       const { rol } = req.usuario;
-      
+
       if (!rol) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           mensaje: "Error de autenticación",
           error: "Rol no definido en el token"
         });
       }
 
       // Solo superadmin puede actualizar
-      if (rol !== 1) { 
-        return res.status(403).json({ 
+      if (rol !== 1) {
+        return res.status(403).json({
           mensaje: "Acceso denegado",
           error: "No tiene permisos para actualizar lugares",
           detalles: "Solo el superadministrador puede actualizar lugares"
@@ -305,7 +297,7 @@ class LugarController {
       let fotosUrls = lugarExistente.fotos_lugar ? JSON.parse(lugarExistente.fotos_lugar) : [];
       if (req.files?.fotos_lugar?.length > 0) {
         try {
-          const uploadPromises = req.files.fotos_lugar.map((file, index) => 
+          const uploadPromises = req.files.fotos_lugar.map((file, index) =>
             cloudinaryService.subirImagenLugar(
               file.buffer,
               `lugar-${Date.now()}-foto-${index}`
@@ -364,7 +356,7 @@ class LugarController {
         fotos_lugar: JSON.stringify(fotosUrls),
         carta_pdf: pdfUrl
       };
-  
+
       const lugarActualizado = await LugarService.actualizarLugar(id, dataLugar);
 
       console.log('Lugar actualizado:', lugarActualizado);
@@ -388,8 +380,8 @@ class LugarController {
           detalles: error.errors.map(e => e.message)
         });
       }
-      res.status(500).json({ 
-        mensaje: "Error al actualizar lugar", 
+      res.status(500).json({
+        mensaje: "Error al actualizar lugar",
         error: error.message,
         tipo: error.name,
         detalles: "Error interno del servidor al procesar la solicitud"
@@ -402,16 +394,16 @@ class LugarController {
   async eliminarLugar(req, res) {
     try {
       const { rol } = req.usuario;
-      
+
       if (!rol) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           mensaje: "Error de autenticación",
           error: "Rol no definido en el token"
         });
       }
 
       if (rol !== 1) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           mensaje: "Acceso denegado",
           error: "No tiene permisos para eliminar lugares",
           detalles: "Solo el super administrador puede eliminar lugares"
@@ -428,21 +420,21 @@ class LugarController {
 
       const existeLugar = await LugarService.buscarLugar(id);
       if (!existeLugar) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           mensaje: "Lugar no encontrado",
           detalles: "No existe un lugar con el ID proporcionado"
         });
       }
 
       await LugarService.eliminarLugar(id);
-      res.json({ 
+      res.json({
         mensaje: "Lugar eliminado correctamente",
         detalles: "El lugar ha sido eliminado permanentemente"
       });
     } catch (error) {
       console.error('Error en eliminarLugar:', error);
-      res.status(500).json({ 
-        mensaje: "Error al eliminar lugar", 
+      res.status(500).json({
+        mensaje: "Error al eliminar lugar",
         error: error.message,
         tipo: error.name,
         detalles: "Error interno del servidor al procesar la solicitud"
@@ -454,16 +446,16 @@ class LugarController {
     try {
       console.log('=== Inicio cambiarEstado ===');
       const { rol } = req.usuario;
-      
+
       if (!rol) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           mensaje: "Error de autenticación",
           error: "Rol no definido en el token"
         });
       }
 
       if (rol !== 1 && rol !== 2) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           mensaje: "Acceso denegado",
           error: "No tiene permisos para cambiar el estado de lugares",
           detalles: "Solo los administradores pueden cambiar el estado de lugares"
@@ -497,13 +489,13 @@ class LugarController {
       if (actualizados[0] === 0) {
         const existe = await LugarService.buscarLugar(id);
         if (!existe) {
-          return res.status(404).json({ 
+          return res.status(404).json({
             mensaje: 'Lugar no encontrado',
             detalles: "No existe un lugar con el ID proporcionado"
           });
         }
-        return res.status(200).json({ 
-          mensaje: 'El estado ya estaba igual', 
+        return res.status(200).json({
+          mensaje: 'El estado ya estaba igual',
           lugar: existe,
           detalles: "No se realizaron cambios en el estado"
         });
@@ -512,14 +504,14 @@ class LugarController {
       console.log('Buscando lugar actualizado...');
       const lugar = await LugarService.buscarLugar(id, true);
       console.log('Lugar encontrado:', lugar);
-      
+
       // Obtener io para enviar notificaciones
       const io = req.app.get('io');
 
       // Si el lugar fue aprobado, notificar a los usuarios
       if (lugar.aprobacion) {
         console.log('Enviando notificaciones...');
-        
+
         // Notificar al propietario del lugar (rol 3)
         console.log('Enviando notificación al propietario:', lugar.usuarioid);
         io.to(`usuario-${lugar.usuarioid}`).emit('lugar-aprobado', {
@@ -535,7 +527,7 @@ class LugarController {
           timestamp: new Date().toISOString(),
           mensaje: `Nuevo lugar disponible: ${lugar.nombre}`
         });
-        
+
         console.log('Notificaciones enviadas');
       } else {
         // Notificar rechazo al propietario
@@ -547,8 +539,8 @@ class LugarController {
         });
       }
 
-      res.json({ 
-        mensaje: lugar.aprobacion ? 'aprobado' : 'rechazado', 
+      res.json({
+        mensaje: lugar.aprobacion ? 'aprobado' : 'rechazado',
         lugar,
         notificaciones: {
           propietario: 'Notificación enviada al propietario',
@@ -557,8 +549,8 @@ class LugarController {
       });
     } catch (error) {
       console.error('Error en cambiarEstado:', error);
-      res.status(500).json({ 
-        mensaje: 'Error al actualizar estado', 
+      res.status(500).json({
+        mensaje: 'Error al actualizar estado',
         error: error.message,
         tipo: error.name,
         detalles: "Error interno del servidor al procesar la solicitud"
@@ -569,9 +561,9 @@ class LugarController {
   async listarLugaresPublicos(req, res) {
     try {
       const lugares = await LugarService.listarLugaresUsuario();
-      
+
       if (!lugares || lugares.length === 0) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           mensaje: "No se encontraron lugares disponibles",
           detalles: "No hay lugares aprobados y activos en este momento"
         });
@@ -604,8 +596,8 @@ class LugarController {
       });
     } catch (error) {
       console.error('Error en listarLugaresPublicos:', error);
-      res.status(500).json({ 
-        mensaje: "Error al listar lugares", 
+      res.status(500).json({
+        mensaje: "Error al listar lugares",
         error: error.message,
         tipo: error.name,
         detalles: "Error interno del servidor al procesar la solicitud"

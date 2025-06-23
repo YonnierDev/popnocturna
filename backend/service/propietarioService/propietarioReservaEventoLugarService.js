@@ -29,7 +29,7 @@ class PropietarioReservaEventoLugarService {
         },
         attributes: ["numero_reserva", "fecha_hora", "aprobacion", "estado"],
       });
-  
+
       return reservas;
     } catch (error) {
       return "Error al obtener las reservas del propietario: " + error.message;
@@ -63,16 +63,16 @@ class PropietarioReservaEventoLugarService {
           aprobacion: "pendiente",
           estado: true
         },
-        attributes: ["id","numero_reserva", "fecha_hora", "aprobacion", "estado"]
+        attributes: ["id", "numero_reserva", "fecha_hora", "aprobacion", "estado"]
       });
-  
+
       return reservas;
     } catch (error) {
       throw new Error("Error al obtener reservas pendientes: " + error.message);
     }
   }
-  
-  
+
+
 }
 
 module.exports = new PropietarioReservaEventoLugarService();

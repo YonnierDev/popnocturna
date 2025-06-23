@@ -26,29 +26,29 @@ class CategoriaService {
     async crearCategoria(tipo, descripcion, imagenUrl) {
         return await Categoria.create({
             tipo,
-            descripcion, 
-            imagen: imagenUrl || null, 
-            estado: true 
+            descripcion,
+            imagen: imagenUrl || null,
+            estado: true
         });
     }
-    
+
 
     async actualizarCategoria(id, datos) {
         const categoria = await Categoria.findByPk(id);
-        
+
         await categoria.update(datos);
-    
+
         return await Categoria.findByPk(id, {
-            attributes: ['id', 'tipo', 'descripcion', 'imagen', 'estado'], 
+            attributes: ['id', 'tipo', 'descripcion', 'imagen', 'estado'],
             include: [{
                 model: Lugar,
                 as: 'lugares',
-                attributes: ['id', 'nombre', 'imagen'], 
+                attributes: ['id', 'nombre', 'imagen'],
             }]
         });
     }
-    
-    
+
+
 
     async eliminarCategoria(id) {
         return await Categoria.destroy({ where: { id } });

@@ -35,17 +35,17 @@ class LugarService {
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["nombre", "correo"], 
+          attributes: ["nombre", "correo"],
         },
         {
           model: Categoria,
           as: "categoria",
-          attributes: ["tipo"], 
+          attributes: ["tipo"],
         },
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre","portada","fecha_hora", "descripcion"], 
+          attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
         },
       ],
     });
@@ -62,17 +62,17 @@ class LugarService {
         {
           model: Usuario,
           as: "usuario",
-          attributes: ["nombre", "correo"], 
+          attributes: ["nombre", "correo"],
         },
         {
           model: Categoria,
           as: "categoria",
-          attributes: ["tipo"], 
+          attributes: ["tipo"],
         },
         {
           model: Evento,
           as: "eventos",
-          attributes: ["nombre", "portada", "fecha_hora", "descripcion"], 
+          attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
         },
       ],
     });
@@ -104,7 +104,7 @@ class LugarService {
 
   async buscarLugarPropietario(id, usuarioid) {
     const lugar = await Lugar.findOne({
-      where: { 
+      where: {
         id,
         usuarioid
       },
@@ -175,7 +175,7 @@ class LugarService {
       throw error;
     }
   }
-  
+
   async actualizarLugar(id, dataLugar) {
     try {
       const lugar = await Lugar.findByPk(id);
@@ -221,10 +221,10 @@ class LugarService {
       console.log('Lugar antes de actualizar:', lugarAntes ? lugarAntes.toJSON() : 'No encontrado');
 
       const actualizados = await Lugar.update(
-        { 
+        {
           aprobacion: estado,
           estado: estado
-        }, 
+        },
         { where: { id } }
       );
       console.log('Resultado de actualización:', actualizados);

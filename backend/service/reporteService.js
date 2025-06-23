@@ -14,7 +14,7 @@ class ReporteService {
 
             console.log('Comentario encontrado:', comentario.toJSON());
             console.log('Actualizando con aprobacion:', aprobacion);
-            
+
             const actualizado = await comentario.update({
                 aprobacion: aprobacion,
                 motivo_reporte: motivo,
@@ -70,7 +70,7 @@ class ReporteService {
     async obtenerNotificacionesReportes(rolid) {
         try {
             console.log('Obteniendo notificaciones para rol:', rolid);
-            
+
             // Verificar que sea admin o super admin
             if (rolid !== 1 && rolid !== 2) {
                 console.log('Error: Rol no autorizado:', rolid);
@@ -87,7 +87,7 @@ class ReporteService {
 
             return {
                 reportesPendientes,
-                mensaje: reportesPendientes > 0 
+                mensaje: reportesPendientes > 0
                     ? `Tienes ${reportesPendientes} reporte(s) pendiente(s) de revisión`
                     : 'No hay reportes pendientes'
             };
@@ -106,7 +106,7 @@ class ReporteService {
                     aprobacion: false
                 },
                 attributes: [
-                    'id', 'nombre', 'descripcion', 'ubicacion', 
+                    'id', 'nombre', 'descripcion', 'ubicacion',
                     'estado', 'aprobacion', 'createdAt'
                 ],
                 include: [
@@ -174,7 +174,7 @@ class ReporteService {
         try {
             console.log('=== Inicio obtenerNotificacionesLugares ===');
             console.log('Rol del usuario:', rolid);
-            
+
             // Verificar que sea admin o super admin
             if (rolid !== 1 && rolid !== 2) {
                 console.log('Error: Rol no autorizado:', rolid);
@@ -191,7 +191,7 @@ class ReporteService {
 
             return {
                 lugaresPendientes,
-                mensaje: lugaresPendientes > 0 
+                mensaje: lugaresPendientes > 0
                     ? `Tienes ${lugaresPendientes} lugar(es) pendiente(s) de aprobación`
                     : 'No hay lugares pendientes de aprobación'
             };

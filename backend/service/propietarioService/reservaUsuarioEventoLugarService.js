@@ -6,7 +6,7 @@ class ReservaUsuarioEventoLugarService {
       console.log('=== listarReservasConDetalles ===');
       console.log('Usuario ID:', usuarioid);
       console.log('Lugar ID solicitado:', lugarId);
-      
+
       const whereClause = { estado: true };
       const includeLugar = {
         model: Lugar,
@@ -24,7 +24,7 @@ class ReservaUsuarioEventoLugarService {
 
       console.log('Buscando reservas con whereClause:', whereClause);
       console.log('IncludeLugar configurado como:', includeLugar);
-      
+
       const reservas = await Reserva.findAll({
         where: whereClause,
         include: [

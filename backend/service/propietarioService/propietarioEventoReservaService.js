@@ -4,10 +4,10 @@ class PropietarioEventoReservaService {
   async obtenerLugaresConEventos(usuarioid) {
     try {
       const lugares = await Lugar.findAll({
-        where: { 
+        where: {
           usuarioid,
           estado: true,
-          aprobacion: true 
+          aprobacion: true
         },
         include: [
           {
@@ -18,7 +18,7 @@ class PropietarioEventoReservaService {
           }
         ]
       });
-      
+
       return lugares;
     } catch (error) {
       console.error('Error en obtenerLugaresConEventos:', error);
@@ -64,14 +64,14 @@ class PropietarioEventoReservaService {
         },
         attributes: ["id", "fecha_hora", "aprobacion", "estado"],
       });
-  
+
       return reservas;
     } catch (error) {
       console.error('Error en obtenerReservasEventoLugar:', error);
       throw new Error("Error al obtener las reservas del propietario: " + error.message);
     }
   }
-  
+
 }
 
 module.exports = new PropietarioEventoReservaService();

@@ -11,8 +11,8 @@ class EventoService {
     return await Evento.findAll({
       where,
       include: [
-        { 
-          model: Lugar, 
+        {
+          model: Lugar,
           as: "lugar",
           attributes: ['id', 'nombre'],
           include: [
@@ -51,20 +51,20 @@ class EventoService {
     if (fechaHasta) where.fecha_hora = { ...where.fecha_hora, [Op.lte]: fechaHasta };
 
     return await Evento.findAll({
-        where,
-        include: [
-            {
-                model: Lugar,
-                as: "lugar",
-                where: { usuarioid: propietarioId },
-                attributes: ['id', 'nombre']
-            }
-        ],
-        order: [['fecha_hora', 'DESC']],  // Ordenar por fecha descendente
-        offset,
-        limit
+      where,
+      include: [
+        {
+          model: Lugar,
+          as: "lugar",
+          where: { usuarioid: propietarioId },
+          attributes: ['id', 'nombre']
+        }
+      ],
+      order: [['fecha_hora', 'DESC']],  // Ordenar por fecha descendente
+      offset,
+      limit
     });
-}
+  }
 
   async listarEventosPorUsuario(usuarioId, { offset, limit, fechaDesde, fechaHasta }) {
     const where = { estado: true }; // Solo eventos activos
@@ -74,8 +74,8 @@ class EventoService {
     return await Evento.findAll({
       where,
       include: [
-        { 
-          model: Lugar, 
+        {
+          model: Lugar,
           as: "lugar",
           attributes: ['id', 'nombre']
         },
@@ -89,8 +89,8 @@ class EventoService {
   async verEventoAdmin(id) {
     return await Evento.findByPk(id, {
       include: [
-        { 
-          model: Lugar, 
+        {
+          model: Lugar,
           as: "lugar",
           attributes: ['id', 'nombre'],
           include: [
@@ -133,8 +133,8 @@ class EventoService {
             where: { usuarioid: propietarioId },
             attributes: ['id', 'nombre']
           },
-          { 
-            model: Comentario, 
+          {
+            model: Comentario,
             as: "comentarios",
             where: { estado: true },
             required: false,
@@ -171,7 +171,7 @@ class EventoService {
     });
   }
 
-  
+
   async crearEventoAdmin(datos, usuarioid) {
     return await Evento.create({
       ...datos,
@@ -191,11 +191,11 @@ class EventoService {
     }
 
     // Verificar que el lugar pertenezca al propietario
-    const lugar = await Lugar.findOne({ 
-      where: { 
+    const lugar = await Lugar.findOne({
+      where: {
         id: lugarId,
-        usuarioid: propietarioId 
-      } 
+        usuarioid: propietarioId
+      }
     });
 
     if (!lugar) {
@@ -206,7 +206,7 @@ class EventoService {
 
     const datosParaCrear = {
       ...datos,
-      estado: true,  
+      estado: true,
       usuarioid: propietarioId,
       lugarid: lugar.id
     };
@@ -218,9 +218,9 @@ class EventoService {
       // Forzar una lectura desde la BD para confirmar
       const eventoDesdeDB = await Evento.findByPk(nuevoEvento.id);
       console.log('[eventoService.crearEventoPropietario] Evento leído desde DB después de crear:', JSON.stringify(eventoDesdeDB, null, 2));
-      
+
       if (!eventoDesdeDB) {
-          console.error('[eventoService.crearEventoPropietario] ¡ALERTA! El evento creado NO se encontró en la BD inmediatamente después.');
+        console.error('[eventoService.crearEventoPropietario] ¡ALERTA! El evento creado NO se encontró en la BD inmediatamente después.');
       }
       return nuevoEvento; // O quizás eventoDesdeDB si quieres estar seguro de que es de la BD
     } catch (error) {
@@ -236,7 +236,7 @@ class EventoService {
 
     const evento = await Evento.findByPk(id);
     console.log('Evento encontrado:', evento ? 'Sí' : 'No');
-    
+
     if (!evento) {
       console.log('Error: Evento no encontrado');
       throw new Error("Evento no encontrado");
@@ -274,20 +274,20 @@ class EventoService {
         camposParaActualizar[key] = datosActualizar[key];
       }
     }
-    
+
     console.log('Campos finales para actualizar en DB:', camposParaActualizar);
 
     // Si camposParaActualizar está vacío (ej. solo se envió ID en params y nada en body/files), 
     // podríamos optar por no hacer el update o devolver el evento tal cual.
     // Por ahora, si está vacío, .update({}) no debería hacer nada o fallar controladamente.
     if (Object.keys(camposParaActualizar).length === 0) {
-        console.log('No hay campos para actualizar después de filtrar.');
-        return evento; // Devuelve el evento sin cambios si no hay nada que actualizar
+      console.log('No hay campos para actualizar después de filtrar.');
+      return evento; // Devuelve el evento sin cambios si no hay nada que actualizar
     }
 
     await evento.update(camposParaActualizar);
     console.log('Evento actualizado exitosamente en DB');
-    
+
     return evento.reload(); // .reload() para obtener el estado más reciente con asociaciones
 
   }
@@ -370,8 +370,8 @@ class EventoService {
     return await Evento.findAll({
       where,
       include: [
-        { 
-          model: Lugar, 
+        {
+          model: Lugar,
           as: "lugar",
           attributes: ['id', 'nombre', 'ubicacion', 'descripcion']
         }
@@ -385,13 +385,13 @@ class EventoService {
 
   async verEventoPublico(id) {
     return await Evento.findOne({
-      where: { 
+      where: {
         id,
         estado: true
       },
       include: [
-        { 
-          model: Lugar, 
+        {
+          model: Lugar,
           as: "lugar",
           attributes: ['id', 'nombre']
         },

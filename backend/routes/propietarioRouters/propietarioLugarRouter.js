@@ -33,8 +33,17 @@ router.post(
 router.patch(
   "/propietario/aprobar/:id",
   autentiMiddleware,
-  validarRol(1,2),
+  validarRol(1, 2),
   PropietarioController.aprobarLugarPropietario
+);
+
+router.patch(
+  "/propietario/actualizar/:id",
+  autentiMiddleware,
+  validarRol(3),
+  upload,
+  handleMulterError,
+  PropietarioController.propietarioActualizarImagenesFotos
 );
 
 router.get(

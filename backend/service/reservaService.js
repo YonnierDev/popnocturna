@@ -18,9 +18,9 @@ class ReservaService {
       limit,
       include: [
         { model: Usuario, as: "usuario", attributes: ["nombre", "correo"] },
-        { 
-          model: Evento, 
-          as: "evento", 
+        {
+          model: Evento,
+          as: "evento",
           attributes: ["id", "nombre", "portada", "fecha_hora"],
           include: [
             {
@@ -38,8 +38,8 @@ class ReservaService {
     resultado.rows = resultado.rows.map(reserva => {
       const reservaJson = reserva.get({ plain: true });
       if (reservaJson.evento) {
-        reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada) 
-          ? reservaJson.evento.portada 
+        reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada)
+          ? reservaJson.evento.portada
           : [reservaJson.evento.portada].filter(Boolean);
       }
       return reserva;
@@ -97,14 +97,14 @@ class ReservaService {
       limit,
       attributes: ['id', 'numero_reserva', 'fecha_hora', 'aprobacion', 'estado', 'cantidad_entradas'],
       include: [
-        { 
-          model: Usuario, 
-          as: "usuario", 
-          attributes: ["id", "nombre", "correo"] 
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "correo"]
         },
-        { 
-          model: Evento, 
-          as: "evento", 
+        {
+          model: Evento,
+          as: "evento",
           attributes: ["id", "nombre", "portada", "fecha_hora"],
           include: [
             {
@@ -122,8 +122,8 @@ class ReservaService {
     resultado.rows = resultado.rows.map(reserva => {
       const reservaJson = reserva.get({ plain: true });
       if (reservaJson.evento) {
-        reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada) 
-          ? reservaJson.evento.portada 
+        reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada)
+          ? reservaJson.evento.portada
           : [reservaJson.evento.portada].filter(Boolean);
       }
       return reserva;
@@ -135,7 +135,7 @@ class ReservaService {
   // Buscar reserva por número (insensible a mayúsculas/minúsculas)
   async buscarReservaPorNumero(numero_reserva) {
     console.log('Buscando reserva con número (servicio):', numero_reserva);
-    
+
     const resultado = await Reserva.findOne({
       where: sequelize.where(
         sequelize.fn('LOWER', sequelize.col('numero_reserva')),
@@ -143,9 +143,9 @@ class ReservaService {
         numero_reserva.toLowerCase()
       ),
       include: [
-        { 
-          model: Usuario, 
-          as: "usuario", 
+        {
+          model: Usuario,
+          as: "usuario",
           attributes: ["id", "nombre", "correo", "rolid"],
           include: [{
             model: Rol,
@@ -153,9 +153,9 @@ class ReservaService {
             attributes: ["id", "nombre"]
           }]
         },
-        { 
-          model: Evento, 
-          as: "evento", 
+        {
+          model: Evento,
+          as: "evento",
           attributes: ["id", "nombre", "fecha_hora", "lugarid"],
           include: [
             {
@@ -167,7 +167,7 @@ class ReservaService {
         }
       ]
     });
-    
+
     console.log('Resultado de la búsqueda:', resultado ? 'Encontrado' : 'No encontrado');
     return resultado;
   }
@@ -187,8 +187,8 @@ class ReservaService {
 
       // Verificar si el evento existe
       if (!evento) {
-        return { 
-          tienePermiso: false, 
+        return {
+          tienePermiso: false,
           mensaje: "El evento no existe",
           capacidadDisponible: 0
         };
@@ -196,8 +196,8 @@ class ReservaService {
 
       // Verificar si el usuario es el propietario del evento
       if (usuarioid && evento.usuarioid === usuarioid) {
-        return { 
-          tienePermiso: false, 
+        return {
+          tienePermiso: false,
           mensaje: "No puedes reservar en tu propio evento",
           capacidadDisponible: 0
         };
@@ -205,8 +205,8 @@ class ReservaService {
 
       // Verificar si el evento está activo
       if (!evento.estado) {
-        return { 
-          tienePermiso: false, 
+        return {
+          tienePermiso: false,
           mensaje: "El evento está inactivo",
           capacidadDisponible: 0
         };
@@ -214,8 +214,8 @@ class ReservaService {
 
       // Verificar si el lugar existe
       if (!evento.lugar) {
-        return { 
-          tienePermiso: false, 
+        return {
+          tienePermiso: false,
           mensaje: "El lugar asociado al evento no existe",
           capacidadDisponible: 0
         };
@@ -223,8 +223,8 @@ class ReservaService {
 
       // Verificar si el lugar está activo
       if (!evento.lugar.estado) {
-        return { 
-          tienePermiso: false, 
+        return {
+          tienePermiso: false,
           mensaje: "El lugar del evento está inactivo",
           capacidadDisponible: 0
         };
@@ -232,8 +232,8 @@ class ReservaService {
 
       // Verificar si el lugar está aprobado
       if (!evento.lugar.aprobacion) {
-        return { 
-          tienePermiso: false, 
+        return {
+          tienePermiso: false,
           mensaje: "El lugar del evento no está aprobado",
           capacidadDisponible: 0
         };
@@ -259,8 +259,8 @@ class ReservaService {
       };
     } catch (error) {
       console.error("Error en verificarDisponibilidad:", error);
-      return { 
-        tienePermiso: false, 
+      return {
+        tienePermiso: false,
         mensaje: error.message || "Error al verificar disponibilidad",
         capacidadDisponible: 0
       };
@@ -287,7 +287,7 @@ class ReservaService {
       });
 
       const entradasReservadas = resultado || 0;
-      
+
       return {
         ...evento.get({ plain: true }),
         entradasReservadas,
@@ -303,7 +303,7 @@ class ReservaService {
   async verificarEvento(eventoid, cantidadEntradas = 1) {
     try {
       const { tienePermiso, mensaje, capacidadDisponible } = await this.verificarDisponibilidad(
-        eventoid, 
+        eventoid,
         cantidadEntradas,
         null // No verificamos el usuario aquí para mantener compatibilidad
       );
@@ -333,7 +333,7 @@ class ReservaService {
         attributes: ["id", "nombre"]
       }]
     });
-    
+
     console.log('Resultado de la búsqueda de usuario:', usuario ? 'Encontrado' : 'No encontrado');
     return usuario;
   }
@@ -362,7 +362,7 @@ class ReservaService {
 
       const evento = await this.verificarEvento(eventoid, cantidad_entradas);
       const usuario = await this.verificarUsuario(usuarioid);
-      
+
       if (!usuario) {
         throw new Error("El usuario no existe");
       }
@@ -379,10 +379,10 @@ class ReservaService {
 
       return await Reserva.findByPk(reserva.id, {
         include: [
-          { 
-            model: Usuario, 
-            as: "usuario", 
-            attributes: ["id", "nombre", "correo"] 
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["id", "nombre", "correo"]
           },
           {
             model: Evento,
@@ -405,7 +405,7 @@ class ReservaService {
   // Actualizar reserva
   async actualizarReserva(id, datosActualizar) {
     const t = await sequelize.transaction();
-    
+
     try {
       // Buscar la reserva existente
       const reserva = await Reserva.findByPk(id, { transaction: t });
@@ -421,18 +421,18 @@ class ReservaService {
 
       // Actualizar la reserva
       await reserva.update(datosActualizar, { transaction: t });
-      
+
       // Confirmar la transacción
       await t.commit();
-      
+
       // Obtener y retornar la reserva actualizada con sus relaciones
       return await Reserva.findByPk(id, {
         include: [
           {
             model: Evento,
             as: 'evento',
-            include: [{ 
-              model: Lugar, 
+            include: [{
+              model: Lugar,
               as: 'lugar',
               attributes: ['id', 'nombre', 'usuarioid']
             }],
@@ -505,11 +505,11 @@ class ReservaService {
   // Actualizar aprobación de reserva por número
   async actualizarAprobacionPorNumero(numeroReserva, aprobacion, usuarioId, rol) {
     const t = await sequelize.transaction();
-    
+
     try {
       // Normalizar número de reserva
       const numeroNormalizado = numeroReserva.trim().toUpperCase();
-      
+
       // Buscar la reserva con sus relaciones
       const reserva = await Reserva.findOne({
         where: { numero_reserva: numeroNormalizado },
@@ -542,16 +542,16 @@ class ReservaService {
       // Actualizar estado de aprobación
       reserva.aprobacion = aprobacion.toLowerCase();
       await reserva.save({ transaction: t });
-      
+
       // Confirmar transacción
       await t.commit();
-      
+
       // Obtener la reserva actualizada con relaciones
       const reservaActualizada = await Reserva.findByPk(reserva.id, {
         include: [
           { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'correo'] },
-          { 
-            model: Evento, 
+          {
+            model: Evento,
             as: 'evento',
             include: [{
               model: Lugar,
@@ -561,9 +561,9 @@ class ReservaService {
           }
         ]
       });
-      
+
       return reservaActualizada;
-      
+
     } catch (error) {
       // Revertir transacción en caso de error
       await t.rollback();
@@ -596,12 +596,12 @@ class ReservaService {
    */
   async actualizarAprobacionReserva(numeroReserva, aprobacion, usuarioId, rol) {
     const t = await sequelize.transaction();
-    
+
     try {
       // Normalizar número de reserva
       const numero = numeroReserva.replace(/\D/g, '').padStart(3, '0');
       const numeroNormalizado = `RES-${numero}`;
-      
+
       // Buscar la reserva con sus relaciones
       const reserva = await Reserva.findOne({
         where: {
@@ -634,13 +634,13 @@ class ReservaService {
 
       // Validar permisos
       const esAdmin = [1, 2].includes(rol);
-      const esPropietario = rol === 3 && 
-                         reserva.evento?.lugar?.usuarioid === usuarioId;
+      const esPropietario = rol === 3 &&
+        reserva.evento?.lugar?.usuarioid === usuarioId;
 
       if (!esAdmin && !esPropietario) {
         await t.rollback();
-        return { 
-          success: false, 
+        return {
+          success: false,
           mensaje: 'No tienes permiso para realizar esta acción',
           status: 403
         };
@@ -649,7 +649,7 @@ class ReservaService {
       // Verificar si ya tiene el estado solicitado
       const aprobacionActual = reserva.aprobacion?.toLowerCase();
       const aprobacionSolicitada = aprobacion.toLowerCase();
-      
+
       if (aprobacionActual === aprobacionSolicitada) {
         await t.rollback();
         return {
@@ -669,7 +669,7 @@ class ReservaService {
       // Actualizar estado
       reserva.aprobacion = aprobacionSolicitada;
       await reserva.save({ transaction: t });
-      
+
       // Confirmar transacción
       await t.commit();
 
@@ -688,8 +688,8 @@ class ReservaService {
     } catch (error) {
       await t.rollback();
       console.error('Error en actualizarAprobacionReserva:', error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         mensaje: 'Error al actualizar la reserva',
         error: error.message,
         status: 500

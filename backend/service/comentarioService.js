@@ -38,10 +38,10 @@ class ComentarioService {
       const comentarios = await Comentario.findAll({
         where: { estado: true },
         include: [
-          { 
-            model: Usuario, 
-            as: "usuario", 
-            attributes: ["id", "nombre", "correo"] 
+          {
+            model: Usuario,
+            as: "usuario",
+            attributes: ["id", "nombre", "correo"]
           },
           {
             model: Evento,
@@ -74,19 +74,19 @@ class ComentarioService {
 
     try {
       const comentarios = await Comentario.findAll({
-        where: { 
+        where: {
           usuarioid: usuarioId,
-          estado: true 
+          estado: true
         },
         include: [
           {
             model: Evento,
             as: "evento",
             attributes: ["id", "nombre", "fecha_hora"],
-            include: { 
-              model: Lugar, 
-              as: "lugar", 
-              attributes: ["id", "nombre"] 
+            include: {
+              model: Lugar,
+              as: "lugar",
+              attributes: ["id", "nombre"]
             },
           },
         ],
@@ -121,17 +121,17 @@ class ComentarioService {
   async obtenerUsuariosComentariosEvento(eventoid) {
     try {
       console.log(`Buscando usuarios que comentaron en el evento ${eventoid}`);
-      
+
       const comentarios = await Comentario.findAll({
-        where: { 
+        where: {
           eventoid,
           estado: true,
           aprobacion: 1 // Solo comentarios aceptados
         },
         include: [
-          { 
-            model: Usuario, 
-            as: "usuario", 
+          {
+            model: Usuario,
+            as: "usuario",
             attributes: ["id", "nombre", "correo"],
             required: true
           }
@@ -142,7 +142,7 @@ class ComentarioService {
       });
 
       console.log(`Usuarios encontrados: ${comentarios.length}`);
-      
+
       // Mapear los resultados para devolver solo los datos del usuario
       return comentarios.map(c => ({
         id: c['usuario.id'],
@@ -239,13 +239,13 @@ class ComentarioService {
       if (!comentario) {
         throw new Error('Comentario no encontrado');
       }
-      
+
       // Solo permitir actualizar el contenido
       const datosActualizacion = {
         contenido: datos.contenido,
         updatedAt: new Date()
       };
-      
+
       return await comentario.update(datosActualizacion);
     } catch (error) {
       console.error('Error al actualizar comentario:', error);
@@ -257,7 +257,7 @@ class ComentarioService {
     try {
       const comentario = await this.obtenerPorId(id);
       if (!comentario) throw new Error('Comentario no encontrado');
-      
+
       return await comentario.update({ estado: false });
     } catch (error) {
       console.error('Error al eliminar comentario:', error);
@@ -268,13 +268,13 @@ class ComentarioService {
   async obtenerComentarioPorId(id) {
     return await Comentario.findByPk(id, {
       include: [
-        { 
-          model: Usuario, 
-          as: "usuario", 
-          attributes: ["id", "nombre", "correo"] 
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "correo"]
         },
-        { 
-          model: Evento, 
+        {
+          model: Evento,
           as: "evento",
           required: true,
           attributes: ["id", "nombre", "descripcion", "fecha_hora", "estado", "capacidad", "precio", "lugarid"],
@@ -315,7 +315,7 @@ class ComentarioService {
 
       // Actualizar el estado
       const [actualizado] = await Comentario.update(
-        { 
+        {
           aprobacion: estado,
           // Si se rechaza, mantener el comentario activo pero marcado como rechazado
           // Si se acepta, desactivar el comentario
@@ -330,7 +330,7 @@ class ComentarioService {
 
       // Obtener el comentario actualizado con toda la información
       const comentarioActualizado = await this.obtenerComentarioPorId(id);
-      
+
       console.log('Estado actualizado exitosamente:', comentarioActualizado);
       return comentarioActualizado;
     } catch (error) {
@@ -345,7 +345,7 @@ class ComentarioService {
       console.log('Evento ID:', eventoid);
 
       const comentarios = await Comentario.findAll({
-        where: { 
+        where: {
           eventoid
           // Sin filtros de estado o aprobación para admins
         },
@@ -379,9 +379,9 @@ class ComentarioService {
       console.log('Evento ID:', eventoid, 'Propietario ID:', propietarioId);
 
       const comentarios = await Comentario.findAll({
-        where: { 
+        where: {
           eventoid,
-          estado: true 
+          estado: true
         },
         include: [
           {
@@ -414,24 +414,24 @@ class ComentarioService {
 
   async obtenerComentariosPendientesRechazados(eventoid) {
     return await Comentario.findAll({
-        where: { 
-            eventoid,
-            estado: true,
-            aprobacion: [0, 2] // 0: pendiente, 2: rechazado
+      where: {
+        eventoid,
+        estado: true,
+        aprobacion: [0, 2] // 0: pendiente, 2: rechazado
+      },
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'correo']
         },
-        include: [
-            {
-                model: Usuario,
-                as: 'usuario',
-                attributes: ['id', 'nombre', 'correo']
-            },
-            {
-                model: Evento,
-                as: 'evento',
-                attributes: ['id', 'nombre']
-            }
-        ],
-        order: [['fecha_hora', 'DESC']]
+        {
+          model: Evento,
+          as: 'evento',
+          attributes: ['id', 'nombre']
+        }
+      ],
+      order: [['fecha_hora', 'DESC']]
     });
   }
 
@@ -440,7 +440,7 @@ class ComentarioService {
       console.log('=== Inicio de obtenerReportados ===');
 
       const comentarios = await Comentario.findAll({
-        where: { 
+        where: {
           aprobacion: 'pendiente',
           estado: true
         },
