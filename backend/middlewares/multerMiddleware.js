@@ -57,7 +57,7 @@ const uploadConfig = {
       return;
     }
 
-    if (file.fieldname === 'imagen' || file.fieldname === 'fotos_lugar') {
+    if (file.fieldname === 'imagen' || file.fieldname === 'fotos_lugar' || file.fieldname === 'portada') {
       if (file.mimetype.startsWith('image/')) {
         console.log('Archivo de imagen válido');
         cb(null, true);
@@ -86,6 +86,10 @@ const uploadImages = multer({
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'carta_pdf') {
       return cb(new Error('No se permiten archivos PDF en este campo'));
+    }
+    // Aplicar la validación de tipo de archivo
+    if (file.fieldname === 'portada' && !file.mimetype.startsWith('image/')) {
+      return cb(new Error('Solo se permiten archivos de imagen para la portada'));
     }
     return uploadConfig.fileFilter(req, file, cb);
   }
