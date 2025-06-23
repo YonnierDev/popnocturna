@@ -31,7 +31,7 @@ router.get("/evento/:eventoId/reservas", autentiMiddleware,
   EventoController.listarReservasEvento
 );
 
-router.delete("/evento/:id", validarRol(1, 2), EventoController.eliminarEvento);
+router.delete("/evento/:id", validarRol(1, 2, 3), EventoController.eliminarEvento);
 
 // Aprobar evento (solo admin)
 //router.put("/evento/:id/aprobar", EventoController.aprobarEvento);
