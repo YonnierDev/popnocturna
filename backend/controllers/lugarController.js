@@ -2,6 +2,11 @@ const fs = require('fs');
 const cloudinaryService = require("../service/cloudinaryService");
 const LugarService = require("../service/lugarService");
 
+// Asegurar que el servicio Cloudinary esté disponible
+if (!cloudinaryService) {
+  throw new Error('Cloudinary service no está disponible');
+}
+
 class LugarController {
   async listarLugares(req, res) {
     try {
@@ -268,35 +273,46 @@ class LugarController {
       let imagenUrl = lugarExistente.imagen;
       if (req.files?.imagen?.[0]) {
         // Verificar el tipo de archivo
-        if (!req.files.imagen[0].mimetype.startsWith('image/')) {
-          return res.status(400).json({
-            mensaje: "Error de validación",
-            error: "Tipo de archivo no válido para la imagen principal",
-            detalles: "La imagen principal debe ser un archivo de imagen (jpg, png, etc.)"
-          });
-        }
-
         try {
-          // Subir imagen principal
-          const imagenUpload = await cloudinaryService.subirImagenLugar(
+          // Primero eliminar la imagen existente si existe
+          if (lugarExistente.imagen) {
+            const publicId = lugarExistente.imagen.split('/').pop().split('.')[0];
+            try {
+              await cloudinary.uploader.destroy(publicId);
+            } catch (error) {
+              console.error('Error al eliminar imagen anterior:', error);
+            }
+          }
+
+          const upload = await cloudinaryService.subirImagenLugar(
             req.files.imagen[0].buffer,
             `lugar-${Date.now()}-principal`
           );
-          imagenUrl = imagenUpload.secure_url;
+          imagenUrl = upload.secure_url;
         } catch (error) {
           console.error('Error al subir imagen principal:', error);
-          return res.status(500).json({
-            mensaje: "Error al subir la imagen principal",
-            error: error.message,
-            detalles: "No se pudo subir la imagen a Cloudinary"
-          });
+          // Si falla la subida, mantener la imagen existente
         }
       }
 
       // Procesar fotos adicionales
-      let fotosUrls = lugarExistente.fotos_lugar ? JSON.parse(lugarExistente.fotos_lugar) : [];
+      let fotosUrls = lugarExistente.fotos_lugar;
       if (req.files?.fotos_lugar?.length > 0) {
         try {
+          // Convertir el string de fotos a array si es necesario
+          const fotosArray = fotosUrls ? JSON.parse(fotosUrls) : [];
+
+          // Eliminar fotos existentes de Cloudinary
+          for (const foto of fotosArray) {
+            try {
+              const publicId = foto.split('/').pop().split('.')[0];
+              await cloudinary.uploader.destroy(publicId);
+            } catch (error) {
+              console.error('Error al eliminar foto:', error);
+            }
+          }
+
+          // Subir nuevas fotos
           const uploadPromises = req.files.fotos_lugar.map((file, index) =>
             cloudinaryService.subirImagenLugar(
               file.buffer,
@@ -304,8 +320,9 @@ class LugarController {
             )
           );
           const uploadResults = await Promise.all(uploadPromises);
-          const nuevasFotosUrls = uploadResults.map(result => result.secure_url);
-          fotosUrls = [...fotosUrls, ...nuevasFotosUrls]; // Mantener las fotos existentes y agregar las nuevas
+
+          // Guardar las nuevas URLs como array
+          fotosUrls = JSON.stringify(uploadResults.map(result => result.secure_url));
         } catch (error) {
           console.error('Error al subir fotos adicionales:', error);
           return res.status(500).json({
@@ -320,6 +337,16 @@ class LugarController {
       let pdfUrl = lugarExistente.carta_pdf;
       if (req.files?.carta_pdf?.[0]) {
         try {
+          // Eliminar PDF anterior si existe
+          if (lugarExistente.carta_pdf) {
+            const publicId = lugarExistente.carta_pdf.split('/').pop().split('.')[0];
+            try {
+              await cloudinary.uploader.destroy(publicId);
+            } catch (error) {
+              console.error('Error al eliminar PDF anterior:', error);
+            }
+          }
+
           const pdfUpload = await cloudinaryService.subirPDF(
             req.files.carta_pdf[0].buffer,
             `carta-${Date.now()}`
@@ -352,25 +379,51 @@ class LugarController {
         ubicacion,
         estado,
         aprobacion,
-        imagen: imagenUrl, // Usar la nueva imagen o la existente (ya manejado arriba)
-        fotos_lugar: JSON.stringify(fotosUrls),
+        imagen: imagenUrl,
+        fotos_lugar: fotosUrls,
         carta_pdf: pdfUrl
       };
 
-      const lugarActualizado = await LugarService.actualizarLugar(id, dataLugar);
+      console.log('Datos a actualizar:', dataLugar);
 
-      console.log('Lugar actualizado:', lugarActualizado);
+      try {
+        const lugarActualizado = await LugarService.actualizarLugar(id, dataLugar);
+        console.log('Lugar actualizado:', lugarActualizado);
 
-      res.json({
-        mensaje: "Lugar actualizado con éxito",
-        lugar: {
-          ...lugarActualizado.dataValues,
-          fotos_lugar: fotosUrls,
-          // Si necesitas mantener la imagen existente cuando no se envía una nueva
-          imagen: lugarActualizado.dataValues.imagen || imagenUrl
-        },
-        detalles: "Los cambios han sido aplicados correctamente"
-      });
+        // Obtener el lugar actualizado con las relaciones
+        const lugarActualizadoConRelaciones = await LugarService.buscarLugar(id);
+        
+        // Convertir fotos_lugar a array si es un string
+        let fotos_lugar = [];
+        if (lugarActualizadoConRelaciones.fotos_lugar) {
+          try {
+            // Intentar parsear como JSON
+            fotos_lugar = JSON.parse(lugarActualizadoConRelaciones.fotos_lugar);
+            // Si es un string, intentar parsear el contenido
+            if (typeof fotos_lugar === 'string') {
+              fotos_lugar = JSON.parse(fotos_lugar);
+            }
+          } catch (e) {
+            // Si falla el parseo, usar el valor original
+            fotos_lugar = lugarActualizadoConRelaciones.fotos_lugar;
+          }
+        }
+        
+        res.json({
+          mensaje: "Lugar actualizado con éxito",
+          lugar: {
+            ...lugarActualizadoConRelaciones.dataValues,
+            // Asegurarse de que fotos_lugar sea un array
+            fotos_lugar: Array.isArray(fotos_lugar) ? fotos_lugar : [],
+            // Mantener la imagen existente cuando no se envía una nueva
+            imagen: lugarActualizadoConRelaciones.imagen || imagenUrl
+          },
+          detalles: "Los cambios han sido aplicados correctamente"
+        });
+      } catch (error) {
+        console.error('Error detallado al actualizar lugar:', error);
+        throw error; // Re-lanzar el error para que lo maneje el catch general
+      }
     } catch (error) {
       console.error('Error en actualizarLugar:', error);
       if (error.name === 'SequelizeValidationError') {

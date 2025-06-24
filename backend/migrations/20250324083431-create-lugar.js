@@ -9,24 +9,27 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      categoriaid: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'categorias',
-          key: 'id'
-        }
-      },
       usuarioid: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: 'usuarios',
-          key: 'id'
+          key: 'id',
+          onDelete: 'CASCADE'
+        }
+      },
+      categoriaid: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'categorias',
+          key: 'id',
+          onDelete: 'CASCADE'
         }
       },
       nombre: {
         type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
       },
       descripcion: {
         type: Sequelize.STRING,
@@ -37,7 +40,8 @@ module.exports = {
         allowNull: false
       },
       estado: {
-        type: Sequelize.BOOLEAN
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       },
       imagen: {
         type: Sequelize.STRING,
@@ -54,7 +58,8 @@ module.exports = {
       },
       aprobacion: {
         type: Sequelize.BOOLEAN,
-        allowNull: false
+        allowNull: false,
+        defaultValue: false
       },
       createdAt: {
         allowNull: false,

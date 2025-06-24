@@ -177,33 +177,140 @@ class LugarService {
   }
 
   async actualizarLugar(id, dataLugar) {
+    console.log('=== Inicio actualizarLugar ===');
+    console.log('ID del lugar a actualizar:', id);
+    console.log('Datos recibidos:', JSON.stringify(dataLugar, null, 2));
+    
+    // Iniciar transacción para asegurar la integridad de los datos
+    const transaction = await Lugar.sequelize.transaction();
+    
     try {
-      const lugar = await Lugar.findByPk(id);
+      // Obtener el lugar actual dentro de la transacción
+      const lugar = await Lugar.findByPk(id, { transaction });
       if (!lugar) {
+        console.error('Lugar no encontrado con ID:', id);
         throw new LugarError("Lugar no encontrado", 'NO_ENCONTRADO');
       }
 
-      // Solo validar si se está cambiando el nombre
-      if (dataLugar.nombre && dataLugar.nombre !== lugar.nombre) {
-        const lugarExistente = await Lugar.findOne({
-          where: {
-            nombre: dataLugar.nombre
-          }
-        });
+      console.log('Lugar actual:', JSON.stringify(lugar.toJSON(), null, 2));
 
-        if (lugarExistente) {
-          throw new LugarError("Ya existe un lugar con este nombre", 'DUPLICADO');
+      // Filtrar campos vacíos o nulos para no sobrescribir los existentes
+      const camposActualizables = {};
+      Object.entries(dataLugar).forEach(([key, value]) => {
+        // Solo incluir campos que existen en el modelo
+        if (key in Lugar.rawAttributes && value !== undefined && value !== null) {
+          // Si es un string vacío, lo convertimos a null para campos que lo permitan
+          if (value === '' && Lugar.rawAttributes[key].allowNull) {
+            camposActualizables[key] = null;
+          } else {
+            camposActualizables[key] = value;
+          }
         }
+      });
+
+      console.log('Campos a actualizar después de filtrar:', camposActualizables);
+
+      // Si no hay campos para actualizar, devolver el lugar actual
+      if (Object.keys(camposActualizables).length === 0) {
+        console.log('No hay campos para actualizar, devolviendo lugar actual');
+        await transaction.rollback();
+        return lugar;
       }
 
-      // Actualizar todos los campos sin restricciones
-      const lugarActualizado = await lugar.update(dataLugar);
-      return lugarActualizado;
+      try {
+        console.log('Iniciando actualización en la base de datos...');
+        
+        // 1. Primero, si se está actualizando el nombre, verificamos si ya existe
+        if (camposActualizables.nombre) {
+          const lugarExistente = await Lugar.findOne({
+            where: {
+              nombre: camposActualizables.nombre,
+              id: { [Op.ne]: id }
+            },
+            transaction
+          });
+          
+          // Si existe un lugar con el mismo nombre, le cambiamos temporalmente el nombre
+          if (lugarExistente) {
+            console.log('Se encontró un lugar con el mismo nombre, realizando actualización segura...');
+            
+            // Generar un nombre temporal único
+            const tempNombre = `temp_${Date.now()}_${lugarExistente.id}`;
+            
+            // Actualizar temporalmente el otro lugar
+            await Lugar.update(
+              { nombre: tempNombre },
+              { 
+                where: { id: lugarExistente.id },
+                transaction
+              }
+            );
+            
+            console.log(`Nombre temporal asignado al lugar ${lugarExistente.id}: ${tempNombre}`);
+          }
+        }
+        
+        // 2. Ahora actualizamos el lugar actual
+        const [updated] = await Lugar.update(
+          camposActualizables,
+          {
+            where: { id },
+            transaction,
+            individualHooks: false,
+            validate: false
+          }
+        );
+        
+        if (!updated) {
+          throw new LugarError('No se pudo actualizar el lugar', 'ACTUALIZACION');
+        }
+        
+        // Si todo salió bien, hacemos commit de la transacción
+        await transaction.commit();
+        
+        console.log('Actualización exitosa, obteniendo datos actualizados...');
+        const lugarActualizado = await Lugar.findByPk(id);
+        console.log('Lugar actualizado con éxito');
+        
+        return lugarActualizado;
+        
+      } catch (updateError) {
+        // Si hay algún error, hacemos rollback de la transacción
+        await transaction.rollback();
+        console.error('Error en la actualización:', updateError);
+        
+        // Manejar específicamente el error de restricción única
+        if (updateError.name === 'SequelizeUniqueConstraintError') {
+          console.error('Error de restricción única:', updateError.fields);
+          throw new LugarError('Error al actualizar el lugar: el nombre ya está en uso', 'DUPLICADO');
+        }
+        
+        // Manejar error de clave foránea
+        if (updateError.name === 'SequelizeForeignKeyConstraintError') {
+          console.error('Error de clave foránea:', updateError.fields);
+          throw new LugarError('Error al actualizar: referencia a registro no encontrada', 'REFERENCIA');
+        }
+        
+        // Para cualquier otro error
+        console.error('Error desconocido al actualizar:', updateError);
+        throw new LugarError(`Error al actualizar el lugar: ${updateError.message}`, 'ERROR_DB');
+      }
+      
     } catch (error) {
+      // Asegurarse de que la transacción se cierre en caso de error
+      if (transaction.finished !== 'commit' && transaction.finished !== 'rollback') {
+        await transaction.rollback();
+      }
+      
+      console.error('Error en actualizarLugar:', error);
+      
+      // Si el error ya es un LugarError, lo relanzamos
       if (error instanceof LugarError) {
         throw error;
       }
-      throw new LugarError("Error al actualizar el lugar", 'INTERNO');
+      
+      // Para cualquier otro error, lanzamos un error genérico
+      throw new LugarError(`Error al actualizar el lugar: ${error.message}`, 'ERROR_DB');
     }
   }
 

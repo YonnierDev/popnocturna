@@ -127,80 +127,6 @@ Obtiene los detalles de un lugar específico por su ID.
     },
     "createdAt": "2025-06-22T00:00:00.000Z",
     "updatedAt": "2025-06-22T00:00:00.000Z"
-  }
-}
-```
-
----
-
-## Crear Lugar
-
-### `POST /api/lugar`
-
-Crea un nuevo lugar en el sistema.
-
-#### Autenticación
-- Requiere token de autenticación
-
-#### Roles permitidos
-- Propietario (3)
-- Admin (2)
-- SuperAdmin (1)
-
-#### Headers
-```
-Content-Type: multipart/form-data
-Authorization: Bearer [token]
-```
-
-#### Campos de Form-Data
-
-| Campo | Tipo | Requerido | Descripción |
-|-------|------|-----------|-------------|
-| nombre | string | Sí | Nombre del lugar |
-| descripcion | string | Sí | Descripción detallada |
-| ubicacion | string | Sí | Dirección física |
-| categoriaid | number | Sí | ID de la categoría |
-| imagen | file | No | Imagen principal (máx. 10MB, formato: jpg, png) |
-| fotos_lugar | file[] | No | Hasta 5 fotos adicionales (máx. 10MB cada una, formato: jpg, png) |
-| carta_pdf | file | No | Documento PDF (máx. 10MB) |
-
-#### Ejemplo de Body (form-data)
-```
-nombre: Mi Restaurante
-descripcion: Un lugar acogedor para comer
-ubicacion: Calle Principal #123
-categoriaid: 2
-imagen: [archivo.jpg]
-fotos_lugar: [foto1.jpg, foto2.jpg]
-carta_pdf: [documento.pdf]
-```
-
-#### Respuesta Exitosa (201)
-```json
-{
-  "mensaje": "Lugar creado exitosamente",
-  "lugar": {
-    "id": 1,
-    "nombre": "Mi Restaurante",
-    "estado": true,
-    "aprobacion": false,
-    "createdAt": "2025-06-22T00:00:00.000Z"
-  }
-}
-```
-
-#### Errores de Subida de Archivos
-
-| Código | Error | Descripción |
-|--------|-------|-------------|
-| 400 | LIMIT_FILE_SIZE | Archivo excede el tamaño máximo (10MB) |
-| 400 | LIMIT_FILE_COUNT | Se superó el número máximo de archivos permitidos |
-| 400 | LIMIT_UNEXPECTED_FILE | Campo de archivo no permitido |
-| 415 | UNSUPPORTED_MEDIA_TYPE | Tipo de archivo no soportado |
-
----
-
 ## Actualizar Lugar
 
 ### `PUT /api/lugar/:id`
@@ -249,12 +175,40 @@ imagen: [nueva-imagen.jpg]
 {
   "mensaje": "Lugar actualizado con éxito",
   "lugar": {
-    "id": 1,
-    "nombre": "Nombre Actualizado",
+    "id": 41,
+    "usuarioid": 3,
+    "categoriaid": 4,
+    "nombre": "El Cubo",
+    "descripcion": "EL deporte es salud",
+    "ubicacion": "Cl. 18 Nte. # 12-143, Comuna 1",
+    "imagen": "https://res.cloudinary.com/popaimagen/image/upload/v1750802704/lugares/lugar-1750802705157-principal.jpg",
+    "fotos_lugar": [
+      "https://res.cloudinary.com/popaimagen/image/upload/v1750737496/lugares/lugar-1750737496934-0.060674211053047156.jpg"
+    ],
+    "carta_pdf": null,
     "estado": true,
     "aprobacion": true,
-    "updatedAt": "2025-06-22T00:00:00.000Z"
-  }
+    "createdAt": "2025-06-24T03:58:17.000Z",
+    "updatedAt": "2025-06-24T22:05:07.000Z",
+    "usuario": {
+      "id": 3,
+      "nombre": "Propietario",
+      "correo": "propietario@gmail.com"
+    },
+    "categoria": {
+      "id": 4,
+      "tipo": "Canchas sinteticas"
+    }
+  },
+  "detalles": "Los cambios han sido aplicados correctamente"
+}
+
+#### Respuesta de Error (404)
+```json
+{
+  "mensaje": "Error",
+  "error": "Lugar no encontrado",
+  "detalles": "No se encontró el lugar con el ID especificado"
 }
 ```
 

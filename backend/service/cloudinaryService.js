@@ -146,53 +146,22 @@ class CloudinaryService {
     }
   }
 
-  // Método para subir imágenes de lugares (existente)
-  async subirImagenLugar(buffer, nombre) {
-    try {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            resource_type: "image",
-            folder: "lugares",
-            public_id: nombre,
-            transformation: [
-              { width: 1200, crop: "limit" },
-              { quality: "auto:good" }
-            ]
-          },
-          (error, result) => {
-            if (error) {
-              console.error("Error al subir imagen de lugar:", error);
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          }
-        );
-
-        const readableStream = require('stream').Readable.from(buffer);
-        readableStream.pipe(uploadStream);
-      });
-    } catch (error) {
-      console.error("Error en subirImagenLugar:", error);
-      throw error;
-    }
-  }
-
-  // Método para subir PDFs (existente)
-  async subirPDF(buffer, nombre) {
+  // Método para subir PDFs de cartas
+  async subirPDFCarta(buffer, nombre) {
     try {
       return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: "raw",
-            folder: "documentos",
+            folder: "cartas",
             public_id: nombre,
-            format: "pdf"
+            transformation: [
+              { quality: "auto:good" }
+            ]
           },
           (error, result) => {
             if (error) {
-              console.error("Error al subir PDF:", error);
+              console.error("Error al subir PDF de carta:", error);
               reject(error);
             } else {
               resolve(result);
@@ -204,27 +173,37 @@ class CloudinaryService {
         readableStream.pipe(uploadStream);
       });
     } catch (error) {
-      console.error("Error en subirPDF:", error);
+      console.error("Error en subirPDFCarta:", error);
       throw error;
     }
   }
 
-  // Método para eliminar una imagen
-  async eliminarImagen(publicId) {
+  // Método para eliminar una imagen o PDF de Cloudinary
+  async eliminarArchivo(url) {
     try {
-      return await cloudinary.uploader.destroy(publicId);
+      // Extraer el public_id de la URL
+      const publicId = url.split('/').pop().split('.')[0];
+      
+      // Determinar si es imagen o PDF basado en la carpeta
+      const esPDF = url.includes('/cartas/');
+      const resourceType = esPDF ? 'raw' : 'image';
+      
+      // Eliminar el archivo
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType
+      });
+      
+      return result;
     } catch (error) {
-      console.error("Error al eliminar imagen:", error);
+      console.error("Error al eliminar archivo:", error);
       throw error;
     }
   }
 
-  /**
-   * Sube una imagen de categoría a Cloudinary
-   * @param {Buffer} buffer - Buffer de la imagen a subir
-   * @param {string} nombre - Nombre único para la imagen
-   * @returns {Promise<Object>} - Resultado de la subida a Cloudinary
-   */
+  // Sube una imagen de categoría a Cloudinary
+  // @param {Buffer} buffer - Buffer de la imagen a subir
+  // @param {string} nombre - Nombre único para la imagen
+  // @returns {Promise<Object>} - Resultado de la subida a Cloudinary
   async subirImagenCategoria(buffer, nombre) {
     try {
       return new Promise((resolve, reject) => {
