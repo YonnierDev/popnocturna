@@ -41,8 +41,8 @@ module.exports = (sequelize, DataTypes) => {
       },
       aprobacion: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 0, // 0 = pendiente, 1 = aceptado, 2 = rechazado
+        allowNull: false,
+        defaultValue: 2, // 2 = rechazado por defecto
         comment: '0 = pendiente, 1 = aceptado, 2 = rechazado'
       },
       motivo_reporte: {

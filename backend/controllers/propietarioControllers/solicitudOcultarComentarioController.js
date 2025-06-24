@@ -42,11 +42,19 @@ class SolicitudOcultarComentarioController {
         });
       }
 
-      // Verificar que el comentario no esté ya reportado
-      if (comentario.aprobacion === 'pendiente') {
-        console.log('Error: Comentario ya reportado');
+      // Verificar el estado actual del comentario
+      if (comentario.aprobacion === 0) {
+        console.log('Error: Comentario ya reportado y pendiente de revisión');
         return res.status(400).json({
           error: "Este comentario ya ha sido reportado y está pendiente de revisión"
+        });
+      }
+      
+      // Si el comentario ya fue aprobado, no se puede reportar
+      if (comentario.aprobacion === 1) {
+        console.log('Error: Comentario ya fue aprobado');
+        return res.status(400).json({
+          error: "Este comentario ya fue aprobado y no puede ser reportado"
         });
       }
 

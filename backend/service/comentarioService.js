@@ -174,14 +174,14 @@ class ComentarioService {
         throw new Error('El usuario no existe');
       }
 
-      // Crear el comentario con estado 'pendiente' (0) de aprobación
+      // Crear el comentario con estado 'rechazado' (2) por defecto
       const comentario = await Comentario.create({
         usuarioid: data.usuarioid,
         eventoid: data.eventoid,
         contenido: data.contenido,
         fecha_hora: new Date(),
         estado: true,
-        aprobacion: 0  // 0 = pendiente, 1 = aceptado, 2 = rechazado
+        aprobacion: data.aprobacion !== undefined ? data.aprobacion : 2  // Usar el valor proporcionado o 2 (rechazado) por defecto
       });
 
       console.log('Comentario creado exitosamente:', comentario);

@@ -47,13 +47,19 @@ class SolicitudOcultarComentarioService {
         throw new Error('Usuario no asociado al comentario');
       }
 
-      // Verificar que el comentario no esté ya reportado
-      if (comentario.aprobacion === 0) {  // 0 = pendiente
-        console.log('Error: Comentario ya reportado');
+      // Verificar que el comentario no esté ya reportado (0 = pendiente)
+      if (comentario.aprobacion === 0) {
+        console.log('Error: Comentario ya reportado y pendiente de revisión');
         throw new Error('Este comentario ya ha sido reportado y está pendiente de revisión');
       }
+      
+      // Si el comentario ya fue aprobado (1), no se puede reportar
+      if (comentario.aprobacion === 1) {
+        console.log('Error: Comentario ya fue aprobado');
+        throw new Error('Este comentario ya fue aprobado y no puede ser reportado');
+      }
 
-      // Actualizar el comentario con el estado de solicitud de ocultación
+      // Actualizar el comentario a estado pendiente (0) cuando se reporta
       const [actualizado] = await Comentario.update(
         {
           motivo_reporte,

@@ -35,7 +35,8 @@ class ComentarioController {
                 usuarioid,
                 eventoid,
                 contenido,
-                fecha_hora: new Date()
+                fecha_hora: new Date(),
+                aprobacion: 2 // Establecer como rechazado por defecto
             });
 
             // Obtener io para enviar notificaciones

@@ -1,5 +1,6 @@
 'use strict';
 /** @type {import('sequelize-cli').Migration} */
+// Nota: Esta migración establece aprobacion = 2 (rechazado) por defecto para nuevos comentarios
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('comentarios', {
@@ -44,7 +45,7 @@ module.exports = {
       aprobacion: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 0,
+        defaultValue: 2, // 2 = rechazado por defecto
         comment: '0 = pendiente, 1 = aceptado, 2 = rechazado'
       },
       motivo_reporte: {
