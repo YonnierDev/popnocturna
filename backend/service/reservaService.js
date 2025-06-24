@@ -710,6 +710,58 @@ class ReservaService {
       };
     }
   }
+
+  // Obtener información detallada de una reserva con información básica del evento, lugar y usuario
+  async obtenerReservaDetallada(reservaId) {
+    try {
+      const reserva = await Reserva.findByPk(reservaId, {
+        attributes: [
+          'id', 
+          'numero_reserva',
+          'fecha_hora',
+          'aprobacion',
+          'estado',
+          'cantidad_entradas',
+          'createdAt',
+          'updatedAt'
+        ],
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            attributes: ['nombre', 'fecha_hora'],
+            include: [{
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['nombre']
+            }]
+          },
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['nombre']
+          }
+        ]
+      });
+
+      if (!reserva) {
+        return { success: false, mensaje: 'Reserva no encontrada', status: 404 };
+      }
+
+      return { 
+        success: true, 
+        data: reserva 
+      };
+    } catch (error) {
+      console.error('Error en obtenerReservaDetallada:', error);
+      return { 
+        success: false, 
+        mensaje: 'Error al obtener la reserva', 
+        error: error.message,
+        status: 500 
+      };
+    }
+  }
 }
 
 module.exports = new ReservaService();

@@ -47,6 +47,13 @@ router.patch(
   ReservaController.aprobarReserva
 );
 
+// Obtener información detallada de una reserva
+router.get(
+  "/reserva/detalle/:id",
+  autentiMiddleare,
+  ReservaController.obtenerReservaDetallada
+);
+
 // Ruta para crear reserva
 router.post(
   "/reserva",

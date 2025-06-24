@@ -693,6 +693,66 @@ class ReservaController {
       });
     }
   }
+
+  // Obtener información detallada de una reserva
+  async obtenerReservaDetallada(req, res) {
+    try {
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ 
+          success: false, 
+          mensaje: 'Se requiere el ID de la reserva' 
+        });
+      }
+
+      const resultado = await ReservaService.obtenerReservaDetallada(id);
+      
+      if (!resultado.success) {
+        return res.status(resultado.status || 500).json({
+          success: false,
+          mensaje: resultado.mensaje,
+          error: resultado.error
+        });
+      }
+
+      // Formatear la respuesta para incluir solo los datos necesarios
+      const reserva = resultado.data.get({ plain: true });
+      
+      const respuesta = {
+        id: reserva.id,
+        numero_reserva: reserva.numero_reserva,
+        fecha_hora: reserva.fecha_hora,
+        aprobacion: reserva.aprobacion,
+        estado: reserva.estado,
+        cantidad_entradas: reserva.cantidad_entradas,
+        fecha_creacion: reserva.createdAt,
+        evento: {
+          nombre: reserva.evento?.nombre,
+          fecha_hora: reserva.evento?.fecha_hora,
+          lugar: {
+            nombre: reserva.evento?.lugar?.nombre || 'Sin lugar asignado'
+          }
+        },
+        usuario: {
+          nombre: reserva.usuario?.nombre || 'Usuario desconocido'
+        }
+      };
+
+      res.status(200).json({
+        success: true,
+        data: respuesta
+      });
+
+    } catch (error) {
+      console.error('Error en obtenerReservaDetallada (controller):', error);
+      res.status(500).json({
+        success: false,
+        mensaje: 'Error al obtener la información de la reserva',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = new ReservaController();
