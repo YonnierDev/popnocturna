@@ -379,6 +379,7 @@ class ComentarioService {
       console.log('Evento ID:', eventoid, 'Propietario ID:', propietarioId);
 
       const comentarios = await Comentario.findAll({
+        attributes: ['id', 'contenido', 'fecha_hora', 'aprobacion'],
         where: {
           eventoid,
           estado: true
@@ -387,25 +388,43 @@ class ComentarioService {
           {
             model: Usuario,
             as: 'usuario',
-            attributes: ['id', 'nombre', 'correo']
+            attributes: ['nombre']
           },
           {
             model: Evento,
             as: 'evento',
+            attributes: ['nombre'],
             required: true,
             include: {
               model: Lugar,
               as: 'lugar',
+              attributes: [],
               required: true,
               where: { usuarioid: propietarioId }
             }
           }
         ],
-        order: [['fecha_hora', 'DESC']]
+        order: [['fecha_hora', 'DESC']],
+        raw: true,
+        nest: true
       });
 
-      console.log('Cantidad de comentarios encontrados:', comentarios.length);
-      return comentarios;
+      // Formatear la respuesta para hacerla más limpia
+      const comentariosFormateados = comentarios.map(comentario => ({
+        id: comentario.id,
+        contenido: comentario.contenido,
+        fecha_hora: comentario.fecha_hora,
+        aprobacion: comentario.aprobacion,
+        usuario: {
+          nombre: comentario.usuario?.nombre
+        },
+        evento: {
+          nombre: comentario.evento?.nombre
+        }
+      }));
+
+      console.log('Cantidad de comentarios encontrados:', comentariosFormateados.length);
+      return comentariosFormateados;
     } catch (error) {
       console.error('Error en obtenerPorEventoPropietario:', error);
       throw error;

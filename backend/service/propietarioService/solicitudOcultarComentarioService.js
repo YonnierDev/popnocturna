@@ -1,4 +1,5 @@
 const { Comentario, Usuario, Evento, Lugar } = require('../../models');
+const { Op } = require("sequelize");
 
 class SolicitudOcultarComentarioService {
   // Obtener un comentario por ID
@@ -94,22 +95,23 @@ class SolicitudOcultarComentarioService {
   async listarComentariosPendientes() {
     return await Comentario.findAll({
       where: {
+        aprobacion: 0  // Solo comentarios pendientes (0 = pendiente)
       },
       include: [
         {
           model: Usuario,
           as: 'usuario',
-          attributes: ['id', 'nombre', 'correo']
+          attributes: ['nombre']
         },
         {
           model: Evento,
           as: 'evento',
-          attributes: ['id', 'nombre'],
+          attributes: ['nombre'],
           include: [
             {
               model: Lugar,
               as: 'lugar',
-              attributes: ['id', 'nombre']
+              attributes: ['nombre']
             }
           ]
         }
@@ -119,8 +121,11 @@ class SolicitudOcultarComentarioService {
         'contenido',
         'fecha_hora',
         'estado',
-        'motivo_reporte'
-      ]
+        'aprobacion',
+        'motivo_reporte',
+        'updatedAt'  // Usamos updatedAt para saber cuándo se reportó
+      ],
+      order: [['updatedAt', 'ASC']]  // Ordenar por fecha de actualización más antigua primero
     });
   }
 

@@ -13,7 +13,7 @@ router.post(
 
 // Rutas para administradores (roles 1 y 2)
 router.get(
-    '/administracion/pendientes',
+    '/administracion/comentarios/reportados',
     [autentiMiddleware, validarRol(1, 2)],
     SolicitudOcultarComentarioController.listarPendientes
 );
