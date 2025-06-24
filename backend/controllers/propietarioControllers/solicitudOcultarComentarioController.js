@@ -110,14 +110,30 @@ class SolicitudOcultarComentarioController {
         });
       }
 
+      // Determinar el estado del comentario basado en el campo aprobacion
+      let estadoComentario = 'Desconocido';
+      switch(comentario.aprobacion) {
+        case 0:
+          estadoComentario = 'Pendiente de revisión';
+          break;
+        case 1:
+          estadoComentario = 'Comentario inactivo (oculto)';
+          break;
+        case 2:
+          estadoComentario = 'Comentario activo (visible)';
+          break;
+      }
+
       const respuesta = {
         mensaje: `Comentario reportado por: ${comentario.evento?.lugar?.usuario?.nombre || 'Propietario no disponible'}, correo: ${comentario.evento?.lugar?.usuario?.correo || 'No disponible'}`,
+        estado: estadoComentario,
         datos: {
           comentario: {
             id: comentario.id,
             contenido: comentario.contenido,
             estado: comentario.estado,
             aprobacion: comentario.aprobacion,
+            estado_aprobacion: estadoComentario,
             motivo_reporte: comentario.motivo_reporte,
             fecha_creacion: comentario.createdAt,
             fecha_actualizacion: comentario.updatedAt,

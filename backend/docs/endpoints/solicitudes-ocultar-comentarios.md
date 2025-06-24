@@ -80,13 +80,18 @@ Obtiene la lista de comentarios reportados pendientes de revisión.
 }
 ```
 
-### 3. Obtener Detalle de Comentario (Admin/Moderador)
+### 3. Obtener Detalle de Comentario (Super Admin / Admin)
 
-Obtiene el detalle completo de un comentario reportado, incluyendo información del propietario que lo reportó.
+Obtiene el detalle completo de un comentario reportado, incluyendo información del propietario que lo reportó y el estado actual del comentario.
 
 - **URL**: `/administracion/comentario/:comentarioid`
 - **Método**: `GET`
-- **Roles permitidos**: `1` (Admin), `2` (Moderador)
+- **Roles permitidos**: `1` (Super Admin), `2` (Admin)
+
+**Nota sobre el estado de aprobación**:
+- Si `aprobacion` es `2`: El comentario está activo y visible para los usuarios.
+- Si `aprobacion` es `1`: El comentario está inactivo (oculto) para los usuarios.
+- Si `aprobacion` es `0`: El comentario está pendiente de revisión.
 
 **Parámetros de URL**:
 - `comentarioid` (requerido): ID del comentario a consultar
@@ -95,12 +100,14 @@ Obtiene el detalle completo de un comentario reportado, incluyendo información 
 ```json
 {
   "mensaje": "Comentario reportado por: Juan Pérez, correo: juan@ejemplo.com",
+  "estado": "Comentario activo (visible)",
   "datos": {
     "comentario": {
       "id": 17,
       "contenido": "Contenido del comentario",
       "estado": true,
-      "aprobacion": 0,
+      "aprobacion": 2,
+      "estado_aprobacion": "Comentario activo (visible)",
       "motivo_reporte": "Motivo del reporte",
       "fecha_creacion": "2025-06-24T12:00:00.000Z",
       "fecha_actualizacion": "2025-06-24T12:00:00.000Z",
@@ -123,6 +130,16 @@ Obtiene el detalle completo de un comentario reportado, incluyendo información 
   }
 }
 ```
+
+**Campos de estado en la respuesta:**
+- `estado` (nivel raíz): Descripción textual del estado actual del comentario
+- `datos.comentario.aprobacion`: Valor numérico del estado (0, 1 o 2)
+- `datos.comentario.estado_aprobacion`: Descripción textual del estado
+
+**Posibles valores de estado:**
+- `0` / `"Pendiente de revisión"`: El comentario está pendiente de revisión por un administrador
+- `1` / `"Comentario inactivo (oculto)"`: El comentario ha sido ocultado por un administrador
+- `2` / `"Comentario activo (visible)"`: El comentario está visible para todos los usuarios
 
 **Error cuando el comentario no existe (404 Not Found):**
 ```json
