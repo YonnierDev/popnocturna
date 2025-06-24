@@ -1,53 +1,89 @@
 # API de Gestión de Reportes y Moderación
 
-Este documento describe los endpoints disponibles para gestionar reportes, lugares pendientes y notificaciones del sistema. Estas rutas están protegidas y requieren autenticación de administradores o moderadores.
+Este documento describe los endpoints disponibles para gestionar reportes, lugares pendientes y notificaciones del sistema. 
 
 ## Base URL
 
 Todas las rutas están prefijadas con `/api/reportes`.
 
+## Autenticación
+
+- Todas las rutas requieren autenticación mediante JWT
+- Los roles válidos son:
+  - `1`: Administrador
+  - `2`: Moderador
+  - `3`: Propietario
+  - `4`: Usuario
+
 ## Endpoints
 
 ### 1. Actualizar Estado de Reporte de Comentario
 
-Permite a un administrador o moderador actualizar el estado de un reporte de comentario.
+Actualiza el estado de un reporte de comentario (aprobado/rechazado).
 
-- **URL**: `/comentario/:id/estado`
+- **URL**: `/reporte/comentario/:id/estado`
 - **Método**: `PUT`
-- **Parámetros de URL**:
-  - `id` (requerido): ID del reporte de comentario
-- **Autenticación requerida**: Sí
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
-- **Body (JSON)**:
-  ```json
-  {
-    "estado": "aprobado",  // o "rechazado"
-    "comentario_moderacion": "Comentario opcional del moderador"
-  }
-  ```
+- **Autenticación requerida**: Sí (JWT)
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
 
-**Ejemplo de respuesta exitosa (200 OK):**
+**Parámetros de URL**:
+- `id` (requerido): ID del reporte de comentario
+
+**Body (JSON)**:
+```json
+{
+  "aprobacion": true,  // o false para rechazar
+  "motivo": "Motivo de la decisión"  // Opcional
+}
+```
+
+**Respuesta exitosa (200 OK):**
 ```json
 {
   "mensaje": "Estado del reporte actualizado correctamente",
   "reporte": {
     "id": 1,
-    "estado": "aprobado",
-    "comentario_moderacion": "Comentario ofensivo verificado"
+    "estado": "aprobado"
   }
 }
 ```
 
+**Errores posibles:**
+- 400: Datos inválidos o faltantes
+- 401: No autenticado
+- 403: No autorizado
+- 404: Comentario no encontrado
+- 500: Error del servidor
+
 ### 2. Listar Lugares Pendientes
 
-Obtiene la lista de lugares que están pendientes de aprobación.
+Obtiene la lista de lugares pendientes de aprobación.
 
 - **URL**: `/lugares/pendientes`
 - **Método**: `GET`
-- **Autenticación requerida**: Sí
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
-- **Parámetros de consulta opcionales**:
-  - `pagina`: Número de página (por defecto: 1)
+- **Autenticación requerida**: Sí (JWT)
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
+
+**Respuesta exitosa (200 OK):**
+```json
+{
+  "mensaje": "Lugares pendientes obtenidos exitosamente",
+  "lugares": [
+    {
+      "id": 1,
+      "nombre": "Nombre del lugar",
+      "descripcion": "Descripción...",
+      "estado": "pendiente",
+      "usuarioId": 3
+    }
+  ]
+}
+```
+
+**Errores posibles:**
+- 401: No autenticado
+- 403: No autorizado
+- 500: Error del servidor
   - `porPagina`: Cantidad de resultados por página (por defecto: 10)
 
 **Ejemplo de respuesta exitosa (200 OK):**
@@ -73,81 +109,96 @@ Obtiene la lista de lugares que están pendientes de aprobación.
 
 ### 3. Actualizar Estado de Lugar
 
-Permite a un administrador o moderador aprobar o rechazar un lugar pendiente.
+Aprueba o rechaza un lugar pendiente.
 
 - **URL**: `/lugar/:id/estado`
 - **Método**: `PUT`
-- **Parámetros de URL**:
-  - `id` (requerido): ID del lugar
-- **Autenticación requerida**: Sí
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
-- **Body (JSON)**:
-  ```json
-  {
-    "estado": "aprobado",  // o "rechazado"
-    "comentario_moderacion": "Comentario opcional del moderador"
-  }
-  ```
+- **Autenticación requerida**: Sí (JWT)
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
 
-**Ejemplo de respuesta exitosa (200 OK):**
+**Parámetros de URL**:
+- `id` (requerido): ID del lugar
+
+**Body (JSON)**:
 ```json
 {
-  "mensaje": "Estado del lugar actualizado correctamente",
+  "aprobacion": true,  // o false para rechazar
+  "estado": true       // alternativa a aprobacion
+}
+```
+
+**Respuesta exitosa (200 OK):**
+```json
+{
+  "mensaje": "aprobado",
   "lugar": {
     "id": 1,
-    "nombre": "Nombre del Lugar",
-    "estado": "aprobado"
+    "nombre": "Nombre del lugar",
+    "aprobacion": true,
+    "usuarioId": 3
+  },
+  "notificaciones": {
+    "propietario": "Notificación enviada al propietario",
+    "usuarios": "Notificación enviada a todos los usuarios"
   }
 }
 ```
+
+**Errores posibles:**
+- 400: El lugar ya está en el estado solicitado
+- 401: No autenticado
+- 403: No autorizado
+- 404: Lugar no encontrado
+- 500: Error del servidor
+
+**Notas:**
+- Emite notificaciones en tiempo real mediante Socket.IO
+- Si se aprueba, notifica a todos los usuarios
+- Si se rechaza, solo notifica al propietario
 
 ### 4. Obtener Notificaciones de Reportes
 
-Obtiene las notificaciones de reportes de comentarios pendientes de revisión.
+Obtiene el contador de reportes pendientes.
 
 - **URL**: `/comentario/reportes/notificaciones`
 - **Método**: `GET`
-- **Autenticación requerida**: Sí
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
+- **Autenticación requerida**: Sí (JWT)
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
 
-**Ejemplo de respuesta exitosa (200 OK):**
+**Respuesta exitosa (200 OK):**
 ```json
 {
-  "notificaciones": [
-    {
-      "id": 1,
-      "tipo": "reporte_comentario",
-      "mensaje": "Tienes 5 reportes de comentarios pendientes",
-      "leido": false,
-      "fecha_creacion": "2025-06-23T15:30:00.000Z"
-    }
-  ]
+  "reportesPendientes": 5,
+  "tieneNotificaciones": true
 }
 ```
+
+**Errores posibles:**
+- 401: No autenticado
+- 403: No autorizado
+- 500: Error del servidor
 
 ### 5. Obtener Notificaciones de Lugares
 
-Obtiene las notificaciones de lugares pendientes de revisión.
+Obtiene el contador de lugares pendientes.
 
 - **URL**: `/lugares/creacion/notificaciones`
 - **Método**: `GET`
-- **Autenticación requerida**: Sí
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
+- **Autenticación requerida**: Sí (JWT)
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
 
-**Ejemplo de respuesta exitosa (200 OK):**
+**Respuesta exitosa (200 OK):**
 ```json
 {
-  "notificaciones": [
-    {
-      "id": 2,
-      "tipo": "nuevo_lugar",
-      "mensaje": "Hay 3 lugares pendientes de revisión",
-      "leido": false,
-      "fecha_creacion": "2025-06-23T16:00:00.000Z"
-    }
-  ]
+  "lugaresPendientes": 3,
+  "tieneNotificaciones": true
 }
 ```
+
+**Errores posibles:**
+- 401: No autenticado
+- 403: No autorizado
+- 500: Error del servidor
 
 ## Códigos de Estado HTTP
 

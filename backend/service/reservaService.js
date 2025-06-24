@@ -339,7 +339,9 @@ class ReservaService {
   }
 
   // Crear nueva reserva
-  async crearReserva(usuarioid, eventoid, fecha_hora, aprobacion, estado, cantidad_entradas = 1) {
+  async crearReserva(usuarioid, eventoid, aprobacion, estado, cantidad_entradas = 1) {
+    // Establecer la fecha y hora actual si no se proporciona
+    const fecha_hora = new Date();
     try {
       // Verificar si el usuario ya tiene una reserva para este evento
       const reservaExistente = await Reserva.findOne({
@@ -360,7 +362,7 @@ class ReservaService {
       const siguienteNumero = ultimaReserva ? ultimaReserva.id + 1 : 1;
       const numero_reserva = `RES-${String(siguienteNumero).padStart(3, '0')}`;
 
-      const evento = await this.verificarEvento(eventoid, cantidad_entradas);
+      const eventoVerificado = await this.verificarEvento(eventoid, cantidad_entradas);
       const usuario = await this.verificarUsuario(usuarioid);
 
       if (!usuario) {
@@ -370,32 +372,44 @@ class ReservaService {
       const reserva = await Reserva.create({
         usuarioid,
         eventoid,
-        fecha_hora,
+        fecha_hora, // Se usa la fecha y hora actual
         aprobacion,
         estado,
         numero_reserva,
         cantidad_entradas
       });
 
-      return await Reserva.findByPk(reserva.id, {
-        include: [
-          {
-            model: Usuario,
-            as: "usuario",
-            attributes: ["id", "nombre", "correo"]
-          },
-          {
-            model: Evento,
-            as: "evento",
-            attributes: ["id", "nombre", "fecha_hora", "descripcion", "precio"],
-            include: [{
-              model: Lugar,
-              as: "lugar",
-              attributes: ["id", "nombre", "ubicacion"]
-            }]
-          }
-        ]
+      // Obtener el evento con la información necesaria
+      const eventoInfo = await Evento.findByPk(eventoid, {
+        attributes: ["nombre"],
+        include: [{
+          model: Lugar,
+          as: "lugar",
+          attributes: ["nombre"]
+        }]
       });
+
+      // Construir la respuesta con los datos necesarios
+      const respuesta = {
+        id: reserva.id,
+        numero_reserva: reserva.numero_reserva,
+        fecha_hora: eventoInfo ? eventoInfo.fecha_hora : null,
+        aprobacion: reserva.aprobacion,
+        estado: reserva.estado,
+        cantidad_entradas: reserva.cantidad_entradas,
+        evento: {
+          id: eventoInfo ? eventoInfo.id : null,
+          nombre: eventoInfo ? eventoInfo.nombre : null,
+          fecha_hora: eventoInfo ? eventoInfo.fecha_hora : null,
+          lugar: eventoInfo && eventoInfo.lugar ? {
+            id: eventoInfo.lugar.id,
+            nombre: eventoInfo.lugar.nombre,
+            ubicacion: eventoInfo.lugar.ubicacion
+          } : null
+        }
+      };
+
+      return respuesta;
     } catch (error) {
       console.error("Error en crearReserva:", error);
       throw error;

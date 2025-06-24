@@ -34,9 +34,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       aprobacion: {
         type: DataTypes.STRING,
+        defaultValue: 'rechazado',
+        allowNull: false
       },
       estado: {
         type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        allowNull: false
       },
       numero_reserva: {
         type: DataTypes.STRING,

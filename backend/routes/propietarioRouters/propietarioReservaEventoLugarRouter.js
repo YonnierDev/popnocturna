@@ -12,4 +12,20 @@ router.get(
   propietarioReservaEventoLugarController.obtenerReservasPendientes
 );
 
+// Obtener reservas de un evento específico
+router.get(
+  '/propietario/eventos/:eventoid/reservas',
+  autentiMiddleware,
+  validarRol(3),
+  propietarioReservaEventoLugarController.obtenerReservasPorEvento
+);
+
+// Ruta de compatibilidad (mantener si es necesario para otros usos)
+router.get(
+  '/propietario/reservas/activas',
+  autentiMiddleware,
+  validarRol(1, 2, 3),
+  propietarioReservaEventoLugarController.obtenerReservasActivas
+);
+
 module.exports = router;

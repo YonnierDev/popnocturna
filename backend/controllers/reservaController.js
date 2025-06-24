@@ -135,7 +135,7 @@ class ReservaController {
   async crearReserva(req, res) {
     try {
       const usuarioid = req.usuario.id;
-      const { eventoid, fecha_hora, cantidad_entradas = 1 } = req.body;
+      const { eventoid, cantidad_entradas = 1 } = req.body;
       const aprobacion = "Pendiente";
       const estado = true;
 
@@ -189,7 +189,6 @@ class ReservaController {
       const nuevaReserva = await ReservaService.crearReserva(
         usuarioid,
         eventoid,
-        fecha_hora,
         aprobacion,
         estado,
         cantidad_entradas
@@ -198,13 +197,29 @@ class ReservaController {
       // Obtener información actualizada del evento para la respuesta
       const eventoActualizado = await ReservaService.obtenerEventoConCapacidad(eventoid);
       
-      res.status(201).json({
+      // Construir la respuesta con los datos formateados
+      const respuesta = {
         success: true,
         mensaje: "Reserva creada exitosamente",
-        data: nuevaReserva,
+        data: {
+          id: nuevaReserva.id,
+          numero_reserva: nuevaReserva.numero_reserva,
+          fecha_hora: nuevaReserva.fecha_hora, // Esta es la fecha/hora del evento
+          aprobacion: nuevaReserva.aprobacion,
+          estado: nuevaReserva.estado,
+          cantidad_entradas: nuevaReserva.cantidad_entradas,
+          evento: {
+            id: nuevaReserva.evento?.id,
+            nombre: nuevaReserva.evento?.nombre,
+            fecha_hora: nuevaReserva.evento?.fecha_hora,
+            lugar: nuevaReserva.evento?.lugar
+          }
+        },
         capacidadActual: eventoActualizado.capacidad - (eventoActualizado.entradasReservadas || 0),
         capacidadTotal: eventoActualizado.capacidad
-      });
+      };
+      
+      res.status(201).json(respuesta);
     } catch (error) {
       console.error("Error en crearReserva:", error);
       res

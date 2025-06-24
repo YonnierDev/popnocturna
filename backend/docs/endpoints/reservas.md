@@ -4,7 +4,7 @@
 
 ### POST `/reserva`
 
-**Descripción:** Crea una nueva reserva en el sistema.
+**Descripción:** Crea una nueva reserva en el sistema. La fecha y hora de la reserva se establecerán automáticamente con la fecha y hora actual del servidor.
 
 **Autenticación:** Requerida (JWT)
 
@@ -13,29 +13,53 @@
 **Cuerpo de la petición (JSON):**
 ```json
 {
-    "fecha_hora": "2024-01-01T14:00:00.000Z",
-    "eventoId": 1,
-    "cantidad_personas": 4,
-    "notas": "Mesa cerca de la ventana por favor"
+    "eventoid": 1,
+    "cantidad_entradas": 1
 }
 ```
+
+**Campos requeridos:**
+- `eventoid` (number): ID del evento para el cual se desea hacer la reserva
+
+**Campos opcionales:**
+- `cantidad_entradas` (number, default: 1): Número de entradas a reservar (mínimo 1)
 
 **Respuesta exitosa (201):**
 ```json
 {
     "success": true,
-    "message": "Reserva creada exitosamente",
-    "reserva": {
-        "id": 1,
-        "numero_reserva": "res-0001",
-        "fecha_hora": "2024-01-01T14:00:00.000Z",
-        "eventoId": 1,
-        "usuarioId": 1,
-        "aprobacion": false,
-        "estado": true
-    }
+    "mensaje": "Reserva creada exitosamente",
+    "data": {
+        "id": 21,
+        "numero_reserva": "RES-021",
+        "aprobacion": "Pendiente",
+        "estado": true,
+        "cantidad_entradas": 1,
+        "evento": {
+            "nombre": "Torneo Relámpago",
+            "lugar": {
+                "nombre": "MACABI"
+            }
+        }
+    },
+    "capacidadActual": 14,
+    "capacidadTotal": 16
 }
 ```
+
+**Campos de respuesta:**
+- `data`: Contiene los detalles de la reserva creada
+  - `id`: ID de la reserva
+  - `numero_reserva`: Número único de la reserva (formato: RES-XXX)
+  - `aprobacion`: Estado de aprobación de la reserva (Pendiente/Aprobado/Rechazado)
+  - `estado`: Estado activo/inactivo de la reserva
+  - `cantidad_entradas`: Número de entradas reservadas
+  - `evento`: Información básica del evento
+    - `nombre`: Nombre del evento
+    - `lugar`: Información del lugar donde se realizará el evento
+      - `nombre`: Nombre del lugar
+- `capacidadActual`: Capacidad disponible actual del evento después de la reserva
+- `capacidadTotal`: Capacidad total del evento
 
 **Errores posibles:**
 - 400: Datos inválidos o faltantes

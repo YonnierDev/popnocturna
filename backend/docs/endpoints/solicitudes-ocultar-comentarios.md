@@ -4,15 +4,15 @@ Este documento describe los endpoints disponibles para gestionar las solicitudes
 
 ## Base URL
 
-Todas las rutas están prefijadas con `/api/solicitudes-ocultar`.
+Todas las rutas están prefijadas con `/api/`.
 
 ## Endpoints
 
-### 1. Obtener Solicitudes Pendientes
+### 1. Obtener Solicitudes Pendientes (Admin/Moderador)
 
 Obtiene la lista de solicitudes de ocultar comentarios pendientes de revisión.
 
-- **URL**: `/pendientes`
+- **URL**: `/administracion/pendientes`
 - **Método**: `GET`
 - **Autenticación requerida**: Sí (Administradores y Moderadores)
 - **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
@@ -33,7 +33,7 @@ Obtiene la lista de solicitudes de ocultar comentarios pendientes de revisión.
 }
 ```
 
-### 2. Obtener Detalle de Solicitud
+### 2. Obtener Detalle de Solicitud (Admin/Moderador)
 
 Obtiene el detalle completo de una solicitud de ocultar comentario, incluyendo información del comentario y del usuario que lo reportó.
 
@@ -69,7 +69,7 @@ Obtiene el detalle completo de una solicitud de ocultar comentario, incluyendo i
 }
 ```
 
-### 3. Procesar Solicitud
+### 3. Procesar Solicitud (Admin/Moderador)
 
 Permite a un administrador o moderador aprobar o rechazar una solicitud de ocultar comentario.
 
@@ -114,3 +114,43 @@ Permite a un administrador o moderador aprobar o rechazar una solicitud de ocult
 - Solo los administradores (rol 1) y moderadores (rol 2) pueden ver y procesar las solicitudes.
 - Al aprobar una solicitud, el comentario se marca como oculto y ya no será visible para los usuarios estándar.
 - Los usuarios que creen múltiples solicitudes falsas pueden ser sancionados.
+
+### 4. Solicitar Ocultar Comentario (Propietario)
+
+Permite a un propietario solicitar que se oculte un comentario de su establecimiento.
+
+- **URL**: `/propietario/comentario/:comentarioid/reporte`
+- **Método**: `POST`
+- **Autenticación requerida**: Sí (Propietarios)
+- **Roles permitidos**: `3` (Propietario)
+
+**Parámetros de URL**:
+- `comentarioid` (requerido): ID del comentario a reportar
+
+**Body (JSON)**:
+```json
+{
+  "motivo": "Motivo por el cual se solicita ocultar el comentario"
+}
+```
+
+**Respuesta exitosa (200 OK):**
+```json
+{
+  "mensaje": "Solicitud registrada exitosamente",
+  "solicitud": {
+    "id": 1,
+    "comentarioid": 5,
+    "estado": "pendiente",
+    "fecha_solicitud": "2025-06-23T15:30:00.000Z"
+  }
+}
+```
+
+**Errores posibles:**
+- 400: Ya existe una solicitud pendiente para este comentario
+- 401: No autenticado
+- 403: No autorizado (usuario no es propietario del establecimiento)
+- 404: Comentario no encontrado
+- 500: Error del servidor
+}

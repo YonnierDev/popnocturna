@@ -48,7 +48,7 @@ class SolicitudOcultarComentarioService {
       }
 
       // Verificar que el comentario no esté ya reportado
-      if (comentario.aprobacion === 'pendiente') {
+      if (comentario.aprobacion === 0) {  // 0 = pendiente
         console.log('Error: Comentario ya reportado');
         throw new Error('Este comentario ya ha sido reportado y está pendiente de revisión');
       }
@@ -57,7 +57,7 @@ class SolicitudOcultarComentarioService {
       const [actualizado] = await Comentario.update(
         {
           motivo_reporte,
-          aprobacion: 'pendiente',
+          aprobacion: 0,  // 0 = pendiente
           reportado_por: usuarioid,
           fecha_reporte: new Date()
         },
@@ -152,42 +152,77 @@ class SolicitudOcultarComentarioService {
 
   async procesarSolicitud(comentarioid, decision, usuarioid) {
     try {
+      console.log('=== Inicio de procesarSolicitud en servicio ===');
+      console.log('Datos recibidos:', { comentarioid, decision, usuarioid });
 
+      // Obtener el comentario con sus relaciones
       const comentario = await Comentario.findOne({
         where: { id: comentarioid },
         include: [
-          { model: Usuario, as: 'usuario', attributes: ['nombre', 'correo'] }
+          { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'correo'] },
+          { model: Evento, as: 'evento', include: [{ model: Lugar, as: 'lugar' }] }
         ]
       });
 
       if (!comentario) {
+        console.log('Error: Comentario no encontrado');
         throw new Error("Comentario no encontrado");
       }
 
       if (!["ocultar", "mantener"].includes(decision)) {
+        console.log('Error: Decisión inválida');
         throw new Error('La decisión debe ser "ocultar" o "mantener"');
       }
 
-      if (decision === "ocultar") {
-        comentario.estado = false;
-      } else if (decision === "mantener") {
-        comentario.estado = true;
+      // Actualizar el estado de aprobación
+      const nuevoEstadoAprobacion = decision === "ocultar" ? 1 : 2; // 1 = aprobado, 2 = rechazado
+      
+      // Actualizar el comentario
+      const [actualizado] = await Comentario.update(
+        {
+          aprobacion: nuevoEstadoAprobacion,
+          // Si la decisión es ocultar, cambiar estado a false (invisible)
+          // Si es mantener, dejar el estado como está
+          ...(decision === "ocultar" && { estado: false })
+        },
+        { where: { id: comentarioid } }
+      );
+
+      if (!actualizado) {
+        console.log('Error: No se pudo actualizar el comentario');
+        throw new Error('Error al actualizar el comentario');
       }
 
-      await comentario.save();
-
+      console.log('Comentario actualizado exitosamente');
+      
+      // Obtener el comentario actualizado para devolverlo
+      const comentarioActualizado = await this.obtenerComentario(comentarioid);
+      
       // Retornar los detalles actualizados del comentario
       return {
-        id: comentario.id,
-        contenido: comentario.contenido,
-        estado: comentario.estado ? 'activo' : 'inactivo',
-        createdAt: comentario.createdAt,
-        updatedAt: comentario.updatedAt,
-        usuario: comentario.usuario ? comentario.usuario.nombre : 'Desconocido',
-        correo: comentario.usuario ? comentario.usuario.correo : 'No disponible',
+        id: comentarioActualizado.id,
+        contenido: comentarioActualizado.contenido,
+        estado: comentarioActualizado.estado ? 'activo' : 'inactivo',
+        aprobacion: comentarioActualizado.aprobacion, // 0=pendiente, 1=aprobado, 2=rechazado
+        motivo_reporte: comentarioActualizado.motivo_reporte,
+        createdAt: comentarioActualizado.createdAt,
+        updatedAt: comentarioActualizado.updatedAt,
+        usuario: comentarioActualizado.usuario ? {
+          id: comentarioActualizado.usuario.id,
+          nombre: comentarioActualizado.usuario.nombre,
+          correo: comentarioActualizado.usuario.correo
+        } : null,
+        evento: comentarioActualizado.evento ? {
+          id: comentarioActualizado.evento.id,
+          nombre: comentarioActualizado.evento.nombre,
+          lugar: comentarioActualizado.evento.lugar ? {
+            id: comentarioActualizado.evento.lugar.id,
+            nombre: comentarioActualizado.evento.lugar.nombre
+          } : null
+        } : null
       };
     } catch (error) {
-      console.error("Error en el servicio:", error.message);
+      console.error("Error en procesarSolicitud:", error);
       throw new Error(`Error al procesar la solicitud: ${error.message}`);
     }
   }
