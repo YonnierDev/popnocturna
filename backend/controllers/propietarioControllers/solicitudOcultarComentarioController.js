@@ -111,7 +111,7 @@ class SolicitudOcultarComentarioController {
       }
 
       const respuesta = {
-        mensaje: "Detalles del comentario obtenidos exitosamente",
+        mensaje: `Comentario reportado por: ${comentario.evento?.lugar?.usuario?.nombre || 'Propietario no disponible'}, correo: ${comentario.evento?.lugar?.usuario?.correo || 'No disponible'}`,
         datos: {
           comentario: {
             id: comentario.id,
@@ -127,13 +127,13 @@ class SolicitudOcultarComentarioController {
               correo: comentario.usuario?.correo
             },
             evento: {
-              id: comentario.evento?.id,
               nombre: comentario.evento?.nombre,
-              descripcion: comentario.evento?.descripcion,
               lugar: {
-                id: comentario.evento?.lugar?.id,
                 nombre: comentario.evento?.lugar?.nombre,
-                ubicacion: comentario.evento?.lugar?.ubicacion
+                propietario: {
+                  nombre: comentario.evento?.lugar?.usuario?.nombre,
+                  correo: comentario.evento?.lugar?.usuario?.correo
+                }
               }
             }
           }

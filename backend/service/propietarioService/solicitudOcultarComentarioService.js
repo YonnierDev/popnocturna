@@ -140,7 +140,7 @@ class SolicitudOcultarComentarioService {
           {
             model: Usuario,
             as: 'usuario',
-            attributes: ['nombre']
+            attributes: ['id', 'nombre', 'correo']
           },
           {
             model: Evento,
@@ -149,7 +149,13 @@ class SolicitudOcultarComentarioService {
             include: [{
               model: Lugar,
               as: 'lugar',
-              attributes: ['nombre']
+              attributes: ['nombre',],
+              include: [{
+                model: Usuario,
+                as: 'usuario',
+                attributes: ['nombre', 'correo'],
+                required: false
+              }]
             }]
           }
         ]

@@ -82,39 +82,64 @@ Obtiene la lista de comentarios reportados pendientes de revisión.
 
 ### 3. Obtener Detalle de Comentario (Admin/Moderador)
 
-Obtiene el detalle completo de un comentario reportado.
+Obtiene el detalle completo de un comentario reportado, incluyendo información del propietario que lo reportó.
 
 - **URL**: `/administracion/comentario/:comentarioid`
 - **Método**: `GET`
 - **Roles permitidos**: `1` (Admin), `2` (Moderador)
 
+**Parámetros de URL**:
+- `comentarioid` (requerido): ID del comentario a consultar
+
 **Respuesta exitosa (200 OK):**
 ```json
 {
-  "comentario": {
-    "id": 17,
-    "contenido": "Contenido del comentario",
-    "estado": true,
-    "aprobacion": 0,
-    "motivo_reporte": "Motivo del reporte",
-    "fecha_creacion": "2025-06-24T05:58:52.000Z",
-    "fecha_actualizacion": "2025-06-24T05:58:52.000Z",
-    "usuario": {
-      "id": 4,
-      "nombre": "Usuario",
-      "correo": "usuario@ejemplo.com"
-    },
-    "evento": {
-      "nombre": "Nombre del Evento",
-      "lugar": {
-        "nombre": "Nombre del Lugar"
+  "mensaje": "Comentario reportado por: Juan Pérez, correo: juan@ejemplo.com",
+  "datos": {
+    "comentario": {
+      "id": 17,
+      "contenido": "Contenido del comentario",
+      "estado": true,
+      "aprobacion": 0,
+      "motivo_reporte": "Motivo del reporte",
+      "fecha_creacion": "2025-06-24T12:00:00.000Z",
+      "fecha_actualizacion": "2025-06-24T12:00:00.000Z",
+      "usuario": {
+        "id": 1,
+        "nombre": "Usuario",
+        "correo": "usuario@ejemplo.com"
+      },
+      "evento": {
+        "nombre": "Nombre del evento",
+        "lugar": {
+          "nombre": "Nombre del lugar",
+          "propietario": {
+            "nombre": "Juan Pérez",
+            "correo": "juan@ejemplo.com"
+          }
+        }
       }
     }
   }
 }
 ```
 
-### 4. Procesar Comentario Reportado (Admin/Moderador)
+**Error cuando el comentario no existe (404 Not Found):**
+```json
+{
+  "mensaje": "No hay comentario disponible con el ID proporcionado",
+  "datos": null
+}
+```
+
+**Códigos de estado HTTP:**
+- `200`: Comentario encontrado exitosamente
+- `401`: No autorizado (token inválido o faltante)
+- `403`: No tiene permisos para ver este comentario
+- `404`: Comentario no encontrado
+- `500`: Error interno del servidor
+
+### 4. Procesar Comentario Reportado (Super admin / Admin)
 
 Permite aprobar o rechazar un comentario reportado.
 
