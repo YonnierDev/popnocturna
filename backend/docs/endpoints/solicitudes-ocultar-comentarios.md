@@ -1,53 +1,191 @@
-# API de Gestión de Solicitudes de Ocultar Comentarios
+# API de Gestión de Comentarios Reportados
 
-Este documento describe los endpoints disponibles para gestionar las solicitudes de ocultar comentarios en la plataforma. Estas rutas están protegidas y requieren autenticación.
+Este documento describe los endpoints disponibles para gestionar los comentarios reportados en la plataforma. Las rutas están protegidas y requieren autenticación con JWT.
 
 ## Base URL
 
 Todas las rutas están prefijadas con `/api/`.
 
+## Autenticación
+
+Todas las rutas requieren un token JWT en el header `Authorization`:
+```
+Authorization: Bearer <token>
+```
+
 ## Endpoints
 
-### 1. Obtener Solicitudes Pendientes (Admin/Moderador)
+### 1. Reportar Comentario (Propietario)
 
-Obtiene la lista de solicitudes de ocultar comentarios pendientes de revisión.
+Permite a un propietario reportar un comentario para su revisión.
 
-- **URL**: `/administracion/pendientes`
-- **Método**: `GET`
-- **Autenticación requerida**: Sí (Administradores y Moderadores)
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
+- **URL**: `/propietario/comentario/:comentarioid/reporte`
+- **Método**: `POST`
+- **Roles permitidos**: `3` (Propietario)
+- **Body**:
+  ```json
+  {
+    "motivo_reporte": "Motivo del reporte"
+  }
+  ```
 
-**Ejemplo de respuesta exitosa (200 OK):**
-```json
-{
-  "solicitudes": [
-    {
+**Respuestas**:
+
+- **200 OK** - Reporte creado exitosamente:
+  ```json
+  {
+    "mensaje": "Reporte registrado correctamente",
+    "solicitud": {
       "id": 1,
       "comentarioid": 5,
-      "usuarioid": 3,
-      "motivo": "Contenido inapropiado",
-      "estado": "pendiente",
-      "fecha_solicitud": "2025-06-23T15:30:00.000Z"
+      "motivo_reporte": "Contenido inapropiado",
+      "estado": "pendiente"
+    }
+  }
+  ```
+
+- **400 Bad Request** - Datos inválidos o faltantes
+- **403 Forbidden** - Usuario no autorizado
+- **404 Not Found** - Comentario no encontrado
+
+### 2. Listar Comentarios Reportados (Admin/Moderador)
+
+Obtiene la lista de comentarios reportados pendientes de revisión.
+
+- **URL**: `/administracion/comentarios/reportados`
+- **Método**: `GET`
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
+
+**Respuesta exitosa (200 OK):**
+```json
+{
+  "comentarios": [
+    {
+      "id": 17,
+      "contenido": "Contenido del comentario",
+      "estado": true,
+      "aprobacion": 0,
+      "motivo_reporte": "Motivo del reporte",
+      "fecha_creacion": "2025-06-24T05:58:52.000Z",
+      "usuario": {
+        "id": 4,
+        "nombre": "Usuario",
+        "correo": "usuario@ejemplo.com"
+      },
+      "evento": {
+        "nombre": "Nombre del Evento"
+      }
     }
   ]
 }
 ```
 
-### 2. Obtener Detalle de Solicitud (Admin/Moderador)
+### 3. Obtener Detalle de Comentario (Admin/Moderador)
 
-Obtiene el detalle completo de una solicitud de ocultar comentario, incluyendo información del comentario y del usuario que lo reportó.
+Obtiene el detalle completo de un comentario reportado.
 
-- **URL**: `/administracion/detalle/:comentarioid`
+- **URL**: `/administracion/comentario/:comentarioid`
 - **Método**: `GET`
-- **Parámetros de URL**:
-  - `comentarioid` (requerido): ID del comentario
-- **Autenticación requerida**: Sí (Administradores y Moderadores)
-- **Permisos requeridos**: `Rol 1` (Admin) o `Rol 2` (Moderador)
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
 
-**Ejemplo de respuesta exitosa (200 OK):**
+**Respuesta exitosa (200 OK):**
 ```json
 {
-  "solicitud": {
+  "comentario": {
+    "id": 17,
+    "contenido": "Contenido del comentario",
+    "estado": true,
+    "aprobacion": 0,
+    "motivo_reporte": "Motivo del reporte",
+    "fecha_creacion": "2025-06-24T05:58:52.000Z",
+    "fecha_actualizacion": "2025-06-24T05:58:52.000Z",
+    "usuario": {
+      "id": 4,
+      "nombre": "Usuario",
+      "correo": "usuario@ejemplo.com"
+    },
+    "evento": {
+      "nombre": "Nombre del Evento",
+      "lugar": {
+        "nombre": "Nombre del Lugar"
+      }
+    }
+  }
+}
+```
+
+### 4. Procesar Comentario Reportado (Admin/Moderador)
+
+Permite aprobar o rechazar un comentario reportado.
+
+- **URL**: `/administracion/procesar/:comentarioid`
+- **Método**: `PUT`
+- **Roles permitidos**: `1` (Admin), `2` (Moderador)
+- **Body**:
+  ```json
+  {
+    "decision": 1
+  }
+  ```
+  - `decision`: `1` para aprobar/ocultar, `2` para rechazar/mantener visible
+
+**Respuestas**:
+
+- **200 OK** - Procesamiento exitoso:
+  ```json
+  {
+    "mensaje": "Comentario aprobado y ocultado correctamente",
+    "exito": true,
+    "datos": {
+      "comentario": {
+        "id": 17,
+        "contenido": "Contenido del comentario",
+        "estado": false,
+        "aprobacion": 1,
+        "motivo_reporte": "Motivo del reporte",
+        "fecha_creacion": "2025-06-24T05:58:52.000Z",
+        "fecha_actualizacion": "2025-06-24T07:23:10.000Z",
+        "usuario": {
+          "id": 4,
+          "nombre": "Usuario",
+          "correo": "usuario@ejemplo.com"
+        },
+        "evento": {
+          "nombre": "Nombre del Evento",
+          "lugar": {
+            "nombre": "Nombre del Lugar"
+          }
+        }
+      },
+      "procesadoPor": {
+        "nombre": "Admin",
+        "correo": "admin@ejemplo.com"
+      }
+    }
+  }
+  ```
+
+- **400 Bad Request** - Decisión inválida o comentario ya procesado
+- **403 Forbidden** - Usuario no autorizado
+- **404 Not Found** - Comentario no encontrado
+
+## Códigos de Estado
+
+- `200 OK`: La solicitud se completó exitosamente
+- `400 Bad Request`: Datos de entrada inválidos
+- `401 Unauthorized`: No autenticado
+- `403 Forbidden`: No tiene permisos para realizar esta acción
+- `404 Not Found`: El recurso solicitado no existe
+- `500 Internal Server Error`: Error del servidor
+
+## Notas
+
+- Los comentarios tienen los siguientes estados:
+  - `estado`: `true` (visible), `false` (oculto)
+  - `aprobacion`: 
+    - `0`: Pendiente de revisión
+    - `1`: Aprobado (oculto)
+    - `2`: Rechazado (visible)
     "id": 1,
     "comentario": {
       "id": 5,

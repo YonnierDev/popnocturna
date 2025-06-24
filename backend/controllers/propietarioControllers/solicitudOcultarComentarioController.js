@@ -154,14 +154,23 @@ class SolicitudOcultarComentarioController {
 
   async procesarSolicitud(req, res) {
     try {
-      const { comentarioid } = req.params;  // Extraemos el comentarioid de los parámetros de la URL
-      const { decision } = req.body;  // Extraemos la decisión del cuerpo de la solicitud
-      const administracion_id = req.usuario.id; // ID del administrador, asumiendo que viene en el token
+      const { comentarioid } = req.params;  // ID del comentario a procesar
+      const { decision } = req.body;  // 1 para aprobar/ocultar, 2 para rechazar/mantener
+      const administradorId = req.usuario.id; // ID del administrador que realiza la acción
 
-      // Verificar que la decisión sea "ocultar" o "mantener"
-      if (!["ocultar", "mantener"].includes(decision)) {
+      // Validar que se proporcione una decisión
+      if (decision === undefined || decision === null) {
         return res.status(400).json({
-          error: 'La decisión debe ser "ocultar" o "mantener"',
+          mensaje: 'Se requiere especificar una decisión (1 para aprobar/ocultar, 2 para rechazar/mantener)',
+          datos: null
+        });
+      }
+
+      // Validar que la decisión sea 1 o 2
+      if (![1, 2].includes(parseInt(decision))) {
+        return res.status(400).json({
+          mensaje: 'La decisión debe ser 1 (aprobado/ocultar) o 2 (rechazado/mantener)',
+          datos: null
         });
       }
 
@@ -169,17 +178,37 @@ class SolicitudOcultarComentarioController {
       const resultado = await SolicitudOcultarComentarioService.procesarSolicitud(
         comentarioid,
         decision,
-        administracion_id
+        administradorId
       );
 
+      // Usar el mensaje del servicio
       return res.status(200).json({
-        mensaje: `Comentario ${decision === "ocultar" ? "ocultado" : "mantenido"} exitosamente`,
-        datos: resultado,  // Devuelves los datos del comentario actualizado
+        mensaje: resultado.mensaje,
+        exito: true,
+        datos: {
+          comentario: resultado.comentario,
+          procesadoPor: resultado.procesadoPor
+        }
       });
+
     } catch (error) {
       console.error("Error al procesar solicitud:", error);
-      return res.status(500).json({
-        error: "Error al procesar la solicitud",  // Error genérico para el cliente
+      
+      // Manejar diferentes tipos de errores
+      if (error.message.includes('no está pendiente de revisión') || 
+          error.message.includes('no encontrado') ||
+          error.message.includes('ya fue aprobado') ||
+          error.message.includes('no tiene reportes')) {
+        return res.status(400).json({
+          error: error.message || 'Error al procesar la solicitud',
+          mensaje: error.message || 'Ocurrió un error al procesar la solicitud'
+        });
+      }
+
+      // Error genérico
+      res.status(500).json({
+        error: 'Ocurrió un error al procesar la solicitud',
+        mensaje: 'Ocurrió un error inesperado al procesar la solicitud'
       });
     }
   }

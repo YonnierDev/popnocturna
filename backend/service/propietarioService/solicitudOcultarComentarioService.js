@@ -1,5 +1,5 @@
-const { Comentario, Usuario, Evento, Lugar } = require('../../models');
-const { Op } = require("sequelize");
+const { Comentario, Usuario, Evento, Lugar, sequelize } = require('../../models');
+const { Op } = require('sequelize');
 
 class SolicitudOcultarComentarioService {
   // Obtener un comentario por ID
@@ -170,78 +170,142 @@ class SolicitudOcultarComentarioService {
 
 
   async procesarSolicitud(comentarioid, decision, usuarioid) {
+    const t = await sequelize.transaction();
+    
     try {
       console.log('=== Inicio de procesarSolicitud en servicio ===');
       console.log('Datos recibidos:', { comentarioid, decision, usuarioid });
 
-      // Obtener el comentario con sus relaciones
-      const comentario = await Comentario.findOne({
+      // Verificar que la decisión sea válida
+      if (![1, 2].includes(parseInt(decision))) {
+        console.log('Error: Decisión inválida');
+        throw new Error('La decisión debe ser 1 (aceptar) o 2 (rechazar)');
+      }
+
+      // Obtener el comentario actual para verificar su estado
+      const comentarioActual = await Comentario.findOne({
         where: { id: comentarioid },
-        include: [
-          { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'correo'] },
-          { model: Evento, as: 'evento', include: [{ model: Lugar, as: 'lugar' }] }
-        ]
+        transaction: t,
+        lock: t.LOCK.UPDATE // Bloquear el registro para evitar condiciones de carrera
       });
 
-      if (!comentario) {
+      if (!comentarioActual) {
         console.log('Error: Comentario no encontrado');
         throw new Error("Comentario no encontrado");
       }
 
-      if (!["ocultar", "mantener"].includes(decision)) {
-        console.log('Error: Decisión inválida');
-        throw new Error('La decisión debe ser "ocultar" o "mantener"');
+      // Si el comentario no está pendiente de revisión
+      if (comentarioActual.aprobacion !== 0) {
+        console.log(`Error: El comentario ya fue procesado con estado aprobacion=${comentarioActual.aprobacion}`);
+        if (comentarioActual.aprobacion === 1) {
+          throw new Error('Este comentario ya fue aprobado y está oculto');
+        } else if (comentarioActual.aprobacion === 2) {
+          throw new Error('Este comentario no tiene reportes activos');
+        } else {
+          throw new Error('Este comentario ya ha sido procesado anteriormente');
+        }
       }
 
-      // Actualizar el estado de aprobación
-      const nuevoEstadoAprobacion = decision === "ocultar" ? 1 : 2; // 1 = aprobado, 2 = rechazado
+      // Preparar la actualización
+      const nuevoEstado = decision == 1 ? false : true;
+      const datosActualizacion = {
+        aprobacion: parseInt(decision),
+        estado: nuevoEstado,
+        reportado_por: usuarioid,
+        updatedAt: new Date()
+      };
       
-      // Actualizar el comentario
-      const [actualizado] = await Comentario.update(
-        {
-          aprobacion: nuevoEstadoAprobacion,
-          // Si la decisión es ocultar, cambiar estado a false (invisible)
-          // Si es mantener, dejar el estado como está
-          ...(decision === "ocultar" && { estado: false })
-        },
-        { where: { id: comentarioid } }
-      );
+      console.log('Datos de actualización:', datosActualizacion);
 
-      if (!actualizado) {
-        console.log('Error: No se pudo actualizar el comentario');
-        throw new Error('Error al actualizar el comentario');
+      // Actualizar el comentario
+      const [filasAfectadas] = await Comentario.update(
+        datosActualizacion,
+        { 
+          where: { id: comentarioid },
+          transaction: t
+        }
+      );
+      
+      if (filasAfectadas === 0) {
+        throw new Error('No se pudo actualizar el comentario');
       }
 
       console.log('Comentario actualizado exitosamente');
       
-      // Obtener el comentario actualizado para devolverlo
-      const comentarioActualizado = await this.obtenerComentario(comentarioid);
-      
-      // Retornar los detalles actualizados del comentario
-      return {
-        id: comentarioActualizado.id,
-        contenido: comentarioActualizado.contenido,
-        estado: comentarioActualizado.estado ? 'activo' : 'inactivo',
-        aprobacion: comentarioActualizado.aprobacion, // 0=pendiente, 1=aprobado, 2=rechazado
-        motivo_reporte: comentarioActualizado.motivo_reporte,
-        createdAt: comentarioActualizado.createdAt,
-        updatedAt: comentarioActualizado.updatedAt,
-        usuario: comentarioActualizado.usuario ? {
-          id: comentarioActualizado.usuario.id,
-          nombre: comentarioActualizado.usuario.nombre,
-          correo: comentarioActualizado.usuario.correo
+      // Obtener el comentario actualizado con sus relaciones básicas
+      const comentarioActualizado = await Comentario.findByPk(comentarioid, {
+        include: [
+          { 
+            model: Usuario, 
+            as: 'usuario', 
+            attributes: ['id', 'nombre', 'correo'] 
+          },
+          { 
+            model: Evento, 
+            as: 'evento', 
+            include: [{ 
+              model: Lugar, 
+              as: 'lugar',
+              attributes: ['nombre']
+            }],
+            attributes: ['nombre']
+          }
+        ],
+        transaction: t
+      });
+
+      // Obtener información del administrador que procesó la solicitud
+      const admin = await Usuario.findByPk(usuarioid, {
+        attributes: ['nombre', 'correo'],
+        transaction: t
+      });
+
+      // Confirmar la transacción
+      await t.commit();
+
+      // Formatear la respuesta
+      const respuesta = {
+        comentario: {
+          id: comentarioActualizado.id,
+          contenido: comentarioActualizado.contenido,
+          estado: comentarioActualizado.estado,
+          aprobacion: comentarioActualizado.aprobacion,
+          motivo_reporte: comentarioActualizado.motivo_reporte,
+          fecha_creacion: comentarioActualizado.createdAt,
+          fecha_actualizacion: comentarioActualizado.updatedAt,
+          usuario: {
+            id: comentarioActualizado.usuario.id,
+            nombre: comentarioActualizado.usuario.nombre,
+            correo: comentarioActualizado.usuario.correo
+          },
+          evento: {
+            id: comentarioActualizado.evento.id,
+            nombre: comentarioActualizado.evento.nombre,
+            lugar: comentarioActualizado.evento.lugar ? {
+              id: comentarioActualizado.evento.lugar.id,
+              nombre: comentarioActualizado.evento.lugar.nombre
+            } : null
+          }
+        },
+        procesadoPor: admin ? {
+          id: admin.id,
+          nombre: admin.nombre,
+          correo: admin.correo
         } : null,
-        evento: comentarioActualizado.evento ? {
-          id: comentarioActualizado.evento.id,
-          nombre: comentarioActualizado.evento.nombre,
-          lugar: comentarioActualizado.evento.lugar ? {
-            id: comentarioActualizado.evento.lugar.id,
-            nombre: comentarioActualizado.evento.lugar.nombre
-          } : null
-        } : null
+        mensaje: decision == 1 
+          ? 'Comentario aprobado y ocultado correctamente' 
+          : 'Comentario rechazado y mantenido visible',
+        exito: true
       };
+
+      return respuesta;
+      
     } catch (error) {
-      console.error("Error en procesarSolicitud:", error);
+      // Hacer rollback en caso de error
+      if (t && typeof t.rollback === 'function') {
+        await t.rollback();
+      }
+      console.error('Error en procesarSolicitud:', error);
       throw new Error(`Error al procesar la solicitud: ${error.message}`);
     }
   }
