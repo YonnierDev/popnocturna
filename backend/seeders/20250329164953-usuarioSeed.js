@@ -42,7 +42,7 @@ module.exports = {
       {
         nombre: "Admin",
         apellido: "Sistema",
-        correo: "admin@gamil.com",
+        correo: "admin@gmail.com",
         fecha_nacimiento: new Date("1990-01-01"),
         contrasena: await bcrypt.hash("Admin-123", 10),
         genero: "Masculino",

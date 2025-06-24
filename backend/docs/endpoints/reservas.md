@@ -1,6 +1,49 @@
 # Endpoints de Reservas
 
-## 1. Listar Todas las Reservas
+## 1. Crear Reserva
+
+### POST `/reserva`
+
+**Descripción:** Crea una nueva reserva en el sistema.
+
+**Autenticación:** Requerida (JWT)
+
+**Roles permitidos:** Usuario (rol 4)
+
+**Cuerpo de la petición (JSON):**
+```json
+{
+    "fecha_hora": "2024-01-01T14:00:00.000Z",
+    "eventoId": 1,
+    "cantidad_personas": 4,
+    "notas": "Mesa cerca de la ventana por favor"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+    "success": true,
+    "message": "Reserva creada exitosamente",
+    "reserva": {
+        "id": 1,
+        "numero_reserva": "res-0001",
+        "fecha_hora": "2024-01-01T14:00:00.000Z",
+        "eventoId": 1,
+        "usuarioId": 1,
+        "aprobacion": false,
+        "estado": true
+    }
+}
+```
+
+**Errores posibles:**
+- 400: Datos inválidos o faltantes
+- 401: Token no válido
+- 403: No tienes permiso para crear reservas
+- 404: Evento no encontrado
+
+## 2. Listar Todas las Reservas
 
 ### GET `/reservas`
 
@@ -40,7 +83,7 @@
 - 401: Token no válido
 - 500: Error interno del servidor
 
-## 2. Buscar Reserva por Número
+## 3. Buscar Reserva por Número
 
 ### GET `/reserva/:numero_reserva`
 
@@ -82,7 +125,7 @@
 - 404: Reserva no encontrada
 - 500: Error interno del servidor
 
-## 3. Actualizar Reserva
+## 4. Actualizar Reserva
 
 ### PUT `/reserva/:id`
 
@@ -126,7 +169,7 @@
 - 404: Reserva no encontrada
 - 500: Error interno del servidor
 
-## 4. Eliminar Reserva
+## 5. Eliminar Reserva
 
 ### DELETE `/reserva/:id`
 
@@ -153,7 +196,7 @@
 - 404: Reserva no encontrada
 - 500: Error interno del servidor
 
-## 5. Actualizar Estado de Reserva
+## 6. Actualizar Estado de Reserva
 
 ### PATCH `/reserva/estado/:id`
 
@@ -192,7 +235,7 @@
 - 404: Reserva no encontrada
 - 500: Error interno del servidor
 
-## 6. Aprobar/Rechazar Reserva
+## 7. Aprobar/Rechazar Reserva
 
 ### PATCH `/reserva/aprobar/:numero_reserva`
 
