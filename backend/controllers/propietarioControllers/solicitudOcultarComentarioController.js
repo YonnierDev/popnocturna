@@ -105,30 +105,47 @@ class SolicitudOcultarComentarioController {
 
       if (!comentario) {
         return res.status(404).json({
-          error: "Comentario no encontrado",
+          mensaje: "No hay comentario disponible con el ID proporcionado",
+          datos: null
         });
       }
 
-      const mensaje = comentario.estado === "inactivo"
-        ? "Comentario inactivo"
-        : "Comentario activo";
-
-      res.status(200).json({
-        mensaje,
+      const respuesta = {
+        mensaje: "Detalles del comentario obtenidos exitosamente",
         datos: {
-          id: comentario.id,
-          contenido: comentario.contenido,
-          estado: comentario.estado,
-          usuario: comentario.usuario.nombre,
-          fecha_creacion: comentario.createdAt,
-          fecha_actualizacion: comentario.updatedAt,
-        },
-      });
+          comentario: {
+            id: comentario.id,
+            contenido: comentario.contenido,
+            estado: comentario.estado,
+            aprobacion: comentario.aprobacion,
+            motivo_reporte: comentario.motivo_reporte,
+            fecha_creacion: comentario.createdAt,
+            fecha_actualizacion: comentario.updatedAt,
+            usuario: {
+              id: comentario.usuario?.id,
+              nombre: comentario.usuario?.nombre,
+              correo: comentario.usuario?.correo
+            },
+            evento: {
+              id: comentario.evento?.id,
+              nombre: comentario.evento?.nombre,
+              descripcion: comentario.evento?.descripcion,
+              lugar: {
+                id: comentario.evento?.lugar?.id,
+                nombre: comentario.evento?.lugar?.nombre,
+                ubicacion: comentario.evento?.lugar?.ubicacion
+              }
+            }
+          }
+        }
+      };
 
+      res.status(200).json(respuesta);
     } catch (error) {
       console.error("Error al obtener detalles del comentario:", error);
       res.status(500).json({
-        error: "Error al obtener los detalles del comentario",
+        mensaje: "Error al obtener los detalles del comentario",
+        error: error.message
       });
     }
   }

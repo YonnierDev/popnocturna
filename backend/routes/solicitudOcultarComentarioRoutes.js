@@ -19,7 +19,7 @@ router.get(
 );
 
 router.get(
-    '/administracion/detalle/:comentarioid',
+    '/administracion/comentario/:comentarioid',
     [autentiMiddleware, validarRol(1, 2)],
     SolicitudOcultarComentarioController.obtenerDetalle
 );

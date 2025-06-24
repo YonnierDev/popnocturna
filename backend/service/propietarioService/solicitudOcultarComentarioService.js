@@ -132,27 +132,35 @@ class SolicitudOcultarComentarioService {
 
   async obtenerDetallesComentario(comentarioid) {
     try {
-      console.log(`Buscando comentario con ID: ${comentarioid}`);  // Agregar log para ver qué comentario se busca
+      console.log(`Buscando comentario con ID: ${comentarioid}`);
 
       const comentario = await Comentario.findOne({
         where: { id: comentarioid },
-        attributes: ['id', 'contenido', 'estado', 'createdAt', 'updatedAt'],
         include: [
           {
             model: Usuario,
             as: 'usuario',
             attributes: ['nombre']
+          },
+          {
+            model: Evento,
+            as: 'evento',
+            attributes: ['nombre'],
+            include: [{
+              model: Lugar,
+              as: 'lugar',
+              attributes: ['nombre']
+            }]
           }
         ]
       });
 
-
-      console.log('Comentario encontrado:', comentario);
-
       if (!comentario) {
-        throw new Error('Comentario no encontrado');
+        console.log('Comentario no encontrado');
+        return null;
       }
 
+      console.log('Comentario encontrado con éxito');
       return comentario;
     } catch (error) {
       console.error('Error en obtenerDetallesComentario:', error.message);
