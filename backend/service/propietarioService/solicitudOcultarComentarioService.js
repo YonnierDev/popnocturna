@@ -101,17 +101,17 @@ class SolicitudOcultarComentarioService {
         {
           model: Usuario,
           as: 'usuario',
-          attributes: ['nombre']
+          attributes: ['id', 'nombre', 'apellido', 'correo', 'imagen']
         },
         {
           model: Evento,
           as: 'evento',
-          attributes: ['nombre'],
+          attributes: ['id', 'nombre', 'descripcion', 'fecha_hora', 'portada'],
           include: [
             {
               model: Lugar,
               as: 'lugar',
-              attributes: ['nombre']
+              attributes: ['id', 'nombre', 'ubicacion', 'imagen', 'fotos_lugar']
             }
           ]
         }
@@ -123,7 +123,9 @@ class SolicitudOcultarComentarioService {
         'estado',
         'aprobacion',
         'motivo_reporte',
-        'updatedAt'  // Usamos updatedAt para saber cuándo se reportó
+        'updatedAt',  // Usamos updatedAt para saber cuándo se reportó
+        'usuarioid',
+        'eventoid'
       ],
       order: [['updatedAt', 'ASC']]  // Ordenar por fecha de actualización más antigua primero
     });
