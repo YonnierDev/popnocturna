@@ -263,38 +263,58 @@
 
 ### PATCH `/reserva/aprobar/:numero_reserva`
 
-**Descripción:** Aprobar o rechazar una reserva.
+**Descripción:** Aprobar o rechazar una reserva. Solo los propietarios (rol 3) pueden aprobar o rechazar reservas de sus propios eventos.
 
 **Parámetros de URL:**
-- `numero_reserva` (string): Número de la reserva
+- `numero_reserva` (string): Número de la reserva (puede incluir o no el prefijo 'RES-')
 
 **Body (JSON):**
 ```json
 {
-    "aprobacion": true // o false para rechazar
+    "aprobacion": "aceptado" // Valores posibles: "aceptado", "rechazado" o "pendiente"
 }
 ```
 
 **Autenticación:** Requerida (JWT)
 
-**Roles permitidos:** Role 1 (admin), Role 2 (super admin) y Role 3 (propietario)
+**Roles permitidos:** Role 3 (propietario)
 
 **Respuesta exitosa (200):**
 ```json
 {
     "success": true,
-    "message": "Reserva aprobada/rechazada exitosamente",
-    "reserva": {
-        "id": 1,
-        "numero_reserva": "res-0001",
-        "aprobacion": true
+    "mensaje": "Reserva aprobada correctamente",
+    "data": {
+        "id": 18,
+        "numero_reserva": "RES-001",
+        "aprobacion": "aceptado",
+        "estado": true,
+        "fecha_actualizacion": "2025-06-24T07:40:16.714Z"
     }
 }
 ```
 
+**Campos de respuesta exitosa:**
+- `success`: Indica si la operación fue exitosa
+- `mensaje`: Mensaje descriptivo del resultado
+- `data`: Contiene los detalles actualizados de la reserva
+  - `id`: ID de la reserva
+  - `numero_reserva`: Número de la reserva
+  - `aprobacion`: Nuevo estado de aprobación (aceptado/rechazado/pendiente)
+  - `estado`: Estado actual de la reserva
+  - `fecha_actualizacion`: Fecha y hora de la última actualización
+
 **Errores posibles:**
-- 400: Datos inválidos
-- 401: Token no válido
-- 403: No tienes permiso para aprobar/rechazar
+- 400: 
+  - Número de reserva no proporcionado
+  - Estado de aprobación no válido
+  - La reserva ya se encuentra en el estado solicitado
+- 401: Token no válido o no proporcionado
+- 403: No tienes permiso para aprobar/rechazar esta reserva
 - 404: Reserva no encontrada
 - 500: Error interno del servidor
+
+**Notas:**
+- Solo el propietario del lugar donde se realiza el evento puede aprobar o rechazar reservas
+- Los valores de aprobación son insensibles a mayúsculas/minúsculas
+- La respuesta incluye la fecha y hora de la última actualización de la reserva
