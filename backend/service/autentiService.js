@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const UsuarioService = require("./usuarioService");
+const { enviarNotificacion } = require("./fcmFirebase/fcmFirebaseService");
 require("dotenv").config();
 
 class AutentiService {
@@ -124,36 +125,45 @@ class AutentiService {
     }
   }
 
-  static async login({ correo, contrasena }) {
+  static async  login({ correo, contrasena, device_token }) {
     const usuario = await UsuarioService.buscarPorCorreo(correo);
-    if (!usuario) {
-      throw new Error("Usuario no existe");
-    }
-    if (!usuario.estado) {
-      throw new Error("Usuario bloqueado");
-    }
+    if (!usuario) throw new Error("Usuario no existe");
+    if (!usuario.estado) throw new Error("Usuario bloqueado");
 
     const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
-    if (!esValido) {
-      throw new Error("Contraseña incorrecta");
+    if (!esValido) throw new Error("Contraseña incorrecta");
+
+
+    if (device_token) {
+      usuario.device_token = device_token;
+      await usuario.save();
     }
 
     const payload = {
       id: usuario.id,
       correo: usuario.correo,
-      rol: usuario.rolid
+      rol: usuario.rolid,
     };
 
     const secret = process.env.JWT_SECRET || "secreto";
 
-    const token = jwt.sign(
-      payload,
-      secret,
-      { expiresIn: "2h" }
-    );
+    const token = jwt.sign(payload, secret, { expiresIn: "2h" });
+
+    if (usuario.device_token) {
+    await enviarNotificacion({
+      token: usuario.device_token,
+      titulo: '¡Bienvenido!',
+      cuerpo: `Hola ${usuario.nombre}, has iniciado sesión exitosamente.`,
+      imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShabro8p3uSGKKI2WHauC3RHRla7VnpVFTpw&s' 
+    });
+  }
 
     return { token, usuario };
   }
+
+
+
+  
 
   static async enviarCodigoRecuperacion(correo) {
     const usuario = await UsuarioService.buscarPorCorreo(correo);

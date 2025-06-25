@@ -97,6 +97,10 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      device_token: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
     },
     {
       sequelize,
