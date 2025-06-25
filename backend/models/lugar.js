@@ -56,13 +56,30 @@ module.exports = (sequelize) => {
       fotos_lugar: {
         type: DataTypes.TEXT,
         allowNull: true,
-        defaultValue: '',
+        defaultValue: JSON.stringify([]),
         get() {
           const rawValue = this.getDataValue('fotos_lugar');
-          return rawValue ? rawValue.split(',') : [];
+          try {
+            // Si es un string, parsear como JSON
+            if (typeof rawValue === 'string') {
+              return JSON.parse(rawValue);
+            }
+            // Si ya es un array, devolverlo
+            if (Array.isArray(rawValue)) {
+              return rawValue;
+            }
+            // Si es null o undefined, devolver array vacío
+            return [];
+          } catch (e) {
+            console.error('Error al parsear fotos_lugar:', e);
+            return [];
+          }
         },
         set(value) {
-          this.setDataValue('fotos_lugar', Array.isArray(value) ? value.join(',') : value);
+          // Asegurarse de que siempre sea un array
+          const valueToStore = Array.isArray(value) ? value : 
+                             (value ? [String(value)] : []);
+          this.setDataValue('fotos_lugar', JSON.stringify(valueToStore));
         }
       },
       carta_pdf: {

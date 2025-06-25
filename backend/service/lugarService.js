@@ -185,6 +185,29 @@ class LugarService {
     const transaction = await Lugar.sequelize.transaction();
     
     try {
+      // Asegurarse de que fotos_lugar sea un array
+      if (dataLugar.fotos_lugar) {
+        try {
+          // Si es string, intentar parsear como JSON
+          if (typeof dataLugar.fotos_lugar === 'string') {
+            try {
+              dataLugar.fotos_lugar = JSON.parse(dataLugar.fotos_lugar);
+            } catch (e) {
+              // Si no es JSON válido, convertirlo a array
+              dataLugar.fotos_lugar = [dataLugar.fotos_lugar];
+            }
+          }
+          // Asegurarse de que sea un array
+          if (!Array.isArray(dataLugar.fotos_lugar)) {
+            dataLugar.fotos_lugar = [String(dataLugar.fotos_lugar)];
+          }
+        } catch (e) {
+          console.error('Error al procesar fotos_lugar:', e);
+          dataLugar.fotos_lugar = [];
+        }
+      } else {
+        dataLugar.fotos_lugar = [];
+      }
       // Obtener el lugar actual dentro de la transacción
       const lugar = await Lugar.findByPk(id, { transaction });
       if (!lugar) {

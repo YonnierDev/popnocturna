@@ -393,21 +393,7 @@ class LugarController {
         // Obtener el lugar actualizado con las relaciones
         const lugarActualizadoConRelaciones = await LugarService.buscarLugar(id);
         
-        // Convertir fotos_lugar a array si es un string
-        let fotos_lugar = [];
-        if (lugarActualizadoConRelaciones.fotos_lugar) {
-          try {
-            // Intentar parsear como JSON
-            fotos_lugar = JSON.parse(lugarActualizadoConRelaciones.fotos_lugar);
-            // Si es un string, intentar parsear el contenido
-            if (typeof fotos_lugar === 'string') {
-              fotos_lugar = JSON.parse(fotos_lugar);
-            }
-          } catch (e) {
-            // Si falla el parseo, usar el valor original
-            fotos_lugar = lugarActualizadoConRelaciones.fotos_lugar;
-          }
-        }
+        // Obtener fotos_lugar directamente del modelo (ya está normalizado por el getter)
         
         res.json({
           mensaje: "Lugar actualizado con éxito",
