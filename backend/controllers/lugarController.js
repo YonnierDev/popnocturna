@@ -278,7 +278,7 @@ class LugarController {
           if (lugarExistente.imagen) {
             const publicId = lugarExistente.imagen.split('/').pop().split('.')[0];
             try {
-              await cloudinary.uploader.destroy(publicId);
+              await cloudinaryService.eliminarImagen(publicId);
             } catch (error) {
               console.error('Error al eliminar imagen anterior:', error);
             }
@@ -299,14 +299,26 @@ class LugarController {
       let fotosUrls = lugarExistente.fotos_lugar;
       if (req.files?.fotos_lugar?.length > 0) {
         try {
-          // Convertir el string de fotos a array si es necesario
-          const fotosArray = fotosUrls ? JSON.parse(fotosUrls) : [];
+          // Asegurarse de que fotosUrls sea un array
+          let fotosArray = [];
+          try {
+            if (Array.isArray(fotosUrls)) {
+              fotosArray = [...fotosUrls];
+            } else if (typeof fotosUrls === 'string') {
+              fotosArray = JSON.parse(fotosUrls);
+            }
+          } catch (e) {
+            console.error('Error al parsear fotos existentes:', e);
+            fotosArray = [];
+          }
 
           // Eliminar fotos existentes de Cloudinary
           for (const foto of fotosArray) {
             try {
-              const publicId = foto.split('/').pop().split('.')[0];
-              await cloudinary.uploader.destroy(publicId);
+              if (foto) {
+                const publicId = foto.split('/').pop().split('.')[0];
+                await cloudinaryService.eliminarImagen(publicId);
+              }
             } catch (error) {
               console.error('Error al eliminar foto:', error);
             }
@@ -321,8 +333,8 @@ class LugarController {
           );
           const uploadResults = await Promise.all(uploadPromises);
 
-          // Guardar las nuevas URLs como array
-          fotosUrls = JSON.stringify(uploadResults.map(result => result.secure_url));
+          // Guardar las nuevas URLs
+          fotosUrls = uploadResults.map(result => result.secure_url);
         } catch (error) {
           console.error('Error al subir fotos adicionales:', error);
           return res.status(500).json({
@@ -393,19 +405,52 @@ class LugarController {
         // Obtener el lugar actualizado con las relaciones
         const lugarActualizadoConRelaciones = await LugarService.buscarLugar(id);
         
-        // Obtener fotos_lugar directamente del modelo (ya está normalizado por el getter)
+        // Asegurarse de que fotos_lugar sea un array limpio
+        let fotos_lugar = [];
+        try {
+          if (lugarActualizadoConRelaciones.fotos_lugar) {
+            let fotos = lugarActualizadoConRelaciones.fotos_lugar;
+            // Si es un string, intentar parsear
+            if (typeof fotos === 'string') {
+              // Eliminar múltiples capas de escape
+              while (fotos.includes('\\"')) {
+                fotos = JSON.parse(fotos);
+              }
+              // Si después de limpiar es un array, usarlo
+              if (Array.isArray(fotos)) {
+                fotos_lugar = fotos.flat();
+              } else if (typeof fotos === 'string') {
+                // Si es un string, intentar parsear como JSON
+                try {
+                  const parsed = JSON.parse(fotos);
+                  fotos_lugar = Array.isArray(parsed) ? parsed : [parsed];
+                } catch (e) {
+                  fotos_lugar = [fotos];
+                }
+              }
+            } else if (Array.isArray(fotos)) {
+              fotos_lugar = fotos.flat();
+            }
+          }
+        } catch (e) {
+          console.error('Error al procesar fotos_lugar:', e);
+          fotos_lugar = [];
+        }
         
-        res.json({
+        // Crear la respuesta
+        const respuesta = {
           mensaje: "Lugar actualizado con éxito",
           lugar: {
             ...lugarActualizadoConRelaciones.dataValues,
-            // Asegurarse de que fotos_lugar sea un array
-            fotos_lugar: Array.isArray(fotos_lugar) ? fotos_lugar : [],
+            // Asegurarse de que fotos_lugar sea un array plano
+            fotos_lugar: fotos_lugar.flat().filter(Boolean),
             // Mantener la imagen existente cuando no se envía una nueva
             imagen: lugarActualizadoConRelaciones.imagen || imagenUrl
           },
           detalles: "Los cambios han sido aplicados correctamente"
-        });
+        };
+        
+        res.json(respuesta);
       } catch (error) {
         console.error('Error detallado al actualizar lugar:', error);
         throw error; // Re-lanzar el error para que lo maneje el catch general
@@ -432,7 +477,7 @@ class LugarController {
 
   async eliminarLugar(req, res) {
     try {
-      const { rol } = req.usuario;
+      const { rol } = req.usuario || {};
 
       if (!rol) {
         return res.status(401).json({
@@ -609,25 +654,42 @@ class LugarController {
       }
 
       // Formatear la respuesta para incluir las fotos
-      const lugaresFormateados = lugares.map(lugar => ({
-        id: lugar.id,
-        nombre: lugar.nombre,
-        descripcion: lugar.descripcion,
-        ubicacion: lugar.ubicacion,
-        imagen: lugar.imagen,
-        fotos_lugar: lugar.fotos_lugar ? lugar.fotos_lugar.split(',') : [],
-        categoria: lugar.categoria ? {
-          id: lugar.categoria.id,
-          tipo: lugar.categoria.tipo
-        } : null,
-        eventos: lugar.eventos ? lugar.eventos.map(evento => ({
-          id: evento.id,
-          nombre: evento.nombre,
-          descripcion: evento.descripcion,
-          fecha_hora: evento.fecha_hora,
-          imagen: evento.imagen
-        })) : []
-      }));
+      const lugaresFormateados = lugares.map(lugar => {
+        // Asegurarse de que fotos_lugar sea un array
+        let fotos_lugar = [];
+        try {
+          if (lugar.fotos_lugar) {
+            if (typeof lugar.fotos_lugar === 'string') {
+              fotos_lugar = JSON.parse(lugar.fotos_lugar);
+            } else if (Array.isArray(lugar.fotos_lugar)) {
+              fotos_lugar = lugar.fotos_lugar;
+            }
+          }
+        } catch (e) {
+          console.error('Error al parsear fotos_lugar:', e);
+          fotos_lugar = [];
+        }
+
+        return {
+          id: lugar.id,
+          nombre: lugar.nombre,
+          descripcion: lugar.descripcion,
+          ubicacion: lugar.ubicacion,
+          imagen: lugar.imagen,
+          fotos_lugar: Array.isArray(fotos_lugar) ? fotos_lugar : [],
+          categoria: lugar.categoria ? {
+            id: lugar.categoria.id,
+            tipo: lugar.categoria.tipo
+          } : null,
+          eventos: lugar.eventos ? lugar.eventos.map(evento => ({
+            id: evento.id,
+            nombre: evento.nombre,
+            descripcion: evento.descripcion,
+            fecha_hora: evento.fecha_hora,
+            imagen: evento.imagen
+          })) : []
+        };
+      });
 
       res.status(200).json({
         mensaje: "Lugares obtenidos correctamente",

@@ -268,6 +268,30 @@ class CloudinaryService {
     }
   }
 
+  // Método para eliminar una imagen por su URL
+  async eliminarImagen(url) {
+    if (!url) return { result: 'not_found' };
+    
+    try {
+      // Extraer el public_id de la URL (última parte sin extensión)
+      const publicId = url.split('/').pop().split('.')[0];
+      const folder = 'lugares';
+      const fullPublicId = `${folder}/${publicId}`;
+      
+      console.log(`Eliminando imagen: ${fullPublicId}`);
+      const result = await cloudinary.uploader.destroy(fullPublicId, {
+        resource_type: 'image',
+        invalidate: true
+      });
+      
+      console.log('Resultado eliminación:', result);
+      return result;
+    } catch (error) {
+      console.error('Error al eliminar imagen:', error);
+      return { result: 'error', error: error.message };
+    }
+  }
+
   // Método para eliminar imágenes de portada de un evento
   async eliminarPortada(evento) {
     try {
