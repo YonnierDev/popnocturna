@@ -29,6 +29,7 @@ yarn-error.log*
 sequelize-meta.json
 .sequelize/
 config/config.json
+config/nocturnapopayan-admin.json
 
 # Database files
 *.sqlite
@@ -100,6 +101,7 @@ temp/
 .firebaserc
 firebase-debug.log
 
+
 # Archivos de configuración local
 config.local.js
 config.dev.js
@@ -110,3 +112,4 @@ config.dev.js
 #test
 test-connection.js
 test-config.js
+
