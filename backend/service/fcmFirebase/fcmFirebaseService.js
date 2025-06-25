@@ -1,7 +1,9 @@
 const admin = require('firebase-admin');
 const path = require('path');
+require('dotenv').config();
 
-const serviceAccount = require(path.resolve(__dirname, '../../config/nocturnapopayan-admin.json'));
+// Cargar las credenciales desde la variable de entorno
+const serviceAccount = require(path.resolve(process.cwd(), process.env.FIREBASE_CREDENTIALS_PATH));
 
 if (!admin.apps.length) {
   admin.initializeApp({
