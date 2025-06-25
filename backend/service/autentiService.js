@@ -149,19 +149,26 @@ class AutentiService {
 
     const token = jwt.sign(payload, secret, { expiresIn: "2h" });
 
-    if (usuario.device_token) {
-    await enviarNotificacion({
-      token: usuario.device_token,
-      titulo: '¡Bienvenido!',
-      cuerpo: `Hola ${usuario.nombre}, has iniciado sesión exitosamente.`,
-      imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShabro8p3uSGKKI2WHauC3RHRla7VnpVFTpw&s' 
-    });
-  }
+     if (usuario.device_token) {
+      const resultadoNotificacion = await enviarNotificacion({
+        token: usuario.device_token,
+        titulo: '¡Bienvenido!',
+        cuerpo: `Hola ${usuario.nombre}, has iniciado sesión exitosamente.`,
+        imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShabro8p3uSGKKI2WHauC3RHRla7VnpVFTpw&s'
+      });
+
+      if (resultadoNotificacion.success) {
+        console.log('🎉 Notificación de bienvenida enviada con éxito.');
+      } else {
+        console.error('❌ Error al enviar la notificación de bienvenida:', resultadoNotificacion.error);
+       
+      }
+    }
 
     return { token, usuario };
   }
 
-
+  
 
   
 
