@@ -125,7 +125,7 @@ class LugarController {
         });
       }
 
-      const { usuarioid, categoriaid, nombre, descripcion, ubicacion } = req.body;
+        const { usuarioid, categoriaid, nombre, descripcion, ubicacion, estado, aprobacion } = req.body;
 
       // Validación de campos requeridos
       const camposRequeridos = ['usuarioid', 'categoriaid', 'nombre', 'descripcion', 'ubicacion'];
@@ -136,6 +136,16 @@ class LugarController {
           mensaje: "Error de validación",
           error: "Campos requeridos faltantes",
           campos: camposFaltantes
+        });
+      }
+     const estadoValido = Number(estado) === 0 || Number(estado) === 1;
+    const aprobacionValida = Number(aprobacion) === 0 || Number(aprobacion) === 1;
+      
+      if (!estadoValido || !aprobacionValida) {
+        return res.status(400).json({
+          mensaje: "Error de validación",
+          error: "Valores inválidos para estado o aprobación",
+          detalles: "Los valores de estado y aprobación deben ser 0 o 1"
         });
       }
 
@@ -199,8 +209,8 @@ class LugarController {
         nombre,
         descripcion,
         ubicacion,
-        estado: false,
-        aprobacion: false,
+         estado: estado || 0,
+        aprobacion: aprobacion || 0,
         imagen: imagenUpload.secure_url,
         fotos_lugar: JSON.stringify(fotosUrls),
         carta_pdf: pdfUrl
