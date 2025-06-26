@@ -1,5 +1,7 @@
 const { Lugar, Usuario, Categoria, Evento } = require("../models");
 const { Op } = require("sequelize");
+const { enviarNotificacion } = require("./fcmFirebase/fcmFirebaseService");
+
 
 class LugarError extends Error {
   constructor(mensaje, tipo = 'VALIDACION') {
@@ -166,15 +168,72 @@ class LugarService {
 
     return lugar;
   }
-
-  async crearLugar(dataLugar) {
+async crearLugar(dataLugar) {
+  try {
+    const nuevoLugar = await Lugar.create(dataLugar);
+    
     try {
-      const nuevoLugar = await Lugar.create(dataLugar);
-      return nuevoLugar;
-    } catch (error) {
-      throw error;
+      const usuarios = await Usuario.findAll({
+        where: {
+          device_token: {
+            [Op.ne]: null 
+          }
+        },
+        attributes: ['id', 'device_token', 'nombre'] 
+      });
+
+      const resultadosNotificaciones = await Promise.all(
+        usuarios.map(usuario => 
+          enviarNotificacion({
+            token: usuario.device_token,
+            titulo: `¡Hola ${usuario.nombre}! Nuevo Lugar Creado`, 
+            cuerpo: `Se ha creado un nuevo lugar: "${nuevoLugar.nombre}". ¡Échale un vistazo!`,
+          })
+          .then(result => ({ success: true, token: usuario.device_token, result }))
+          .catch(error => ({ success: false, token: usuario.device_token, error }))
+        )
+      );
+
+      const exitosas = resultadosNotificaciones.filter(r => r.success);
+      const fallidas = resultadosNotificaciones.filter(r => !r.success);
+
+      
+      if (fallidas.length > 0) {
+        console.error('Errores en notificaciones fallidas:', fallidas);
+      }
+
+    } catch (errorNotificacion) {
+      console.error('Error en el proceso de notificación:', errorNotificacion);
+    }
+    
+    return nuevoLugar;
+  } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      const errores = error.errors.map(err => ({
+        campo: err.path,
+        mensaje: err.message
+      }));
+      
+      throw {
+        mensaje: "Error al crear lugar - Validación fallida",
+        error: "Los datos proporcionados violan restricciones de unicidad",
+        tipo: "ValidationError",
+        detalles: errores,
+        status: 400 
+      };
+    } else {
+      throw {
+        mensaje: "Error al crear lugar",
+        error: error.message,
+        tipo: error.name,
+        detalles: "Error interno del servidor al procesar la solicitud",
+        status: 500 
+      };
     }
   }
+}
+ 
+  
 
   async actualizarLugar(id, dataLugar) {
     console.log('=== Inicio actualizarLugar ===');
