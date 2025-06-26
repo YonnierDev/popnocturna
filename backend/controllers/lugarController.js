@@ -716,6 +716,101 @@ class LugarController {
     }
   }
 
+ async listarLugaresPorCategoria(req, res) {
+  try {
+    const { categoriaid } = req.params;
+
+    // Basic validation
+    if (!categoriaid || isNaN(categoriaid)) {
+      return res.status(400).json({
+        mensaje: "Error de validación",
+        error: "ID de categoría no válido o no proporcionado"
+      });
+    }
+
+    // Verify category exists
+    const categoria = await LugarService.verificarCategoria(categoriaid);
+    if (!categoria) {
+      return res.status(404).json({
+        mensaje: "Categoría no encontrada",
+        detalles: "No existe una categoría con el ID proporcionado"
+      });
+    }
+
+    // Get approved places in this category
+    const lugares = await LugarService.listarLugaresPorCategoria(categoriaid);
+
+    if (!lugares || lugares.length === 0) {
+      return res.status(404).json({
+        mensaje: "No se encontraron lugares en esta categoría",
+        detalles: `No hay lugares registrados en la categoría ${categoria.tipo}`,
+        categoria: categoria.tipo
+      });
+    }
+
+    res.status(200).json({
+      mensaje: `Lugares encontrados en la categoría ${categoria.tipo}`,
+      cantidad: lugares.length,
+      categoria: categoria.tipo,
+      datos: lugares
+    });
+
+  } catch (error) {
+    console.error('Error en listarLugaresPorCategoria:', error);
+    res.status(500).json({
+      mensaje: "Error al buscar lugares por categoría",
+      error: error.message,
+      tipo: error.name,
+      detalles: "Error interno del servidor al procesar la solicitud"
+    });
+  }
+}
+
+async obtenerEventosDeLugar(req, res) {
+  try {
+    const { lugarid } = req.params;
+
+    if (!lugarid || isNaN(lugarid)) {
+      return res.status(400).json({
+        mensaje: "Error de validación",
+        error: "ID de lugar no válido o no proporcionado"
+      });
+    }
+
+    const resultado = await LugarService.obtenerEventosDeLugar(lugarid);
+
+    if (!resultado.eventos || resultado.eventos.length === 0) {
+      return res.status(404).json({
+        mensaje: "No se encontraron eventos para este lugar",
+        detalles: `El lugar ${resultado.lugar.nombre} no tiene eventos registrados`,
+        lugar: resultado.lugar
+      });
+    }
+
+    res.status(200).json({
+      mensaje: "Eventos obtenidos correctamente",
+      datos: resultado.eventos.map(evento => ({
+        ...evento,
+        lugar: resultado.lugar
+      }))
+    });
+
+  } catch (error) {
+    console.error('Error en obtenerEventosDeLugar:', error);
+    if (error.message === 'Lugar no encontrado') {
+      return res.status(404).json({
+        mensaje: "Lugar no encontrado",
+        error: error.message
+      });
+    }
+    res.status(500).json({
+      mensaje: "Error al obtener eventos del lugar",
+      error: error.message,
+      detalles: "Error interno del servidor al procesar la solicitud"
+    });
+  }
+}
+
 }
 
 module.exports = new LugarController();

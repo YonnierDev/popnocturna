@@ -462,6 +462,85 @@ async crearLugar(dataLugar) {
       ]
     });
   }
+  async listarLugaresPorCategoria(categoriaid) {
+  return await Lugar.findAll({
+    where: {
+      categoriaid,
+      estado: true,
+      aprobacion: true
+    },
+    include: [
+      {
+        model: Categoria,
+        as: "categoria",
+        attributes: ["tipo"],
+      }
+    ],
+    attributes: [
+      'id',
+      'nombre',
+      'descripcion',
+      'ubicacion',
+      'imagen',
+      'fotos_lugar',
+      'categoriaid',
+      'createdAt',
+      'updatedAt'
+    ]
+  });
 }
+
+async obtenerEventosDeLugar(lugarid) {
+  try {
+    const lugar = await Lugar.findByPk(lugarid, {
+      attributes: ['id', 'nombre'],
+      include: [{
+        model: Evento,
+        as: 'eventos',
+        where: { estado: true },
+        attributes: [
+          'id', 
+          'nombre', 
+          'portada', 
+          'capacidad', 
+          'precio', 
+          'descripcion', 
+          'fecha_hora', 
+          'estado', 
+          'usuarioid',
+          'createdAt',
+          'updatedAt'
+        ],
+        required: false,
+        order: [['fecha_hora', 'ASC']] // Ordenar por fecha más cercana
+      }]
+    });
+
+    if (!lugar) {
+      throw new Error('Lugar no encontrado');
+    }
+
+    // Formatear el array de portadas si es necesario
+    const eventosFormateados = lugar.eventos.map(evento => {
+      return {
+        ...evento.toJSON(),
+        portada: Array.isArray(evento.portada) ? evento.portada : [evento.portada].filter(Boolean)
+      };
+    });
+
+    return {
+      lugar: {
+        id: lugar.id,
+        nombre: lugar.nombre
+      },
+      eventos: eventosFormateados
+    };
+  } catch (error) {
+    console.error('Error en obtenerEventosDeLugar:', error);
+    throw error;
+  }
+}
+}
+
 
 module.exports = new LugarService();

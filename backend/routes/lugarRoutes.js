@@ -29,4 +29,10 @@ router.delete('/lugar/:id', autentiMiddleware, LugarController.eliminarLugar);
 
 router.patch('/lugar/estado/:id', autentiMiddleware, LugarController.cambiarEstado);
 
+router.get('/lugares/categoria/:categoriaid', LugarController.listarLugaresPorCategoria);
+
+router.get('/lugares/:lugarid/eventos', LugarController.obtenerEventosDeLugar);
+
+
+
 module.exports = router;
