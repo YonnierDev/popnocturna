@@ -476,6 +476,44 @@ class EventoController {
       });
     }
   }
+
+  async obtenerEventosPorPrecio(req, res) {
+  try {
+    const { rango } = req.params;
+    const rangosValidos = ['gratis', 'economico', 'medio', 'premium'];
+
+    if (!rangosValidos.includes(rango)) {
+      return res.status(400).json({
+        mensaje: "Rango de precio no válido",
+        error: "Los rangos válidos son: gratis, economico, medio, premium",
+        rangosValidos
+      });
+    }
+
+    const eventos = await eventoService.obtenerEventosPorPrecio(rango);
+
+    if (!eventos || eventos.length === 0) {
+      return res.status(404).json({
+        mensaje: `No se encontraron eventos en el rango ${rango}`,
+        detalles: "Intenta con otro rango de precio"
+      });
+    }
+
+    res.status(200).json({
+      mensaje: `Eventos en rango ${rango} obtenidos correctamente`,
+      cantidad: eventos.length,
+      datos: eventos
+    });
+
+  } catch (error) {
+    console.error('Error en obtenerEventosPorPrecio:', error);
+    res.status(500).json({
+      mensaje: "Error al obtener eventos por precio",
+      error: error.message,
+      detalles: "Error interno del servidor al procesar la solicitud"
+    });
+  }
+}
 }
 
 module.exports = new EventoController();

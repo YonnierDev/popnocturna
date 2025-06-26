@@ -557,6 +557,53 @@ class EventoService {
     await evento.destroy();
     return true;
   }
+
+
+  async obtenerEventosPorPrecio(rangoPrecio) {
+  try {
+    let condicionesPrecio = {};
+    
+    switch(rangoPrecio) {
+      case 'gratis':
+        condicionesPrecio = { precio: '0' };
+        break;
+      case 'economico':
+        condicionesPrecio = { precio: { [Op.between]: ['1', '50000'] } };
+        break;
+      case 'medio':
+        condicionesPrecio = { precio: { [Op.between]: ['50001', '150000'] } };
+        break;
+      case 'premium':
+        condicionesPrecio = { precio: { [Op.gte]: '150001' } };
+        break;
+      default:
+        throw new Error('Rango de precio no válido');
+    }
+
+    const eventos = await Evento.findAll({
+      where: {
+        ...condicionesPrecio,
+        estado: true
+      },
+      include: [{
+        model: Lugar,
+        as: 'lugar',
+        attributes: ['id', 'nombre'],
+        where: { estado: true, aprobacion: true }
+      }],
+      order: [['fecha_hora', 'ASC']]
+    });
+
+    return eventos.map(evento => ({
+      ...evento.toJSON(),
+      portada: Array.isArray(evento.portada) ? evento.portada : [evento.portada].filter(Boolean)
+    }));
+
+  } catch (error) {
+    console.error('Error en obtenerEventosPorPrecio:', error);
+    throw error;
+  }
+}
 }
 
 module.exports = new EventoService();

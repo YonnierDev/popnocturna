@@ -40,4 +40,9 @@ router.get("/evento/:eventoId/comentarios", validarRol(1, 2,), EventoController.
 
 router.patch("/evento/estado/:id", validarRol(1, 2), EventoController.cambiarEstadoEvento);
 
+
+
+// Ruta protegida (si necesitas versión autenticada)
+router.get('/eventos/precio/:rango', autentiMiddleware, EventoController.obtenerEventosPorPrecio);
+
 module.exports = router;
