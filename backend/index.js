@@ -80,6 +80,9 @@ app.use("/api", require("./routes/propietarioRouters/categoriaUsuarioRolRouter")
 // Reportes
 app.use("/api", require("./routes/reporteRoutes"));
 
+
+//Notificacion
+app.use('/api', require("./routes/notificacionRouter"));
 // Socket.IO
 const io = new Server(server, {
   cors: {

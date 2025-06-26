@@ -1,0 +1,69 @@
+'use strict';
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('notificaciones', {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
+      },
+      remitente_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Usuario', 
+          key: 'id'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
+      receptor_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Usuario',
+          key: 'id'
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
+      titulo: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      cuerpo: {
+        type: Sequelize.TEXT,
+        allowNull: false
+      },
+      imagen: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      tipo: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      leida: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      }
+    });
+  },
+
+  async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable('notificaciones');
+  }
+};
