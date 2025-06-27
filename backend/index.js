@@ -83,6 +83,9 @@ app.use("/api", require("./routes/reporteRoutes"));
 
 //Notificacion
 app.use('/api', require("./routes/notificacionRouter"));
+
+// Solicitudes
+app.use('/api', require("./routes/solicitudRouter"));
 // Socket.IO
 const io = new Server(server, {
   cors: {
