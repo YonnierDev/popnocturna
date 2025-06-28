@@ -8,7 +8,11 @@ class SolicitudService {
   async obtenerTodas() {
     return await Solicitud.findAll({
       include: [
-        { model: Usuario, as: "usuario", attributes: ["id", "nombre"] },
+        {
+          model: Usuario,
+          as: "usuario",
+          attributes: ["id", "nombre", "apellido"],
+        },
       ],
       order: [["created_at", "DESC"]],
     });
@@ -41,9 +45,25 @@ class SolicitudService {
 
   async actualizarEstado(id, nuevoEstado) {
     const solicitud = await Solicitud.findByPk(id);
-    if (!solicitud) throw { status: 404, mensaje: "Solicitud no encontrada" };
+    if (!solicitud) {
+      throw { status: 404, mensaje: "Solicitud no encontrada" };
+    }
+
     solicitud.estado = nuevoEstado;
     await solicitud.save();
+
+    const estadoLower = nuevoEstado.toLowerCase();
+
+    if (estadoLower === "aceptado" || estadoLower === "rechazado") {
+      const usuario = await Usuario.findByPk(solicitud.usuario_id);
+      if (!usuario) {
+        throw { status: 404, mensaje: "Usuario no encontrado" };
+      }
+
+      const nuevoRolId = estadoLower === "aceptado" ? 3 : 4;
+      await usuario.update({ rolid: nuevoRolId });
+    }
+
     return { mensaje: "Estado actualizado correctamente" };
   }
 
