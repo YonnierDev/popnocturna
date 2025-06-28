@@ -47,6 +47,14 @@ router.patch(
   ReservaController.aprobarReserva
 );
 
+// Obtener reservas pendientes del usuario
+router.get(
+  "/usuario/reservas/pendientes",
+  autentiMiddleare,
+  validarRol(4), // Solo usuarios con rol 4 (usuarios normales)
+  ReservaController.obtenerReservasPendientesUsuario
+);
+
 // Obtener información detallada de una reserva
 router.get(
   "/reserva/detalle/:id",

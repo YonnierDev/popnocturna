@@ -753,6 +753,39 @@ class ReservaController {
       });
     }
   }
+
+  /**
+   * Obtiene las reservas pendientes del usuario autenticado
+   */
+  async obtenerReservasPendientesUsuario(req, res) {
+    try {
+      const { id: usuarioid } = req.usuario;
+      
+      // Validar que el usuario existe
+      const usuario = await Usuario.findByPk(usuarioid);
+      if (!usuario) {
+        return res.status(404).json({
+          ok: false,
+          msg: 'Usuario no encontrado',
+        });
+      }
+
+      const reservas = await ReservaService.obtenerReservasPendientesPorUsuario(usuarioid);
+      
+      return res.json({
+        ok: true,
+        total: reservas.length,
+        reservas,
+      });
+    } catch (error) {
+      console.error('Error en obtenerReservasPendientesUsuario:', error);
+      return res.status(500).json({
+        ok: false,
+        msg: 'Error al obtener las reservas pendientes',
+        error: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new ReservaController();

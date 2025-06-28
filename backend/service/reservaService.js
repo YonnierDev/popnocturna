@@ -762,6 +762,83 @@ class ReservaService {
       };
     }
   }
+
+  /**
+   * Obtiene las reservas pendientes de un usuario
+   * @param {number} usuarioid - ID del usuario
+   * @returns {Promise<Array>} Lista de reservas pendientes
+   */
+  async obtenerReservasPendientesPorUsuario(usuarioid) {
+    try {
+      const reservas = await Reserva.findAll({
+        where: {
+          usuarioid,
+          estado: true, // Solo reservas activas
+          aprobacion: 'pendiente' // Solo reservas pendientes
+        },
+        include: [
+          {
+            model: Evento,
+            as: 'evento',
+            attributes: ['id', 'nombre', 'fecha_hora', 'portada'],
+            include: [
+              {
+                model: Lugar,
+                as: 'lugar',
+                attributes: ['id', 'nombre', 'direccion']
+              }
+            ]
+          },
+          {
+            model: Usuario,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'correo']
+          }
+        ],
+        order: [['fecha_hora', 'DESC']]
+      });
+
+      // Formatear la respuesta
+      return reservas.map(reserva => {
+        const reservaJson = reserva.get({ plain: true });
+        
+        // Asegurar que portada sea un array
+        if (reservaJson.evento) {
+          reservaJson.evento.portada = Array.isArray(reservaJson.evento.portada)
+            ? reservaJson.evento.portada
+            : [reservaJson.evento.portada].filter(Boolean);
+        }
+
+        return {
+          id: reservaJson.id,
+          numero_reserva: reservaJson.numero_reserva,
+          fecha_hora: reservaJson.fecha_hora,
+          cantidad_entradas: reservaJson.cantidad_entradas,
+          aprobacion: reservaJson.aprobacion,
+          estado: reservaJson.estado,
+          evento: {
+            id: reservaJson.evento?.id,
+            nombre: reservaJson.evento?.nombre,
+            fecha_hora: reservaJson.evento?.fecha_hora,
+            portada: reservaJson.evento?.portada,
+            lugar: {
+              id: reservaJson.evento?.lugar?.id,
+              nombre: reservaJson.evento?.lugar?.nombre,
+              direccion: reservaJson.evento?.lugar?.direccion
+            }
+          },
+          usuario: {
+            id: reservaJson.usuario?.id,
+            nombre: reservaJson.usuario?.nombre,
+            correo: reservaJson.usuario?.correo
+          }
+        };
+      });
+    } catch (error) {
+      console.error('Error en obtenerReservasPendientesPorUsuario:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ReservaService();

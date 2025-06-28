@@ -4,22 +4,12 @@ const CategoriaService = require('../service/categoriaService');
 class CategoriaController {
     async listarCategorias(req, res) {
         try {
-            console.log("🔍 Intentando listar categorías");
-            const listaCategorias = await CategoriaService.listarCategorias();
+            console.log("🔍 Obteniendo todas las categorías (activas e inactivas)");
+            const categorias = await CategoriaService.listarCategorias();
             
-            // Formatear la respuesta para el rol 1 (Super Admin)
-            const categoriasFormateadas = listaCategorias.map(categoria => ({
-                id: categoria.id,
-                tipo: categoria.tipo,
-                descripcion: categoria.descripcion,
-                imagen: categoria.imagen,
-                estado: categoria.estado,
-                createdAt: categoria.createdAt,
-                updatedAt: categoria.updatedAt
-            }));
-
-            console.log("✅ Categorías encontradas:", categoriasFormateadas);
-            res.json(categoriasFormateadas);
+            // Devolver las categorías tal cual vienen del servicio
+            console.log(`✅ Se encontraron ${categorias.length} categorías`);
+            res.json(categorias);
         } catch (e) {
             console.error("❌ Error al listar categorías:", e);
             res.status(500).json({ 
