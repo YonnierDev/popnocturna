@@ -4,6 +4,7 @@ const autentiMiddleware = require("../../middlewares/autentiMiddleware");
 const validarRol = require("../../middlewares/validarRol");
 const { uploadImages, uploadPDF, handleMulterError } = require("../../middlewares/multerMiddleware");
 const PropietarioController = require("../../controllers/propietarioControllers/propietarioLugarController");
+const PropietarioGeneralController = require("../../controllers/propietarioController");
 
 router.get(
   "/propietario/lugares",
@@ -59,6 +60,30 @@ router.get(
   autentiMiddleware,
   validarRol(3),
   PropietarioController.listarComentariosYCalificacionesLugar
+);
+
+// Obtener todos los comentarios de un lugar con información del evento
+router.get(
+  "/propietario/lugar/:lugarid/comentarios",
+  autentiMiddleware,
+  validarRol(3),
+  PropietarioGeneralController.listarComentariosPorLugar
+);
+
+// Obtener todas las calificaciones de un lugar con información del evento
+router.get(
+  "/propietario/lugar/:lugarid/calificaciones",
+  autentiMiddleware,
+  validarRol(3),
+  PropietarioGeneralController.listarCalificacionesPorLugar
+);
+
+// Obtener todas las reservas de un lugar con información del evento
+router.get(
+  "/propietario/lugar/:lugarid/reservas",
+  autentiMiddleware,
+  validarRol(3),
+  PropietarioGeneralController.listarReservasPorLugar
 );
 
 module.exports = router;
