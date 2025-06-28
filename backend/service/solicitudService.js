@@ -1,4 +1,5 @@
-const { Solicitud, Usuario } = require("../models");
+const { Solicitud, Usuario, Notificacion } = require("../models");
+const { enviarNotificacion } = require("./fcmFirebase/fcmFirebaseService");
 
 class SolicitudService {
   async crear(data) {
@@ -62,6 +63,40 @@ class SolicitudService {
 
       const nuevoRolId = estadoLower === "aceptado" ? 3 : 4;
       await usuario.update({ rolid: nuevoRolId });
+
+  
+      if (usuario.device_token) {
+        const titulo = `Tu solicitud fue ${estadoLower}`;
+        const cuerpo =
+          estadoLower === "aceptado"
+            ? "¡Felicidades! Ahora eres colaborador."
+            : "Tu solicitud fue rechazada. Puedes intentarlo nuevamente.";
+
+        try {
+          const resultado = await enviarNotificacion({
+            token: usuario.device_token,
+            titulo,
+            cuerpo,
+          });
+
+          await Notificacion.create({
+            remitente_id: 1,
+            receptor_id: usuario_id,
+            titulo,
+            cuerpo,
+            imagen: null,
+            tipo: "estado_solicitud",
+            leida: false,
+          });
+
+          console.log("✅ Notificación enviada y guardada correctamente.");
+        } catch (errorNoti) {
+          console.error(
+            "❌ Error enviando o guardando notificación:",
+            errorNoti.message
+          );
+        }
+      }
     }
 
     return { mensaje: "Estado actualizado correctamente" };
