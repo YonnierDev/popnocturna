@@ -785,7 +785,7 @@ class ReservaService {
               {
                 model: Lugar,
                 as: 'lugar',
-                attributes: ['id', 'nombre', 'direccion']
+                attributes: ['id', 'nombre', 'ubicacion']
               }
             ]
           },
@@ -824,7 +824,7 @@ class ReservaService {
             lugar: {
               id: reservaJson.evento?.lugar?.id,
               nombre: reservaJson.evento?.lugar?.nombre,
-              direccion: reservaJson.evento?.lugar?.direccion
+              ubicacion: reservaJson.evento?.lugar?.ubicacion
             }
           },
           usuario: {
