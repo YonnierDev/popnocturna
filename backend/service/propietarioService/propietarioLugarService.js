@@ -1,6 +1,46 @@
 const { Lugar, Usuario, Categoria, Comentario, Calificacion, Evento } = require("../../models");
 
 class PropietarioLugarService {
+  async obtenerLugarPorId(id) {
+    try {
+      const lugar = await Lugar.findByPk(id, {
+        include: [
+          {
+            model: Categoria,
+            as: 'categoria',
+            attributes: ['id', 'tipo']
+          }
+        ]
+      });
+
+      if (lugar) {
+        // Asegurar que fotos_lugar sea un array
+        if (lugar.fotos_lugar) {
+          if (typeof lugar.fotos_lugar === 'string') {
+            // Si es un string, dividir por comas y limpiar
+            lugar.fotos_lugar = lugar.fotos_lugar
+              .split(',')
+              .map(url => url.trim())
+              .filter(url => url !== '');
+          } else if (!Array.isArray(lugar.fotos_lugar)) {
+            // Si no es string ni array, inicializar como array vacío
+            lugar.fotos_lugar = [];
+          }
+        } else {
+          // Si es null/undefined, inicializar como array vacío
+          lugar.fotos_lugar = [];
+        }
+        
+        // Asegurar que todas las URLs sean strings válidos
+        lugar.fotos_lugar = lugar.fotos_lugar.map(url => String(url).trim()).filter(url => url !== '');
+      }
+
+      return lugar;
+    } catch (error) {
+      console.error('Error en obtenerLugarPorId:', error);
+      throw error;
+    }
+  }
   async listarLugaresPropietario(usuarioid) {
     console.log("LUGARES USUARIOID:", usuarioid);
     const lugares = await Lugar.findAll({
@@ -200,12 +240,77 @@ class PropietarioLugarService {
     });
   }
 
-  async propietarioActualizarImagenesFotos(){
+  async actualizarLugarPropietario(id, usuarioId, datosActualizados) {
+    const transaction = await Lugar.sequelize.transaction();
+    let resultado;
+    
     try {
+      // Buscar el lugar por ID
+      const lugar = await Lugar.findByPk(id, { transaction });
+
+      if (!lugar) {
+        throw new Error('Lugar no encontrado');
+      }
+
+      // Verificar que el lugar pertenezca al usuario
+      if (lugar.usuarioid !== usuarioId) {
+        throw new Error('No tienes permiso para actualizar este lugar');
+      }
+
+      // Asegurarse de que fotos_lugar sea un string separado por comas
+      if (datosActualizados.fotos_lugar) {
+        if (Array.isArray(datosActualizados.fotos_lugar)) {
+          datosActualizados.fotos_lugar = datosActualizados.fotos_lugar.join(',');
+        }
+      }
+
+      // Actualizar el lugar
+      await Lugar.update(datosActualizados, {
+        where: { id },
+        transaction
+      });
+
+      // Obtener el lugar actualizado con sus relaciones
+      const lugarActualizado = await Lugar.findByPk(id, {
+        include: [
+          {
+            model: Categoria,
+            as: 'categoria',
+            attributes: ['id', 'tipo']
+          }
+        ],
+        transaction
+      });
       
+      // Asegurarse de que fotos_lugar sea un array en la respuesta
+      if (lugarActualizado) {
+        if (lugarActualizado.fotos_lugar) {
+          // Si ya es un array, no hacemos nada
+          if (!Array.isArray(lugarActualizado.fotos_lugar)) {
+            // Si es un string, lo convertimos a array
+            lugarActualizado.fotos_lugar = lugarActualizado.fotos_lugar 
+              ? lugarActualizado.fotos_lugar.split(',').filter(Boolean)
+              : [];
+          }
+        } else {
+          // Si es null o undefined, lo inicializamos como array vacío
+          lugarActualizado.fotos_lugar = [];
+        }
+      }
+      
+      // Confirmar la transacción
+      await transaction.commit();
+      resultado = lugarActualizado;
     } catch (error) {
-      
+      // Solo hacer rollback si la transacción aún está activa
+      if (transaction.finished !== 'commit') {
+        await transaction.rollback();
+      }
+      console.error('Error en actualizarLugarPropietario:', error);
+      throw error;
     }
+    
+    return resultado;
   }
 
 

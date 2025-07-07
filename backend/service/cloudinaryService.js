@@ -80,12 +80,15 @@ class CloudinaryService {
   // Método para subir imágenes de lugares
   async subirImagenLugar(buffer, nombre) {
     try {
+      // Generar un nombre único para la imagen
+      const publicId = `lugar-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      
       return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: "image",
-            folder: "lugares", // Carpeta específica para imágenes de lugares
-            public_id: nombre,
+            folder: "lugares",
+            public_id: publicId, // Usar el ID único generado
             format: "jpg",
             quality: "auto:good",
             transformation: [
