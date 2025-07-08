@@ -2,19 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/index.js",
-      "use": "@vercel/node"
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": {
+        "installCommand": "npm install && npm install mysql2"
+      }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "backend/index.js"
+      "dest": "index.js"
     }
   ],
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
+  "env": {
+    "NODE_ENV": "production",
+    "DB_USERNAME": "root",
+    "DB_PASSWORD": "CjYhunQqMsgsXJDIuhDMaedErgqQphTW",
+    "DB_NAME": "railway",
+    "DB_PORT": "30422",
+    "DB_HOST": "gondola.proxy.rlwy.net"
   }
 }
