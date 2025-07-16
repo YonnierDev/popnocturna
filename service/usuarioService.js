@@ -1,13 +1,15 @@
 const { Op } = require('sequelize');
-const {
-  Usuario,
-  Rol,
-  Lugar,
-  Comentario,
-  Reserva,
-  Calificacion,
-  Evento,
+const { 
+  Usuario, 
+  Rol, 
+  Lugar, 
+  Comentario, 
+  Reserva, 
+  Calificacion, 
+  Evento, 
+  Notificacion 
 } = require("../models");
+const { sequelize } = require("../models");
 
 class UsuarioService {
   async listarUsuarios() {
@@ -190,10 +192,51 @@ class UsuarioService {
   }
 
   async eliminarUsuario(id) {
-    const usuario = await this.buscarUsuario(id);
-    if (!usuario) throw new Error("Usuario no encontrado");
-    await Usuario.destroy({ where: { id } });
-    return { mensaje: "Usuario eliminado correctamente", usuarioEliminado: usuario };
+    const transaction = await sequelize.transaction();
+    try {
+      const usuario = await Usuario.findByPk(id, { transaction });
+      if (!usuario) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      // Eliminar dependencias en orden inverso
+      await Calificacion.destroy({ where: { usuarioid: id }, transaction });
+      await Comentario.destroy({ where: { usuarioid: id }, transaction });
+      await Reserva.destroy({ where: { usuarioid: id }, transaction });
+      
+      // Si el usuario es propietario, eliminar sus lugares
+      if (usuario.rolid === 2) { // Asumiendo que 2 es el ID del rol de propietario
+        await Lugar.destroy({ where: { usuarioid: id }, transaction });
+      }
+
+      // Eliminar notificaciones donde el usuario es el receptor
+      await Notificacion.destroy({ where: { receptor_id: id }, transaction });
+      if (!usuario) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      // Eliminar dependencias en orden inverso
+      await Calificacion.destroy({ where: { usuarioid: id }, transaction });
+      await Comentario.destroy({ where: { usuarioid: id }, transaction });
+      await Reserva.destroy({ where: { usuarioid: id }, transaction });
+      
+      // Si el usuario es propietario, eliminar sus lugares
+      if (usuario.rolid === 2) { // Asumiendo que 2 es el ID del rol de propietario
+        await Lugar.destroy({ where: { usuarioid: id }, transaction });
+      }
+
+      // Finalmente, eliminar el usuario
+      await usuario.destroy({ transaction });
+      
+      // Si todo sale bien, hacemos commit de la transacción
+      await transaction.commit();
+      
+      return { mensaje: "Usuario eliminado correctamente" };
+    } catch (error) {
+      // Si hay algún error, hacemos rollback
+      await transaction.rollback();
+      throw error;
+    }
   }
 
 

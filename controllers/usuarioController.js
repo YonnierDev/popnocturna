@@ -196,16 +196,17 @@ class UsuarioController {
   async eliminarUsuario(req, res) {
     try {
       const { id } = req.params;
-
       const usuario = await UsuarioService.buscarUsuario(id);
       if (!usuario) {
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
       }
-
-      await UsuarioService.eliminarUsuario(id);
-      res.json({ mensaje: "Usuario eliminado correctamente" });
+      const resultado = await UsuarioService.eliminarUsuario(id);
+      res.json({ mensaje: "Usuario eliminado correctamente", resultado });
     } catch (error) {
-      res.status(500).json({ mensaje: "Error en el servicio" });
+      res.status(500).json({ 
+        mensaje: "Error en el servicio",
+        error: error.message
+      });
     }
   }
 

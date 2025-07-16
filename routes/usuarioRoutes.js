@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const UsuarioController = require("../controllers/usuarioController");
-const autentiMiddleware = require("../middlewares/autentiMiddleware");
 const validarUsuario = require("../middlewares/validacionesUsuario");
+const autentiMiddleware = require("../middlewares/autentiMiddleware");
 const { uploadImages } = require("../middlewares/multerMiddleware");
 
+// Rutas públicas (sin token requerido)
 router.get("/usuarios", UsuarioController.listarUsuarios);
 router.get("/usuario/:id", UsuarioController.buscarUsuario);
 router.post("/usuario",
@@ -12,6 +13,7 @@ router.post("/usuario",
   validarUsuario,
   UsuarioController.crearUsuario
 );
+
 router.put("/usuario/:id", UsuarioController.actualizarUsuario);
 router.delete("/usuario/:id", UsuarioController.eliminarUsuario);
 router.get("/usuarios/rol/:rolId", UsuarioController.buscarPorRol);

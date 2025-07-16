@@ -30,10 +30,6 @@ const corsOptions = {
 // Middleware CORS
 app.use(cors(corsOptions));
 
-console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
-
-console.log('🔧 Configuración CORS: Permitiendo cualquier origen');
-
 // Servir archivos estáticos desde la carpeta public
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
@@ -51,41 +47,28 @@ app.get("/", (req, res) => {
   });
 });
 
-// Rutas
-// Rutas de autenticación y usuarios
-app.use("/api", require("./routes/autentiRouter"));
+// Rutas públicas (sin token requerido)
 app.use("/api", require("./routes/usuarioRoutes"));
+app.use("/api", require("./routes/autentiRouter"));
+
+// Rutas protegidas (requieren token)
 app.use("/api", require("./routes/rolRouter"));
 app.use("/api", require("./routes/usuariosRouter/categoriasParaUsuarioRouter"));
-
-// Rutas de catálogo
 app.use("/api", require("./routes/categoriaRoutes"));
 app.use("/api", require("./routes/lugarRoutes"));
 app.use("/api", require("./routes/eventoRoutes"));
-
-// Rutas de reservas
 app.use("/api", require("./routes/reservaRouter"));
 app.use("/api", require("./routes/calificacionRoutes"));
 app.use("/api", require("./routes/comentarioRoutes"));
 app.use("/api", require("./routes/solicitudOcultarComentarioRoutes"));
-
-// Rutas de propietario
 app.use("/api", require("./routes/propietarioRouters/propietarioLugarRouter"));
-
-
 app.use("/api", require("./routes/propietarioRouters/propietarioEventoReservaRouter"));
 app.use("/api", require("./routes/propietarioRouters/propietarioReservaEventoLugarRouter"));
 app.use("/api", require("./routes/propietarioRouters/categoriaUsuarioRolRouter"));
-
-// Reportes
 app.use("/api", require("./routes/reporteRoutes"));
-
-
-//Notificacion
 app.use('/api', require("./routes/notificacionRouter"));
-
-// Solicitudes
 app.use('/api', require("./routes/solicitudRouter"));
+
 // Socket.IO
 const io = new Server(server, {
   cors: {
