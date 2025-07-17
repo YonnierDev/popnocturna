@@ -165,7 +165,24 @@ class AutentiService {
       }
     }
 
-    return { token, usuario };
+    return {
+      token,
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        correo: usuario.correo,
+        fecha_nacimiento: usuario.fecha_nacimiento,
+        contrasena: usuario.contrasena,
+        genero: usuario.genero,
+        estado: usuario.estado,
+        imagen: usuario.imagen,
+        rolid: usuario.rolid,
+        device_token: usuario.device_token,
+        createdAt: usuario.createdAt,
+        updatedAt: usuario.updatedAt
+      }
+    };
   }
 
   
