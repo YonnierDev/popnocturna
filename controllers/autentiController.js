@@ -22,9 +22,9 @@ class AutentiController {
         });
       }
 
-      // Asignar rol 3 (Propietario) por defecto si no se especifica
+      // Asignar rol 4 (Usuario) por defecto si no se especifica
       if (!req.body.rolid) {
-        req.body.rolid = 3; // Rol Propietario
+        req.body.rolid = 4; // Rol Usuario
       }
 
       const resultado = await AutentiService.registrarUsuario(req.body);
