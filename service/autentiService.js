@@ -133,8 +133,8 @@ class AutentiService {
     const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValido) throw new Error("Contraseña incorrecta");
 
-
-    if (device_token) {
+    // Solo actualizar device_token para usuarios con rol 4 (móvil)
+    if (device_token && usuario.rolid === 4) {
       usuario.device_token = device_token;
       await usuario.save();
     }
@@ -149,7 +149,8 @@ class AutentiService {
 
     const token = jwt.sign(payload, secret, { expiresIn: "2h" });
 
-     if (usuario.device_token) {
+    // Solo enviar notificación para usuarios con rol 4 (móvil)
+    if (usuario.device_token && usuario.rolid === 4) {
       const resultadoNotificacion = await enviarNotificacion({
         token: usuario.device_token,
         titulo: '¡Bienvenido!',
