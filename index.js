@@ -19,12 +19,33 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración CORS - Simple y funcional
+// Configuración CORS mejorada
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://popnocturna.vercel.app'
+];
+
 const corsOptions = {
-  origin: true,  // Permite cualquier origen
+  origin: function (origin, callback) {
+    // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
+    if (!origin) return callback(null, true);
+    
+    // Verificar si el origen está en la lista de permitidos
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'El origen de la petición no está permitido por CORS';
+      console.warn(`Origen no permitido: ${origin}`);
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,  // Permite cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 600,  // Tiempo que el navegador puede cachear la respuesta CORS (en segundos)
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
 // Middleware CORS
