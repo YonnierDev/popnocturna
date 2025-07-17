@@ -19,33 +19,12 @@ const server = http.createServer(app);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración CORS mejorada
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://popnocturna.vercel.app'
-];
-
+// Configuración CORS - Simple y funcional
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
-    if (!origin) return callback(null, true);
-    
-    // Verificar si el origen está en la lista de permitidos
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'El origen de la petición no está permitido por CORS';
-      console.warn(`Origen no permitido: ${origin}`);
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: true,  // Permite cualquier origen
   credentials: true,  // Permite cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600,  // Tiempo que el navegador puede cachear la respuesta CORS (en segundos)
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 // Middleware CORS
