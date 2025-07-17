@@ -20,7 +20,7 @@ router.post('/categoria',
 
 router.put('/categoria/:id',
   autentiMiddleware,
-  validarRol(1),
+  validarRol(1, 2),
   uploadImages.single("imagen"),
   CategoriaController.actualizarCategoria
 );
