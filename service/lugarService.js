@@ -35,9 +35,7 @@ class LugarService {
   }
   async listarLugaresAdmin() {
     return await Lugar.findAll({
-      where: {
-        aprobacion: true,
-      },
+      // Eliminamos el where para traer todos los registros sin filtrar
       include: [
         {
           model: Usuario,
@@ -55,6 +53,7 @@ class LugarService {
           attributes: ["nombre", "portada", "fecha_hora", "descripcion"],
         },
       ],
+      order: [['createdAt', 'DESC']]  // Ordenamos por fecha de creación descendente
     });
   }
 
