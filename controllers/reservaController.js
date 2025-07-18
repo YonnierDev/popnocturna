@@ -185,46 +185,59 @@ class ReservaController {
         });
       }
 
-      // Crear la reserva
-      const nuevaReserva = await ReservaService.crearReserva(
-        usuarioid,
-        eventoid,
-        aprobacion,
-        estado,
-        cantidad_entradas
-      );
+      try {
+        // Crear la reserva
+        const nuevaReserva = await ReservaService.crearReserva(
+          usuarioid,
+          eventoid,
+          aprobacion,
+          estado,
+          cantidad_entradas
+        );
 
-      // Obtener información actualizada del evento para la respuesta
-      const eventoActualizado = await ReservaService.obtenerEventoConCapacidad(eventoid);
-      
-      // Construir la respuesta con los datos formateados
-      const respuesta = {
-        success: true,
-        mensaje: "Reserva creada exitosamente",
-        data: {
-          id: nuevaReserva.id,
-          numero_reserva: nuevaReserva.numero_reserva,
-          fecha_hora: nuevaReserva.fecha_hora, // Esta es la fecha/hora del evento
-          aprobacion: nuevaReserva.aprobacion,
-          estado: nuevaReserva.estado,
-          cantidad_entradas: nuevaReserva.cantidad_entradas,
-          evento: {
-            id: nuevaReserva.evento?.id,
-            nombre: nuevaReserva.evento?.nombre,
-            fecha_hora: nuevaReserva.evento?.fecha_hora,
-            lugar: nuevaReserva.evento?.lugar
-          }
-        },
-        capacidadActual: eventoActualizado.capacidad - (eventoActualizado.entradasReservadas || 0),
-        capacidadTotal: eventoActualizado.capacidad
-      };
-      
-      res.status(201).json(respuesta);
+        // Obtener información actualizada del evento para la respuesta
+        const eventoActualizado = await ReservaService.obtenerEventoConCapacidad(eventoid);
+        
+        // Construir la respuesta con los datos formateados
+        const respuesta = {
+          success: true,
+          mensaje: "Reserva creada exitosamente",
+          data: {
+            id: nuevaReserva.id,
+            numero_reserva: nuevaReserva.numero_reserva,
+            fecha_hora: nuevaReserva.fecha_hora,
+            aprobacion: nuevaReserva.aprobacion,
+            estado: nuevaReserva.estado,
+            cantidad_entradas: nuevaReserva.cantidad_entradas,
+            evento: {
+              id: nuevaReserva.evento?.id,
+              nombre: nuevaReserva.evento?.nombre,
+              fecha_hora: nuevaReserva.evento?.fecha_hora,
+              lugar: nuevaReserva.evento?.lugar
+            }
+          },
+          capacidadActual: eventoActualizado.capacidad - (eventoActualizado.entradasReservadas || 0),
+          capacidadTotal: eventoActualizado.capacidad
+        };
+        
+        return res.status(201).json(respuesta);
+      } catch (error) {
+        console.error("Error al crear reserva:", error);
+        if (error.message.includes("Ya tienes reserva")) {
+          return res.status(400).json({
+            success: false,
+            mensaje: error.message // Este mensaje ya está formateado en el servicio
+          });
+        }
+        throw error; // Re-lanzar otros errores para que los maneje el catch externo
+      }
     } catch (error) {
       console.error("Error en crearReserva:", error);
-      res
-        .status(500)
-        .json({ mensaje: "Error en el servicio", error: error.message });
+      res.status(500).json({ 
+        success: false,
+        mensaje: "Error en el servicio", 
+        error: error.message 
+      });
     }
   }
 

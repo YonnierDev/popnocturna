@@ -349,7 +349,13 @@ class ReservaService {
       });
 
       if (reservaExistente) {
-        throw new Error("Ya tienes una reserva activa para este evento");
+        // Verificar si la reserva existente está activa
+        if (reservaExistente.estado) {
+          throw new Error("Ya tienes reserva en este evento");
+        } else {
+          // Si la reserva existe pero está inactiva, permitir crear una nueva
+          console.log(`Reserva inactiva encontrada para el usuario ${usuarioid} en evento ${eventoid}, procediendo con nueva reserva`);
+        }
       }
 
       // Obtener el último número de reserva
